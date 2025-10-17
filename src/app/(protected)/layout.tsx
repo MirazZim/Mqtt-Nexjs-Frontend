@@ -11,7 +11,7 @@ export default function ProtectedLayout({
     return (
         <ProtectedRoute>
             <div>
-                /
+                {/* <Navbar /> */}
                 {children}
             </div>
         </ProtectedRoute>
