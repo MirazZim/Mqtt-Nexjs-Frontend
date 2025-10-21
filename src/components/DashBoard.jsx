@@ -143,94 +143,140 @@ const Dashboard = () => {
     };
 
     return (
-        <div className="dashboard">
-            <div className="dashboard-header">
-                <h1>🌡️ Environmental Monitoring & Control System</h1>
+        <div className="min-h-screen bg-gray-100">
+            {/* Top Header with Gradient */}
+            <div className="bg-gradient-to-r from-teal-700 via-teal-600 to-blue-600 px-6 py-4 flex items-center justify-between shadow-lg">
+                <h1 className="text-white text-3xl font-bold tracking-wide">
+                    Temperature & Humidity Monitoring
+                </h1>
+
             </div>
 
-            <div className="dashboard-grid">
-                {/* Critical Path Components - Load First */}
-                <div className="dashboard-card full-width">
+            {/* Sub-header with Navigation */}
+            <div className="bg-teal-800 px-6 py-3 flex items-center justify-between shadow-md">
+
+
+                <div className="flex items-center gap-3">
                     <LocationSelector
                         selectedLocation={selectedLocation}
                         onLocationChange={handleLocationChange}
                     />
                 </div>
+            </div>
 
-                <div className="dashboard-card">
-                    <CurrentEnvironment selectedLocation={selectedLocation} />
-                </div>
+            {/* Main Content Area */}
+            <div className="p-6">
+                <div className="grid grid-cols-12 gap-6">
 
-                <div className="dashboard-card">
-                    <DeviceStatus selectedLocation={selectedLocation} />
-                </div>
+                    {/* LEFT SIDEBAR - Sensors & Device Status */}
+                    <div className="col-span-3 space-y-4">
 
-                <div className="dashboard-card">
-                    <EnvironmentControl
-                        selectedLocation={selectedLocation}
-                        targetTemperature={targetTemperature}
-                        setTargetTemperature={setTargetTemperature}
-                    />
-                </div>
-
-                {/* Lazy Load Charts */}
-                <div className="chart-section">
-                    <Suspense fallback={<ChartLoader />}>
-                        <EnvironmentChart
-                            selectedLocation={selectedLocation}
-                            socket={socket}
-                        />
-                    </Suspense>
-                </div>
-
-                {/* Heavy Components - Load After Critical Path */}
-                {showHeavyComponents ? (
-                    <>
-                        {/* Spatial Temperature Map with preloaded data */}
-                        <div className="dashboard-card full-width spatial-map-card">
-                            {isLoadingLocations ? (
-                                <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    height: '400px',
-                                    fontSize: '16px',
-                                    color: '#666',
-                                    background: '#f8f9fa',
-                                    borderRadius: '8px'
-                                }}>
-                                    <i className="fas fa-spinner fa-spin" style={{ marginRight: '10px' }}></i>
-                                    Loading temperature data...
-                                </div>
-                            ) : (
-                                <ComponentLoader height={400}>
-                                    <SpatialTemperatureMap
-                                        selectedLocation="sensor-room"
-                                        targetTemperature={22}
-                                        preloadedData={locationsData}
-                                    />
-                                </ComponentLoader>
-                            )}
+                        {/* CurrentEnvironment - 4 Channel Cards will be here */}
+                        <div className="bg-white rounded-lg shadow-md p-4 text-black">
+                            <CurrentEnvironment selectedLocation={selectedLocation} />
                         </div>
 
-                        {/* Other lazy components can be added here as needed */}
-                        {/*
-            <div className="dashboard-card full-width">
-              <ComponentLoader>
-                <DelayMonitor delayStats={delayStats} />
-              </ComponentLoader>
-            </div>
-            */}
-                    </>
-                ) : (
-                    // Loading placeholder for heavy components
-                    <div className="dashboard-card full-width" style={{ height: '400px', background: '#f8f9fa', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: '8px' }}>
-                        <div style={{ textAlign: 'center', color: '#666' }}>
-                            <i className="fas fa-hourglass-half fa-2x" style={{ marginBottom: '10px' }}></i>
-                            <div>Loading advanced features...</div>
+                        {/* Device Status */}
+                        <div className="bg-white rounded-lg shadow-md p-6 text-black">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Device Status</h3>
+                            <DeviceStatus selectedLocation={selectedLocation} />
+                        </div>
+
+                        {/* Environment Control */}
+                        <div className="bg-white rounded-lg shadow-md p-6 text-black">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Environment Control</h3>
+                            <EnvironmentControl
+                                selectedLocation={selectedLocation}
+                                targetTemperature={targetTemperature}
+                                setTargetTemperature={setTargetTemperature}
+                            />
                         </div>
                     </div>
-                )}
+
+                    {/* RIGHT MAIN AREA - Charts */}
+                    <div className="col-span-9 space-y-6">
+
+                        {/* Temperature Chart */}
+                        <div className="bg-white rounded-lg shadow-md p-6 text-black">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-xl font-semibold text-gray-800">Temperature</h2>
+                                <div className="flex gap-2">
+                                    <button className="p-2 hover:bg-gray-100 rounded transition-colors">
+                                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </button>
+                                    <button className="p-2 hover:bg-gray-100 rounded transition-colors">
+                                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <Suspense fallback={<ChartLoader />}>
+                                <EnvironmentChart
+                                    selectedLocation={selectedLocation}
+                                    socket={socket}
+                                    type="temperature"
+                                />
+                            </Suspense>
+                        </div>
+
+                        {/* Humidity Chart */}
+                        <div className="bg-white rounded-lg shadow-md p-6 text-black">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-xl font-semibold text-gray-800">Humidity</h2>
+                                <div className="flex gap-2">
+                                    <button className="p-2 hover:bg-gray-100 rounded transition-colors">
+                                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </button>
+                                    <button className="p-2 hover:bg-gray-100 rounded transition-colors">
+                                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <Suspense fallback={<ChartLoader />}>
+                                <EnvironmentChart
+                                    selectedLocation={selectedLocation}
+                                    socket={socket}
+                                    type="humidity"
+                                />
+                            </Suspense>
+                        </div>
+
+                        {/* Spatial Temperature Map */}
+                        {showHeavyComponents ? (
+                            <div className="bg-white rounded-lg shadow-md p-6">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-4">Spatial Temperature Map</h3>
+                                {isLoadingLocations ? (
+                                    <div className="flex justify-center items-center h-[400px] text-base text-gray-600 bg-gray-50 rounded-lg">
+                                        <i className="fas fa-spinner fa-spin mr-2"></i>
+                                        Loading temperature data...
+                                    </div>
+                                ) : (
+                                    <ComponentLoader height={400}>
+                                        <SpatialTemperatureMap
+                                            selectedLocation="sensor-room"
+                                            targetTemperature={22}
+                                            preloadedData={locationsData}
+                                        />
+                                    </ComponentLoader>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="bg-gray-50 rounded-lg shadow-md h-[400px] flex justify-center items-center">
+                                <div className="text-center text-gray-600">
+                                    <i className="fas fa-hourglass-half fa-2x mb-2"></i>
+                                    <div>Loading advanced features...</div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );

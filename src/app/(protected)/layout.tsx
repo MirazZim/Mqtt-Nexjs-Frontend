@@ -1,5 +1,6 @@
 'use client'
 
+import Navbar from '@/components/Navbar/Navbar';
 //import Navbar from '@/components/Navbar/Navbar';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
@@ -11,7 +12,7 @@ export default function ProtectedLayout({
     return (
         <ProtectedRoute>
             <div>
-                {/* <Navbar /> */}
+                <Navbar />
                 {children}
             </div>
         </ProtectedRoute>
