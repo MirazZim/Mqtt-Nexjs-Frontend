@@ -871,50 +871,124 @@ const EnvironmentControl = ({ selectedLocation }) => {
     };
 
     return (
-        <div className="environment-control">
-            <div className="environment-header">
-                <h2>🌡️ Environment Control</h2>
+        <div className="space-y-6">
+            {/* Minimalist Header */}
+            <div className="flex items-center justify-between">
+                <h2 className="text-3xl font-light text-gray-900 tracking-tight">Environment Control</h2>
+                <div className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-gray-500">{selectedLocation}</span>
+                </div>
             </div>
 
-            <div className="location-info">
-                📍 Location: <strong>{selectedLocation}</strong>
+            {/* Clean Status Bar */}
+            <div className="flex items-center gap-4 pb-6 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full ${realTimeStatus.connected ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
+                    <span className="text-xs text-gray-500 uppercase tracking-wider">Broker</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full ${realTimeStatus.sensorActive ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
+                    <span className="text-xs text-gray-500 uppercase tracking-wider">Sensors</span>
+                </div>
             </div>
 
-            <div className="parameters-grid">
-                {/* Temperature Parameter Card with Knob */}
-                <div className={`parameter-card`}>
-                    <div className="parameter-header">
-                        <FaThermometerHalf style={{ color: getStatusColor(currentData.temperature, setpoints.temperature, 0.5) }} />
-                        <span>Temperature</span>
-                        <span className={`sensor-status ${realTimeStatus.sensorActive ? 'active' : 'inactive'}`}>
-                            {realTimeStatus.sensorActive ? '🟢' : '🔴'}
-                        </span>
-                    </div>
-                    <div className="parameter-value" style={{ color: getStatusColor(currentData.temperature, setpoints.temperature, 0.5) }}>
-                        {displayedTemperature}°C
-                    </div>
-                    <div className="parameter-status" style={{
-                        backgroundColor: currentData.temperature === null ? '#e9ecef' :
-                            Math.abs(currentData.temperature - setpoints.temperature) <= 0.5 ? '#d1ecf1' : '#fff3cd',
-                        color: currentData.temperature === null ? '#6c757d' :
-                            Math.abs(currentData.temperature - setpoints.temperature) <= 0.5 ? '#0c5460' : '#856404'
-                    }}>
-                        Target: {setpoints.temperature}°C
-                    </div>
-
-                    {/* Temperature Knob Control */}
-                    <div className="knob-setpoint-section">
-                        <div className="knob-wrapper-small">
-                            <div className="knob-container-small">
-                                {/* Tick marks */}
-                                <div className="knob-ticks-small">
-                                    {generateTempTicks()}
+            {/* Temperature Control - Ultra Clean Card */}
+            <div className="bg-white rounded-2xl border border-gray-100 hover:border-gray-200 transition-all duration-300 overflow-hidden">
+                <div className="p-8">
+                    {/* Card Header */}
+                    <div className="flex items-start justify-between mb-8">
+                        <div>
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center">
+                                    <FaThermometerHalf className="text-white text-lg" />
                                 </div>
+                                <h3 className="text-xl font-medium text-gray-900">Temperature</h3>
+                            </div>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-5xl font-light tracking-tight"
+                                    style={{ color: getStatusColor(currentData.temperature, setpoints.temperature, 0.5) }}>
+                                    {displayedTemperature}
+                                </span>
+                                <span className="text-2xl font-light text-gray-400">°C</span>
+                            </div>
+                        </div>
 
-                                {/* Main knob */}
+                        {/* Status Indicator */}
+                        <div className={`px-3 py-1.5 rounded-full text-xs font-medium ${realTimeStatus.sensorActive
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-gray-100 text-gray-500'
+                            }`}>
+                            {realTimeStatus.sensorActive ? 'Live' : 'Offline'}
+                        </div>
+                    </div>
+
+                    {/* Target Display */}
+                    <div className="mb-6 pb-6 border-b border-gray-50">
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-500">Target Temperature</span>
+                            <span className="font-medium text-gray-900">{setpoints.temperature}°C</span>
+                        </div>
+                        {currentData.temperature !== null && (
+                            <div className="mt-2">
+                                <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                                    <div
+                                        className={`h-full transition-all duration-500 ${Math.abs(currentData.temperature - setpoints.temperature) <= 0.5
+                                            ? 'bg-emerald-500'
+                                            : 'bg-amber-500'
+                                            }`}
+                                        style={{
+                                            width: `${Math.min(100, (1 - Math.abs(currentData.temperature - setpoints.temperature) / 5) * 100)}%`
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Sleek Knob Control */}
+                    <div className="flex flex-col items-center space-y-6">
+                        <div className="relative">
+                            {/* Minimalist Progress Ring */}
+                            <svg className="w-48 h-48 -rotate-90" viewBox="0 0 160 160">
+                                {/* Background ring */}
+                                ircle
+                                cx="80"
+                                cy="80"
+                                r="70"
+                                fill="none"
+                                stroke="#f3f4f6"6"
+                                strokeWidth="2"
+
+                                {/* Progress ring */}
+                                ircle
+                                cx="80"
+                                cy="80"
+                                r="70"
+                                fill="none"
+                                stroke="url(#tempGradient)"
+                                strokeWidth="2"
+                                strokeDasharray={`${((tempKnobValue - TEMP_MIN_VALUE) / (TEMP_MAX_VALUE - TEMP_MIN_VALUE)) * 440} 440`}
+                                className="transition-all duration-300"
+                                strokeLinecap="round"d"
+
+                                <defs>
+                                    <linearGradient id="tempGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#f97316" />
+                                        <stop offset="100%" stopColor="#ec4899" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+
+                            {/* Central Knob */}
+                            <div className="absolute inset-0 flex items-center justify-center">
                                 <div
                                     ref={tempKnobRef}
-                                    className={`enhanced-knob-small ${tempIsDragging ? 'dragging' : ''} ${tempIsHovering ? 'hovering' : ''} ${!realTimeStatus.connected || !realTimeStatus.sensorActive ? 'disabled' : ''}`}
+                                    className={`relative w-32 h-32 rounded-full bg-white shadow-xl cursor-grab active:cursor-grabbing transition-all duration-200 ${tempIsDragging ? 'scale-105 shadow-2xl' : ''
+                                        } ${tempIsHovering ? 'shadow-2xl' : ''} ${!realTimeStatus.connected || !realTimeStatus.sensorActive ? 'opacity-40 cursor-not-allowed' : ''
+                                        }`}
                                     style={{
                                         transform: `rotate(${tempValueToAngle(tempKnobValue)}deg)`
                                     }}
@@ -923,56 +997,30 @@ const EnvironmentControl = ({ selectedLocation }) => {
                                     onMouseLeave={() => setTempIsHovering(false)}
                                     onWheel={handleTempWheel}
                                 >
-                                    <div className="knob-inner-small">
-                                        <div className="knob-indicator-small"></div>
-                                        <div className="knob-dot-small"></div>
+                                    {/* Knob indicator line */}
+                                    <div className="absolute top-2 left-1/2 -translate-x-1/2 w-0.5 h-6 bg-gradient-to-b from-orange-500 to-pink-500 rounded-full"></div>
+
+                                    {/* Center value */}
+                                    <div className="absolute inset-0 flex items-center justify-center flex-col">
+                                        <span className="text-3xl font-light text-gray-900">{tempKnobValue}</span>
+                                        <span className="text-xs text-gray-400 uppercase tracking-wider">°C</span>
                                     </div>
                                 </div>
-
-                                {/* Center value display */}
-                                <div className="center-display-small">
-                                    <span className="center-value-small">{tempKnobValue}</span>
-                                    <span className="center-unit-small">°C</span>
-                                </div>
-                            </div>
-
-                            {/* Progress arc */}
-                            <div className="progress-arc-small">
-                                <svg viewBox="0 0 120 120" className="progress-svg-small">
-                                    <circle
-                                        cx="60"
-                                        cy="60"
-                                        r="50"
-                                        fill="none"
-                                        stroke="#e0e6ed"
-                                        strokeWidth="3"
-                                        strokeDasharray={`${TEMP_TOTAL_ANGLE * Math.PI * 50 / 180} ${360 * Math.PI * 50 / 180}`}
-                                        strokeDashoffset={`${(135) * Math.PI * 50 / 180}`}
-                                        className="progress-bg-small"
-                                    />
-                                    <circle
-                                        cx="60"
-                                        cy="60"
-                                        r="50"
-                                        fill="none"
-                                        stroke="url(#progressGradientSmallTemp)"
-                                        strokeWidth="3"
-                                        strokeDasharray={`${((tempKnobValue - TEMP_MIN_VALUE) / (TEMP_MAX_VALUE - TEMP_MIN_VALUE)) * TEMP_TOTAL_ANGLE * Math.PI * 50 / 180} ${360 * Math.PI * 50 / 180}`}
-                                        strokeDashoffset={`${(135) * Math.PI * 50 / 180}`}
-                                        className="progress-fill-small"
-                                    />
-                                    <defs>
-                                        <linearGradient id="progressGradientSmallTemp" x1="0%" y1="0%" x2="100%" y2="0%">
-                                            <stop offset="0%" stopColor="#3b82f6" />
-                                            <stop offset="50%" stopColor="#06b6d4" />
-                                        </linearGradient>
-                                    </defs>
-                                </svg>
                             </div>
                         </div>
 
-                        {/* Direct input below knob */}
-                        <div className="knob-input-small">
+                        {/* Input with Buttons */}
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => handleTempValueChange({ target: { value: tempKnobValue - 1 } })}
+                                disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
+                                className="w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-gray-600"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                </svg>
+                            </button>
+
                             <input
                                 type="number"
                                 min={TEMP_MIN_VALUE}
@@ -980,161 +1028,34 @@ const EnvironmentControl = ({ selectedLocation }) => {
                                 value={tempKnobValue}
                                 onChange={handleTempValueChange}
                                 disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                className="enhanced-input-small"
+                                className="w-20 px-4 py-2 text-center text-lg font-light bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                             />
+
+                            <button
+                                onClick={() => handleTempValueChange({ target: { value: tempKnobValue + 1 } })}
+                                disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
+                                className="w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-gray-600"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                            </button>
                         </div>
 
-                        {/* Status */}
+                        {/* Status Message */}
                         {tempPublishStatus && (
-                            <div className={`status-message-small ${tempPublishStatus.includes('✅') ? 'success' : 'error'}`}>
+                            <div className={`text-xs px-4 py-2 rounded-full ${tempPublishStatus.includes('✅')
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : 'bg-red-50 text-red-700'
+                                }`}>
                                 {tempPublishStatus}
                             </div>
                         )}
                     </div>
                 </div>
-
-                {/* Humidity Parameter Card with Knob */}
-                <div className={`parameter-card`}>
-                    <div className="parameter-header">
-                        <FaTint style={{ color: getStatusColor(currentData.humidity, setpoints.humidity, 2.0) }} />
-                        <span>Humidity</span>
-                        <span className={`sensor-status ${realTimeStatus.sensorActive ? 'active' : 'inactive'}`}>
-                            {realTimeStatus.sensorActive ? '🟢' : '🔴'}
-                        </span>
-                    </div>
-                    <div className="parameter-value" style={{ color: getStatusColor(currentData.humidity, setpoints.humidity, 2.0) }}>
-                        {displayedHumidity}%
-                    </div>
-                    <div className="parameter-status" style={{
-                        backgroundColor: currentData.humidity === null ? '#e9ecef' :
-                            Math.abs(currentData.humidity - setpoints.humidity) <= 2.0 ? '#d1ecf1' : '#fff3cd',
-                        color: currentData.humidity === null ? '#6c757d' :
-                            Math.abs(currentData.humidity - setpoints.humidity) <= 2.0 ? '#0c5460' : '#856404'
-                    }}>
-                        Target: {setpoints.humidity}%
-                    </div>
-
-                    {/* Humidity Knob Control */}
-                    <div className="knob-setpoint-section">
-                        <div className="knob-wrapper-small">
-                            <div className="knob-container-small">
-                                {/* Tick marks */}
-                                <div className="knob-ticks-small">
-                                    {generateHumidityTicks()}
-                                </div>
-
-                                {/* Main knob */}
-                                <div
-                                    ref={humidityKnobRef}
-                                    className={`enhanced-knob-small humidity ${humidityIsDragging ? 'dragging' : ''} ${humidityIsHovering ? 'hovering' : ''} ${!realTimeStatus.connected || !realTimeStatus.sensorActive ? 'disabled' : ''}`}
-                                    style={{
-                                        transform: `rotate(${humidityValueToAngle(humidityKnobValue)}deg)`
-                                    }}
-                                    onMouseDown={handleHumidityMouseDown}
-                                    onMouseEnter={() => setHumidityIsHovering(true)}
-                                    onMouseLeave={() => setHumidityIsHovering(false)}
-                                    onWheel={handleHumidityWheel}
-                                >
-                                    <div className="knob-inner-small">
-                                        <div className="knob-indicator-small humidity"></div>
-                                        <div className="knob-dot-small humidity"></div>
-                                    </div>
-                                </div>
-
-                                {/* Center value display */}
-                                <div className="center-display-small">
-                                    <span className="center-value-small">{humidityKnobValue}</span>
-                                    <span className="center-unit-small">%</span>
-                                </div>
-                            </div>
-
-                            {/* Progress arc */}
-                            <div className="progress-arc-small">
-                                <svg viewBox="0 0 120 120" className="progress-svg-small">
-                                    <circle
-                                        cx="60"
-                                        cy="60"
-                                        r="50"
-                                        fill="none"
-                                        stroke="#e0e6ed"
-                                        strokeWidth="3"
-                                        strokeDasharray={`${HUMIDITY_TOTAL_ANGLE * Math.PI * 50 / 180} ${360 * Math.PI * 50 / 180}`}
-                                        strokeDashoffset={`${(135) * Math.PI * 50 / 180}`}
-                                        className="progress-bg-small"
-                                    />
-                                    <circle
-                                        cx="60"
-                                        cy="60"
-                                        r="50"
-                                        fill="none"
-                                        stroke="url(#progressGradientSmallHumidity)"
-                                        strokeWidth="3"
-                                        strokeDasharray={`${((humidityKnobValue - HUMIDITY_MIN_VALUE) / (HUMIDITY_MAX_VALUE - HUMIDITY_MIN_VALUE)) * HUMIDITY_TOTAL_ANGLE * Math.PI * 50 / 180} ${360 * Math.PI * 50 / 180}`}
-                                        strokeDashoffset={`${(135) * Math.PI * 50 / 180}`}
-                                        className="progress-fill-small"
-                                    />
-                                    <defs>
-                                        <linearGradient id="progressGradientSmallHumidity" x1="0%" y1="0%" x2="100%" y2="0%">
-                                            <stop offset="0%" stopColor="#1e40af" />
-                                            <stop offset="50%" stopColor="#3b82f6" />
-                                            <stop offset="100%" stopColor="#06b6d4" />
-                                        </linearGradient>
-                                    </defs>
-                                </svg>
-                            </div>
-                        </div>
-
-                        {/* Direct input below knob */}
-                        <div className="knob-input-small">
-                            <input
-                                type="number"
-                                min={HUMIDITY_MIN_VALUE}
-                                max={HUMIDITY_MAX_VALUE}
-                                value={humidityKnobValue}
-                                onChange={handleHumidityValueChange}
-                                disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                className="enhanced-input-small"
-                            />
-                        </div>
-
-                        {/* Status */}
-                        {humidityPublishStatus && (
-                            <div className={`status-message-small ${humidityPublishStatus.includes('✅') ? 'success' : 'error'}`}>
-                                {humidityPublishStatus}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Enhanced Real-Time Connection Status */}
-            <div className="connection-status">
-                <div className="connection-details">
-                    <span className={`connection-indicator ${realTimeStatus.connected ? 'connected' : 'disconnected'}`}>
-                        Broker: {realTimeStatus.connected ? '🟢 Connected' : '🔴 Disconnected'}
-                    </span>
-                    <span className={`sensor-indicator ${realTimeStatus.sensorActive ? 'active' : 'inactive'}`}>
-                        Sensors: {realTimeStatus.sensorActive ? '🟢 Active' : '🔴 Inactive'}
-                    </span>
-                </div>
-                {/* <div className="connection-message">
-          {!realTimeStatus.connected ?
-            'Please check broker connection.' :
-            !realTimeStatus.sensorActive ?
-              'Waiting for real-time sensor data...' :
-              'Real-time sensor data active - knobs enabled!'
-          }
-        </div> */}
-
-                {/* Real-time activity indicator
-        {realTimeStatus.sensorActive && (
-          <div className="realtime-indicator">
-            <span className="pulse-dot"></span>
-            Live data stream active
-          </div>
-        )} */}
             </div>
         </div>
+
     );
 };
 

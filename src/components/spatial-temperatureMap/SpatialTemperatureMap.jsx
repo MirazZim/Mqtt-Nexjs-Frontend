@@ -7,13 +7,12 @@ import {
 } from 'react-icons/fa';
 import { createSocket } from '../../lib/socket';
 import AuthContext from '../../context/AuthContext';
-// Import the CSS file
 import API_BASE_URL from '../../config/api.js';
 
 const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTemperature = 22 }) => {
     const { user } = useContext(AuthContext);
 
-    // State management
+    // State management (unchanged)
     const [data, setData] = useState({
         sensors: [],
         actuators: [],
@@ -39,13 +38,13 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
         content: ''
     });
 
-    // Optimization refs
+    // Optimization refs (unchanged)
     const [lastUpdate, setLastUpdate] = useState(Date.now());
     const updateBuffer = useRef(new Map());
     const updateTimer = useRef(null);
     const socketRef = useRef(null);
 
-    // Helper functions
+    // Helper functions (unchanged)
     const utils = useMemo(() => ({
         safeNumber: (value, fallback = 0) => {
             const num = parseFloat(value);
@@ -70,7 +69,7 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
         }
     }), [targetTemperature]);
 
-    // Data fetching with proper error handling
+    // All data fetching, socket, and calculation logic remains EXACTLY the same
     const fetchData = useCallback(async () => {
         if (!user?.token || !selectedLocation) {
             setUI(prev => ({ ...prev, loading: false, error: 'Missing authentication or location' }));
@@ -103,7 +102,6 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                 realSensors: []
             };
 
-            // Process responses
             if (responses[0].status === 'fulfilled' && responses[0].value.ok) {
                 const result = await responses[0].value.json();
                 newData.sensors = result.sensors || [];
@@ -141,14 +139,12 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
         }
     }, [user?.token, selectedLocation]);
 
-    // Debounced update flushing
     const flushUpdates = useCallback(() => {
         if (updateBuffer.current.size === 0) return;
 
         setData(prev => {
             let newData = { ...prev };
 
-            // Update real sensors data
             for (const [sensorId, update] of updateBuffer.current) {
                 newData.sensors = newData.sensors.map(sensor =>
                     sensor.sensor_id === sensorId
@@ -170,7 +166,6 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
         setLastUpdate(Date.now());
     }, []);
 
-    // Socket connection for real-time updates
     useEffect(() => {
         if (!ui.realTimeUpdates || !user?.token) return;
 
@@ -178,14 +173,11 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
         if (!socket) return;
 
         socketRef.current = socket;
-
         socket.emit('joinLocation', selectedLocation);
 
-        // Handle spatial sensor updates
         socket.on('spatialSensorUpdate', (update) => {
             console.log('🔄 Real sensor update received:', update);
             if (update.location === selectedLocation && update.sensorId?.startsWith('REAL_')) {
-                // Update sensors data immediately
                 setData(prev => ({
                     ...prev,
                     sensors: prev.sensors.map(sensor =>
@@ -204,7 +196,6 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
             }
         });
 
-        // Handle control commands
         socket.on('spatialControlCommand', (command) => {
             console.log('🎛️ Control command received:', command);
             if (command.actuatorId) {
@@ -220,7 +211,6 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
             }
         });
 
-        // Handle real sensor data directly
         socket.on('newMeasurement', (measurement) => {
             if (measurement.location === selectedLocation) {
                 updateBuffer.current.set('measurement', measurement);
@@ -238,12 +228,10 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
         };
     }, [ui.realTimeUpdates, user?.token, selectedLocation, flushUpdates]);
 
-    // Initial data load
     useEffect(() => {
         fetchData();
     }, [fetchData]);
 
-    // Map calculations
     const mapCalculations = useMemo(() => {
         const getBounds = () => {
             const positions = [
@@ -306,7 +294,6 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
         return { getBounds, getStats };
     }, [data.sensors, data.actuators, utils]);
 
-    // Event handlers
     const handlers = {
         toggleRealTime: () => {
             setUI(prev => ({ ...prev, realTimeUpdates: !prev.realTimeUpdates }));
@@ -337,111 +324,27 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
         }
     };
 
-    // Real Sensor Status Component
-    const RealSensorStatus = () => {
-        const realSensors = data.realSensors;
-        const onlineCount = realSensors.filter(s => utils.isOnline(s.last_update)).length;
-
-        if (realSensors.length === 0) {
-            return (
-                <div className="warning-panel">
-                    <div className="warning-header">
-                        <FaExclamationTriangle className="warning-icon" />
-                        <span className="warning-title">No real sensors detected</span>
-                    </div>
-                    <p className="warning-text">
-                        Check if your sensors (ESPX, ESPX2, ESPX3) are sending data to the MQTT broker.
-                    </p>
-                </div>
-            );
-        }
-
-        return (
-            <div className="sensor-status-panel">
-                <div className="sensor-status-header">
-                    <div className="sensor-status-title">
-                        <FaBolt className={`sensor-bolt ${onlineCount > 0 ? 'online' : 'offline'}`} />
-                        <h3>Real Sensor Status</h3>
-                    </div>
-                    <div className="sensor-status-controls">
-                        <span className={`status-badge ${onlineCount === realSensors.length ? 'all-online' : 'partial-online'}`}>
-                            {onlineCount}/{realSensors.length} Online
-                        </span>
-                        <button
-                            onClick={handlers.refresh}
-                            className="refresh-btn"
-                            title="Refresh data"
-                        >
-                            <FaSync />
-                        </button>
-                    </div>
-                </div>
-
-                <div className="sensor-grid">
-                    {realSensors.map(sensor => {
-                        const isOnline = utils.isOnline(sensor.last_update);
-                        const temp = utils.safeNumber(sensor.last_reading);
-                        const tempStatus = utils.getTemperatureStatus(temp);
-
-                        return (
-                            <div
-                                key={sensor.sensor_id}
-                                className={`sensor-card ${isOnline ? 'online' : 'offline'}`}
-                                onClick={() => handlers.selectSensor(sensor)}
-                            >
-                                <div className="sensor-card-header">
-                                    <div className="sensor-name">
-                                        {sensor.sensor_id.replace('REAL_TEMP_', 'Sensor ')}
-                                    </div>
-                                    {isOnline ? (
-                                        <FaWifi className="wifi-icon online" />
-                                    ) : (
-                                        <FaTimes className="wifi-icon offline" />
-                                    )}
-                                </div>
-
-                                <div
-                                    className="sensor-temperature"
-                                    style={{ color: isOnline ? tempStatus.color : '#dc2626' }}
-                                >
-                                    {isOnline ? utils.formatTemp(temp) : 'OFFLINE'}
-                                </div>
-
-                                <div className="sensor-details">
-                                    <div>Position: ({sensor.x_coordinate}, {sensor.y_coordinate})</div>
-                                    {sensor.mqtt_topic && (
-                                        <div>Topic: {sensor.mqtt_topic}</div>
-                                    )}
-                                    {isOnline && (
-                                        <div>Updated: {new Date(sensor.last_update).toLocaleTimeString()}</div>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-        );
-    };
-
-    // Control Bar Component
+    // TAILWIND VERSION - Control Bar Component
     const ControlBar = () => (
-        <div className="control-bar">
-            <div className="control-bar-content">
-                <div className="control-bar-left">
-                    <div className="control-bar-title">
-                        <FaThermometerHalf className="title-icon" />
+        <div className="bg-gradient-to-r from-teal-700 to-blue-600 px-6 py-4 rounded-t-xl">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3 text-white">
+                        <FaThermometerHalf className="text-2xl" />
                         <div>
-                            <h2>Spatial Temperature Control</h2>
-                            <p>Location: {selectedLocation}</p>
+                            <h2 className="text-xl font-bold">Spatial Temperature Control</h2>
+                            <p className="text-sm text-teal-100">Location: {selectedLocation}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="control-bar-right">
+                <div className="flex items-center gap-2">
                     <button
                         onClick={handlers.toggleRealTime}
-                        className={`control-btn ${ui.realTimeUpdates ? 'active' : 'inactive'}`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${ui.realTimeUpdates
+                            ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                            : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                            }`}
                     >
                         {ui.realTimeUpdates ? <FaPause /> : <FaPlay />}
                         {ui.realTimeUpdates ? 'Live' : 'Paused'}
@@ -449,7 +352,7 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
 
                     <button
                         onClick={handlers.toggleFullscreen}
-                        className="control-btn secondary"
+                        className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg font-medium transition-colors"
                     >
                         {ui.isFullscreen ? <FaCompress /> : <FaExpand />}
                         {ui.isFullscreen ? 'Exit' : 'Fullscreen'}
@@ -457,7 +360,7 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
 
                     <button
                         onClick={handlers.refresh}
-                        className="control-btn primary"
+                        className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-100 text-teal-700 rounded-lg font-medium transition-colors"
                     >
                         <FaSync />
                         Refresh
@@ -467,7 +370,168 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
         </div>
     );
 
-    // Spatial Map Component
+    // TAILWIND VERSION - Real Sensor Status (already provided earlier, keeping same)
+    const RealSensorStatus = () => {
+        const realSensors = data.realSensors;
+        const onlineCount = realSensors.filter(s => utils.isOnline(s.last_update)).length;
+
+        if (realSensors.length === 0) {
+            return (
+                <div className="mx-6 mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center gap-3 mb-2">
+                        <FaExclamationTriangle className="text-yellow-600 text-xl" />
+                        <span className="font-semibold text-yellow-800">No real sensors detected</span>
+                    </div>
+                    <p className="text-sm text-yellow-700">
+                        Check if your sensors (ESPX, ESPX2, ESPX3) are sending data to the MQTT broker.
+                    </p>
+                </div>
+            );
+        }
+
+        return (
+            <div className="mx-6 mt-6 bg-card rounded-xl border border-border shadow-sm group relative">
+                {/* Compact Header - Always Visible */}
+                <div className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-accent/50 transition-colors rounded-xl">
+                    <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${onlineCount > 0
+                                ? 'bg-emerald-50 text-emerald-600'
+                                : 'bg-red-50 text-red-600'
+                            }`}>
+                            <FaBolt className={`text-xl ${onlineCount > 0 ? 'animate-pulse' : ''}`} />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold text-foreground">
+                                Real Sensor Status
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                                Hover to view sensor details
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${onlineCount === realSensors.length
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-amber-50 text-amber-700 border border-amber-200'
+                            }`}>
+                            <span className={`inline-block w-2 h-2 rounded-full ${onlineCount === realSensors.length
+                                    ? 'bg-emerald-500 animate-pulse'
+                                    : 'bg-amber-500'
+                                }`}></span>
+                            {onlineCount}/{realSensors.length} Online
+                        </span>
+
+                        <button
+                            onClick={handlers.refresh}
+                            className="p-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
+                            title="Refresh data"
+                        >
+                            <FaSync className="w-4 h-4" />
+                        </button>
+
+                        {/* Dropdown indicator */}
+                        <svg
+                            className="w-5 h-5 text-muted-foreground transition-transform group-hover:rotate-180"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                </div>
+
+                {/* Dropdown Content - Shows on Hover */}
+                <div className="absolute left-0 right-0 top-full mt-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+                    <div className="bg-card rounded-xl border border-border shadow-2xl p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {realSensors.map(sensor => {
+                                const isOnline = utils.isOnline(sensor.last_update);
+                                const temp = utils.safeNumber(sensor.last_reading);
+                                const tempStatus = utils.getTemperatureStatus(temp);
+
+                                return (
+                                    <div
+                                        key={sensor.sensor_id}
+                                        onClick={() => handlers.selectSensor(sensor)}
+                                        className={`group/card relative bg-background rounded-lg border-2 p-4 cursor-pointer transition-all duration-200 hover:shadow-lg ${isOnline
+                                                ? 'border-emerald-200 hover:border-emerald-400'
+                                                : 'border-red-200 hover:border-red-400'
+                                            }`}
+                                    >
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div className="flex-1">
+                                                <h4 className="font-semibold text-foreground text-sm">
+                                                    {sensor.sensor_id.replace('REAL_TEMP_', 'Sensor ')}
+                                                </h4>
+                                            </div>
+                                            {isOnline ? (
+                                                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50">
+                                                    <FaWifi className="w-4 h-4 text-emerald-600" />
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-50">
+                                                    <FaTimes className="w-4 h-4 text-red-600" />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div
+                                            className="text-3xl font-bold mb-3 transition-colors"
+                                            style={{ color: isOnline ? tempStatus.color : '#dc2626' }}
+                                        >
+                                            {isOnline ? utils.formatTemp(temp) : 'OFFLINE'}
+                                        </div>
+
+                                        <div className="space-y-1 text-xs text-muted-foreground">
+                                            <div className="flex items-center gap-1">
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                                <span>Position: ({sensor.x_coordinate}, {sensor.y_coordinate})</span>
+                                            </div>
+
+                                            {sensor.mqtt_topic && (
+                                                <div className="flex items-center gap-1">
+                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                                    </svg>
+                                                    <span className="truncate">Topic: {sensor.mqtt_topic}</span>
+                                                </div>
+                                            )}
+
+                                            {isOnline && (
+                                                <div className="flex items-center gap-1">
+                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span>Updated: {new Date(sensor.last_update).toLocaleTimeString()}</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {isOnline && (
+                                            <div className="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-full">
+                                                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                                                    Live
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+
+    // TAILWIND VERSION - Spatial Map Component
     const SpatialMap = () => {
         const bounds = mapCalculations.getBounds();
         const stats = mapCalculations.getStats();
@@ -479,20 +543,18 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
         const scaleY = (y) => ((y - bounds.minY) / (bounds.maxY - bounds.minY)) * (mapHeight - 2 * padding) + padding;
 
         return (
-            <div className="spatial-map">
-                <div className="map-header">
-                    <h3>Temperature Map</h3>
+            <div className="mx-6 my-6 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+                <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-border flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-foreground">Temperature Map</h3>
                     {stats && (
-                        <div className="map-stats">
-                            Avg: {utils.formatTemp(stats.avg)} |
-                            Range: {utils.formatTemp(stats.min)} - {utils.formatTemp(stats.max)}
+                        <div className="text-sm text-muted-foreground">
+                            Avg: {utils.formatTemp(stats.avg)} | Range: {utils.formatTemp(stats.min)} - {utils.formatTemp(stats.max)}
                         </div>
                     )}
                 </div>
 
-                <div className="map-container">
-                    <svg width={mapWidth} height={mapHeight} className="temperature-map">
-                        {/* Grid lines */}
+                <div className="p-6 bg-white relative">
+                    <svg width={mapWidth} height={mapHeight} className="mx-auto">
                         <defs>
                             <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
                                 <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#f0f0f0" strokeWidth="1" />
@@ -500,7 +562,6 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                         </defs>
                         <rect width="100%" height="100%" fill="url(#grid)" />
 
-                        {/* Actuator influence zones */}
                         {data.actuators.map((actuator, idx) => {
                             const x = scaleX(utils.safeNumber(actuator.x_coordinate));
                             const y = scaleY(utils.safeNumber(actuator.y_coordinate));
@@ -520,7 +581,6 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                             );
                         })}
 
-                        {/* Temperature sensors */}
                         {data.sensors.map((sensor, idx) => {
                             const x = scaleX(utils.safeNumber(sensor.x_coordinate));
                             const y = scaleY(utils.safeNumber(sensor.y_coordinate));
@@ -538,7 +598,7 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                                         fill={isOnline ? tempStatus.color : '#9ca3af'}
                                         stroke={isReal ? '#1f2937' : '#ffffff'}
                                         strokeWidth={isReal ? 3 : 2}
-                                        className="sensor-point"
+                                        className="cursor-pointer hover:opacity-80 transition-opacity"
                                         onClick={() => handlers.selectSensor(sensor)}
                                         onMouseEnter={(e) => handlers.showTooltip(e,
                                             `${sensor.sensor_id}\n${utils.formatTemp(temp)}\nPosition: (${sensor.x_coordinate}, ${sensor.y_coordinate})\nStatus: ${isOnline ? 'Online' : 'Offline'}`
@@ -550,7 +610,7 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                                             x={x}
                                             y={y + 25}
                                             textAnchor="middle"
-                                            className="sensor-label"
+                                            className="text-xs font-semibold fill-gray-700"
                                         >
                                             {sensor.sensor_id.replace('REAL_TEMP_', 'R')}
                                         </text>
@@ -559,7 +619,6 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                             );
                         })}
 
-                        {/* Actuators */}
                         {data.actuators.map((actuator, idx) => {
                             const x = scaleX(utils.safeNumber(actuator.x_coordinate));
                             const y = scaleY(utils.safeNumber(actuator.y_coordinate));
@@ -586,7 +645,7 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                                         stroke="#374151"
                                         strokeWidth="2"
                                         rx="3"
-                                        className="actuator-point"
+                                        className="cursor-pointer hover:opacity-80 transition-opacity"
                                         onClick={() => handlers.selectActuator(actuator)}
                                         onMouseEnter={(e) => handlers.showTooltip(e,
                                             `${actuator.actuator_id}\nType: ${actuator.actuator_type}\nOutput: ${output.toFixed(1)}%\nPosition: (${actuator.x_coordinate}, ${actuator.y_coordinate})`
@@ -597,7 +656,7 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                                         x={x}
                                         y={y + 4}
                                         textAnchor="middle"
-                                        className="actuator-icon"
+                                        className="text-sm pointer-events-none"
                                     >
                                         {getActuatorIcon(actuator.actuator_type)}
                                     </text>
@@ -606,21 +665,20 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                         })}
                     </svg>
 
-                    {/* Legend */}
-                    <div className="map-legend">
-                        <div className="legend-title">Legend</div>
-                        <div className="legend-items">
-                            <div className="legend-item">
-                                <div className="legend-color real-sensor"></div>
-                                <span>Real Sensor</span>
+                    <div className="absolute bottom-8 right-8 bg-white/90 backdrop-blur-sm rounded-lg border border-border p-4 shadow-lg">
+                        <div className="text-sm font-semibold text-foreground mb-3">Legend</div>
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <div className="w-1 h-1 rounded-full bg-gray-700 border-2 border-white"></div>
+                                <span className="text-xs text-muted-foreground">Real Sensor</span>
                             </div>
-                            <div className="legend-item">
-                                <div className="legend-color simulated-sensor"></div>
-                                <span>Simulated Sensor</span>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                <span className="text-xs text-muted-foreground">Simulated Sensor</span>
                             </div>
-                            <div className="legend-item">
-                                <div className="legend-color actuator"></div>
-                                <span>Actuator</span>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 bg-amber-500 border border-gray-700 rounded-sm"></div>
+                                <span className="text-xs text-muted-foreground">Actuator</span>
                             </div>
                         </div>
                     </div>
@@ -632,9 +690,9 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
     // Loading state
     if (ui.loading) {
         return (
-            <div className="loading-container">
-                <div className="loading-spinner"></div>
-                <p>Loading spatial data...</p>
+            <div className="flex flex-col items-center justify-center min-h-[400px] p-12">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mb-4"></div>
+                <p className="text-muted-foreground">Loading spatial data...</p>
             </div>
         );
     }
@@ -642,13 +700,16 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
     // Error state
     if (ui.error) {
         return (
-            <div className="error-container">
-                <div className="error-header">
-                    <FaExclamationTriangle />
-                    <span>Error Loading Data</span>
+            <div className="flex flex-col items-center justify-center min-h-[400px] p-12">
+                <div className="flex items-center gap-3 text-red-600 mb-4">
+                    <FaExclamationTriangle className="text-2xl" />
+                    <span className="text-lg font-semibold">Error Loading Data</span>
                 </div>
-                <p className="error-message">{ui.error}</p>
-                <button onClick={handlers.refresh} className="error-retry-btn">
+                <p className="text-muted-foreground mb-6">{ui.error}</p>
+                <button
+                    onClick={handlers.refresh}
+                    className="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors"
+                >
                     Try Again
                 </button>
             </div>
@@ -657,27 +718,36 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
 
     // Main render
     return (
-        <div className={`spatial-temperature-container ${ui.isFullscreen ? 'fullscreen' : ''}`}>
+        <div className={`relative w-full transition-all duration-300 ${ui.isFullscreen
+            ? 'fixed inset-0 z-50 bg-background overflow-auto'
+            : 'rounded-xl border border-border bg-card'
+            }`}>
             <ControlBar />
             <RealSensorStatus />
 
             {data.sensors.length === 0 ? (
-                <div className="no-sensors-message">
-                    <FaInfoCircle className="no-sensors-icon" />
-                    <h3>No Sensors Found</h3>
-                    <p>Configure sensors with coordinates to view the temperature map.</p>
+                <div className="flex flex-col items-center justify-center min-h-[400px] p-12 text-center mx-6 my-6">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 text-blue-600 mb-4">
+                        <FaInfoCircle className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground mb-2">
+                        No Sensors Found
+                    </h3>
+                    <p className="text-sm text-muted-foreground max-w-md">
+                        Configure sensors with coordinates to view the temperature map.
+                    </p>
                 </div>
             ) : (
                 <SpatialMap />
             )}
 
-            {/* Tooltip */}
             {tooltip.visible && (
                 <div
-                    className="tooltip"
+                    className="fixed z-50 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-lg pointer-events-none whitespace-pre-line animate-in fade-in-0 zoom-in-95 duration-200"
                     style={{ left: tooltip.x, top: tooltip.y }}
                 >
                     {tooltip.content}
+                    <div className="absolute w-2 h-2 bg-gray-900 transform rotate-45 -translate-x-1/2 left-1/2 -bottom-1"></div>
                 </div>
             )}
         </div>

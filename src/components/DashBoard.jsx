@@ -147,7 +147,7 @@ const Dashboard = () => {
             {/* Top Header with Gradient */}
             <div className="bg-gradient-to-r from-teal-700 via-teal-600 to-blue-600 px-6 py-4 flex items-center justify-between shadow-lg">
                 <h1 className="text-white text-3xl font-bold tracking-wide">
-                    Temperature & Humidity Monitoring
+                    Sake Monitoring System
                 </h1>
 
             </div>
@@ -165,7 +165,7 @@ const Dashboard = () => {
             </div>
 
             {/* Main Content Area */}
-            <div className="p-6">
+            <div className="p-2">
                 <div className="grid grid-cols-12 gap-6">
 
                     {/* LEFT SIDEBAR - Sensors & Device Status */}
@@ -223,7 +223,7 @@ const Dashboard = () => {
                         </div>
 
                         {/* Humidity Chart */}
-                        <div className="bg-white rounded-lg shadow-md p-6 text-black">
+                        {/* <div className="bg-white rounded-lg shadow-md p-6 text-black">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-xl font-semibold text-gray-800">Humidity</h2>
                                 <div className="flex gap-2">
@@ -246,7 +246,7 @@ const Dashboard = () => {
                                     type="humidity"
                                 />
                             </Suspense>
-                        </div>
+                        </div> */}
 
                         {/* Spatial Temperature Map */}
                         {showHeavyComponents ? (
@@ -258,7 +258,7 @@ const Dashboard = () => {
                                         Loading temperature data...
                                     </div>
                                 ) : (
-                                    <ComponentLoader height={400}>
+                                    <ComponentLoader height={950}>
                                         <SpatialTemperatureMap
                                             selectedLocation="sensor-room"
                                             targetTemperature={22}
