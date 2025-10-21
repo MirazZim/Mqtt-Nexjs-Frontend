@@ -18,13 +18,25 @@ export default function ProtectedRoute({
         if (!loading && !user) {
             router.push('/login');
         }
+
         if (user && roles.length > 0 && !roles.includes(user.role)) {
             router.push('/unauthorized');
         }
     }, [user, loading, router, roles]);
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+            </div>
+        );
+    }
+
     if (!user) return null;
+
+    if (roles.length > 0 && !roles.includes(user.role)) {
+        return null;
+    }
 
     return <>{children}</>;
 }
