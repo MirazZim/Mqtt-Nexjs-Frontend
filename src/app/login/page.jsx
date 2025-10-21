@@ -29,7 +29,7 @@ const Login = () => {
 
             const { token, user: userData } = await response.json();
             login(userData, token);
-            router('/');
+            router.push('/dashboard');
         } catch (err) {
             setError(err.message);
         }
