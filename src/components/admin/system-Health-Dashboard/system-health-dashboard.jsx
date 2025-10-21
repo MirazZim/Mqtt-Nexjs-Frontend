@@ -11,7 +11,7 @@ const SystemHealthDashboard = ({ socket }) => {
     const [auditFilter, setAuditFilter] = useState('ALL');
     const [auditTimeframe, setAuditTimeframe] = useState('today');
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [itemsPerPage, setItemsPerPage] = useState(5);
 
 
 
@@ -437,8 +437,8 @@ const SystemHealthDashboard = ({ socket }) => {
                                                     key={page}
                                                     onClick={() => setCurrentPage(page)}
                                                     className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${currentPage === page
-                                                            ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md'
-                                                            : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                                                        ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md'
+                                                        : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
                                                         }`}
                                                 >
                                                     {page}
