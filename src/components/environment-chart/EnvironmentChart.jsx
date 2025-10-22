@@ -81,11 +81,11 @@ const MemoizedChart = React.memo(({
     const ChartComponent = chartType === 'area' ? AreaChart : LineChart;
 
     return (
-        <ChartContainer config={chartConfig} className="h-[400px] w-full">
+        <ChartContainer config={chartConfig} className="h-[250px] w-full">
             <ChartComponent
                 key={chartKey}
                 data={data}
-                margin={{ top: 20, right: 60, left: 20, bottom: 20 }}
+                margin={{ top: 10, right: 20, left: 20, bottom: 10 }}
             >
                 <defs>
                     <linearGradient id="fillTemperature" x1="0" y1="0" x2="0" y2="1">
@@ -112,9 +112,10 @@ const MemoizedChart = React.memo(({
                     tickFormatter={formatXAxisTick}
                     tickLine={false}
                     axisLine={false}
-                    tickMargin={8}
+                    tickMargin={4}
                     minTickGap={30}
-                    className="text-xs"
+                    className="text-[10px]"
+                    height={30}
                 />
 
                 {/* Dynamic temperature Y-axis (left) */}
@@ -126,8 +127,8 @@ const MemoizedChart = React.memo(({
                         tickFormatter={(value) => `${Math.round(value * 10) / 10}°C`}
                         tickLine={false}
                         axisLine={false}
-                        className="text-xs"
-                        width={60}
+                        className="text-[10px]"
+                        width={50}
                     />
                 )}
 
@@ -610,41 +611,66 @@ const EnvironmentChart = ({ selectedLocation }) => {
 
     return (
         <Card className="w-full">
-            <CardHeader>
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                    <div>
-                        <CardTitle>Environment Monitoring</CardTitle>
-                        <CardDescription>
-                            {selectedLocation && `Real-time sensor data for ${selectedLocation}`}
-                            {lastUpdate && ` • Last Update: ${lastUpdate.toLocaleTimeString()}`}
-                        </CardDescription>
+            <CardHeader >
+                <div className="flex items-center justify-between flex-wrap">
+
+                    {/* Center: Metric Toggles */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <label className="flex items-center gap-1 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={selectedMetrics.temperature}
+                                onChange={() => handleMetricToggle('temperature')}
+                                className="w-3 h-3 rounded border-gray-300"
+                            />
+                            <span className="text-xs">🌡️ Temp</span>
+                        </label>
+                        <label className="flex items-center gap-1 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={selectedMetrics.humidity}
+                                onChange={() => handleMetricToggle('humidity')}
+                                className="w-3 h-3 rounded border-gray-300"
+                            />
+                            <span className="text-xs">💧 Humid</span>
+                        </label>
+                        <label className="flex items-center gap-1 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={selectedMetrics.airflow}
+                                onChange={() => handleMetricToggle('airflow')}
+                                className="w-3 h-3 rounded border-gray-300"
+                            />
+                            <span className="text-xs">💨 Air</span>
+                        </label>
                     </div>
 
-                    <div className="flex gap-2 flex-wrap">
+                    {/* Right: Controls */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
                         {/* Time Range Selector */}
                         <Select
                             value={selectedDays.toString()}
                             onValueChange={(value) => setSelectedDays(Number(value))}
                         >
-                            <SelectTrigger className="w-[160px]">
-                                <SelectValue placeholder="Time range" />
+                            <SelectTrigger className="w-[110px] h-7 text-xs">
+                                <SelectValue placeholder="Range" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="5">⚡ Last 5 Minutes</SelectItem>
-                                <SelectItem value="1">Last 24 Hours</SelectItem>
-                                <SelectItem value="7">Last 7 Days</SelectItem>
-                                <SelectItem value="30">Last 30 Days</SelectItem>
+                                <SelectItem value="5" className="text-xs">⚡ 5 Min</SelectItem>
+                                <SelectItem value="1" className="text-xs">24 Hr</SelectItem>
+                                <SelectItem value="7" className="text-xs">7 Days</SelectItem>
+                                <SelectItem value="30" className="text-xs">30 Days</SelectItem>
                             </SelectContent>
                         </Select>
 
                         {/* Chart Type Selector */}
                         <Select value={chartType} onValueChange={setChartType}>
-                            <SelectTrigger className="w-[120px]">
-                                <SelectValue placeholder="Chart type" />
+                            <SelectTrigger className="w-[85px] h-7 text-xs">
+                                <SelectValue placeholder="Type" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="line">📈 Line</SelectItem>
-                                <SelectItem value="area">📊 Area</SelectItem>
+                                <SelectItem value="line" className="text-xs">Line</SelectItem>
+                                <SelectItem value="area" className="text-xs">Area</SelectItem>
                             </SelectContent>
                         </Select>
 
@@ -652,56 +678,26 @@ const EnvironmentChart = ({ selectedLocation }) => {
                         <button
                             onClick={handleRefresh}
                             disabled={loading}
-                            className="px-4 py-2 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="px-2 py-1 text-xs rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                            title="Refresh data"
                         >
-                            {loading ? 'Loading...' : '🔄 Refresh'}
+                            🔄
                         </button>
 
                         {/* Download CSV Button */}
                         <button
                             onClick={downloadCSV}
                             disabled={loading || measurements.length === 0}
-                            className="px-4 py-2 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            title={`Download ${measurements.length} data points as CSV`}
+                            className="px-2 py-1 text-xs rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                            title="Download CSV"
                         >
-                            📥 Download CSV
+                            📥
                         </button>
                     </div>
                 </div>
-
-                {/* Metric Toggles */}
-                <div className="flex gap-4 mt-4 flex-wrap">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={selectedMetrics.temperature}
-                            onChange={() => handleMetricToggle('temperature')}
-                            className="w-4 h-4 rounded border-gray-300"
-                        />
-                        <span className="text-sm font-medium">🌡️ Temperature</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={selectedMetrics.humidity}
-                            onChange={() => handleMetricToggle('humidity')}
-                            className="w-4 h-4 rounded border-gray-300"
-                        />
-                        <span className="text-sm font-medium">💧 Humidity</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={selectedMetrics.airflow}
-                            onChange={() => handleMetricToggle('airflow')}
-                            className="w-4 h-4 rounded border-gray-300"
-                        />
-                        <span className="text-sm font-medium">💨 Airflow</span>
-                    </label>
-                </div>
             </CardHeader>
 
-            <CardContent className="pt-0" ref={chartContainerRef}>
+            <CardContent className="pt-0 px-3 pb-3" ref={chartContainerRef}>
                 {loading ? (
                     <div className="flex items-center justify-center h-[400px]">
                         <div className="text-center">

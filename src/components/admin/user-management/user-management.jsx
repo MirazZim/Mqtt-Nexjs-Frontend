@@ -18,28 +18,42 @@ const UserManagement = () => {
     const [filterRole, setFilterRole] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [usersPerPage, setUsersPerPage] = useState(10);
+    const [toast, setToast] = useState({ show: false, type: '', message: '' });
+    const [deleteConfirm, setDeleteConfirm] = useState({ show: false, userId: null, username: '' });
 
 
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
-                    headers: { 'Authorization': `Bearer ${user.token}` }
-                });
-                const data = await response.json();
 
-                if (data.status === 'success') {
-                    setUsers(data.users);
-                }
-                setLoading(false);
-            } catch (error) {
-                console.error('Error fetching users:', error);
-                setLoading(false);
+    const showToast = (type, message) => {
+        setToast({ show: true, type, message });
+        setTimeout(() => {
+            setToast({ show: false, type: '', message: '' });
+        }, 5000);
+    };
+
+    const fetchUsers = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
+                headers: { 'Authorization': `Bearer ${user.token}` }
+            });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                setUsers(data.users);
             }
-        };
+            setLoading(false);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            showToast('error', 'Failed to load users');
+            setLoading(false);
+        }
+    };
 
-        fetchUsers();
-    }, [user.token]);
+    // ✅ 4. useEffect calls fetchUsers
+    useEffect(() => {
+        if (user?.token) {
+            fetchUsers();
+        }
+    }, [user?.token]);
 
     // Calculate pagination
 
@@ -47,7 +61,7 @@ const UserManagement = () => {
 
     const handleCreateUser = async () => {
         if (!newUser.username || !newUser.password) {
-            alert('Username and password are required');
+            showToast('error', 'Username and password are required');
             return;
         }
 
@@ -62,15 +76,55 @@ const UserManagement = () => {
             });
 
             const data = await response.json();
-            if (data.status === 'success') {
-                alert('User created successfully');
+
+            // ✅ Check response.ok first, then check data
+            if (response.ok) {
+                showToast('success', `User "${newUser.username}" created successfully!`);
                 setNewUser({ username: '', password: '', role: 'user', desired_temperature: 22.0 });
-                setUsers([]);
+                fetchUsers();
             } else {
-                alert(data.message || 'Error creating user');
+                // Show error message from API or generic message
+                const errorMsg = data.error || data.message || `Failed to create user (Status: ${response.status})`;
+                showToast('error', errorMsg);
             }
         } catch (error) {
-            alert('Error creating user: ' + error.message);
+            console.error('Create user error:', error);
+            showToast('error', 'Network error: Could not create user');
+        }
+    };
+
+    const handleDeleteUser = async (userId) => {
+        const userToDelete = users.find(u => u.id === userId);
+
+        // ✅ Show custom modal instead of confirm()
+        setDeleteConfirm({
+            show: true,
+            userId: userId,
+            username: userToDelete?.username || 'this user'
+        });
+    };
+
+    // ✅ New function to confirm deletion
+    const confirmDelete = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/users/${deleteConfirm.userId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${user.token}` }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showToast('success', `User "${deleteConfirm.username}" deleted successfully!`);
+                setDeleteConfirm({ show: false, userId: null, username: '' });
+                fetchUsers();
+            } else {
+                const errorMsg = data.error || data.message || 'Failed to delete user';
+                showToast('error', errorMsg);
+            }
+        } catch (error) {
+            console.error('Delete user error:', error);
+            showToast('error', 'Network error: Could not delete user');
         }
     };
 
@@ -86,38 +140,21 @@ const UserManagement = () => {
             });
 
             const data = await response.json();
-            if (data.status === 'success') {
-                alert('User updated successfully');
+
+            if (response.ok) {
+                showToast('success', `User "${updates.username}" updated successfully!`);
                 setEditingUser(null);
-                setUsers([]);
+                fetchUsers();
             } else {
-                alert(data.message || 'Error updating user');
+                const errorMsg = data.error || data.message || `Failed to update user (Status: ${response.status})`;
+                showToast('error', errorMsg);
             }
         } catch (error) {
-            alert('Error updating user: ' + error.message);
+            console.error('Update user error:', error);
+            showToast('error', 'Network error: Could not update user');
         }
     };
 
-    const handleDeleteUser = async (userId) => {
-        if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${user.token}` }
-            });
-
-            const data = await response.json();
-            if (data.status === 'success') {
-                alert('User deleted successfully');
-                setUsers([]);
-            } else {
-                alert(data.message || 'Error deleting user');
-            }
-        } catch (error) {
-            alert('Error deleting user: ' + error.message);
-        }
-    };
 
     // Filter users based on search term and role
     const filteredUsers = users.filter(u => {
@@ -164,9 +201,99 @@ const UserManagement = () => {
         return pages;
     };
 
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+                    <p className="text-gray-600">Loading users...</p>
+                </div>
+            </div>
+        );
+    }
+
 
     return (
+
+
         <div className="space-y-6">
+            {/* Toast Notification */}
+            {/* Toast Notification - Middle Bottom */}
+            {toast.show && (
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] animate-in slide-in-from-bottom duration-300">
+                    <div className={`rounded-lg shadow-2xl border-2 p-4 min-w-[320px] max-w-md flex items-start gap-3 ${toast.type === 'success'
+                        ? 'bg-green-50 border-green-200'
+                        : toast.type === 'error'
+                            ? 'bg-red-50 border-red-200'
+                            : 'bg-blue-50 border-blue-200'
+                        }`}>
+                        {/* Icon */}
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${toast.type === 'success'
+                            ? 'bg-green-500'
+                            : toast.type === 'error'
+                                ? 'bg-red-500'
+                                : 'bg-blue-500'
+                            }`}>
+                            {toast.type === 'success' && (
+                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                            )}
+                            {toast.type === 'error' && (
+                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            )}
+                            {toast.type === 'info' && (
+                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            )}
+                        </div>
+
+                        {/* Message */}
+                        <div className="flex-1">
+                            <h4 className={`font-semibold mb-0.5 ${toast.type === 'success'
+                                ? 'text-green-800'
+                                : toast.type === 'error'
+                                    ? 'text-red-800'
+                                    : 'text-blue-800'
+                                }`}>
+                                {toast.type === 'success' ? 'Success!' : toast.type === 'error' ? 'Error!' : 'Info'}
+                            </h4>
+                            <p className={`text-sm ${toast.type === 'success'
+                                ? 'text-green-700'
+                                : toast.type === 'error'
+                                    ? 'text-red-700'
+                                    : 'text-blue-700'
+                                }`}>
+                                {toast.message}
+                            </p>
+                        </div>
+
+                        {/* Close Button */}
+                        <button
+                            onClick={() => setToast({ show: false, type: '', message: '' })}
+                            className={`p-1 rounded-lg transition-colors flex-shrink-0 ${toast.type === 'success'
+                                ? 'hover:bg-green-100'
+                                : toast.type === 'error'
+                                    ? 'hover:bg-red-100'
+                                    : 'hover:bg-blue-100'
+                                }`}
+                        >
+                            <svg className={`w-5 h-5 ${toast.type === 'success'
+                                ? 'text-green-600'
+                                : toast.type === 'error'
+                                    ? 'text-red-600'
+                                    : 'text-blue-600'
+                                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Page Header with Stats */}
             <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -548,6 +675,84 @@ const UserManagement = () => {
                     </div>
                 </div>
             )}
+
+
+            {/* ✅ ADD DELETE CONFIRMATION MODAL HERE */}
+            {deleteConfirm.show && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        {/* Modal Header */}
+                        <div className="bg-gradient-to-r from-red-600 to-red-500 px-6 py-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-xl font-bold text-white">Confirm Deletion</h3>
+                            </div>
+                            <button
+                                onClick={() => setDeleteConfirm({ show: false, userId: null, username: '' })}
+                                className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            <div className="flex items-start gap-4 mb-6">
+                                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                                        Delete user "{deleteConfirm.username}"?
+                                    </h4>
+                                    <p className="text-gray-600 text-sm">
+                                        This action cannot be undone. All data associated with this user will be permanently deleted.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                <div className="flex items-start gap-2">
+                                    <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    <p className="text-sm text-red-800">
+                                        <strong>Warning:</strong> This will permanently remove the user from the system.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Actions */}
+                        <div className="px-6 py-4 bg-gray-50 flex gap-3 justify-end">
+                            <button
+                                onClick={() => setDeleteConfirm({ show: false, userId: null, username: '' })}
+                                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-lg font-medium hover:from-red-700 hover:to-red-600 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Delete User
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };

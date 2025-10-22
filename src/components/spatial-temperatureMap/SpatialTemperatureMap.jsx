@@ -326,44 +326,44 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
 
     // TAILWIND VERSION - Control Bar Component
     const ControlBar = () => (
-        <div className="bg-gradient-to-r from-teal-700 to-blue-600 px-6 py-4 rounded-t-xl">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3 text-white">
-                        <FaThermometerHalf className="text-2xl" />
+        <div className="bg-gradient-to-r from-teal-700 to-blue-600 px-3 py-2 md:px-4 md:py-2.5 rounded-t-lg">
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 md:gap-3">
+                    <div className="flex items-center gap-2 text-white">
+                        <FaThermometerHalf className="text-base md:text-lg" />
                         <div>
-                            <h2 className="text-xl font-bold">Spatial Temperature Control</h2>
-                            <p className="text-sm text-teal-100">Location: {selectedLocation}</p>
+                            <h2 className="text-sm md:text-base font-bold">Spatial Temperature Control</h2>
+                            <p className="text-xs text-teal-100 hidden sm:block">Location: {selectedLocation}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 md:gap-1.5">
                     <button
                         onClick={handlers.toggleRealTime}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${ui.realTimeUpdates
+                        className={`flex items-center gap-1 px-2 py-1 md:px-3 md:py-1.5 rounded-md text-xs md:text-sm font-medium transition-all ${ui.realTimeUpdates
                             ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
                             : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                             }`}
                     >
-                        {ui.realTimeUpdates ? <FaPause /> : <FaPlay />}
-                        {ui.realTimeUpdates ? 'Live' : 'Paused'}
+                        {ui.realTimeUpdates ? <FaPause className="w-3 h-3" /> : <FaPlay className="w-3 h-3" />}
+                        <span className="hidden sm:inline">{ui.realTimeUpdates ? 'Live' : 'Paused'}</span>
                     </button>
 
                     <button
                         onClick={handlers.toggleFullscreen}
-                        className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg font-medium transition-colors"
+                        className="flex items-center gap-1 px-2 py-1 md:px-3 md:py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-md text-xs md:text-sm font-medium transition-colors"
                     >
-                        {ui.isFullscreen ? <FaCompress /> : <FaExpand />}
-                        {ui.isFullscreen ? 'Exit' : 'Fullscreen'}
+                        {ui.isFullscreen ? <FaCompress className="w-3 h-3" /> : <FaExpand className="w-3 h-3" />}
+                        <span className="hidden md:inline">{ui.isFullscreen ? 'Exit' : 'Fullscreen'}</span>
                     </button>
 
                     <button
                         onClick={handlers.refresh}
-                        className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-100 text-teal-700 rounded-lg font-medium transition-colors"
+                        className="flex items-center gap-1 px-2 py-1 md:px-3 md:py-1.5 bg-white hover:bg-gray-100 text-teal-700 rounded-md text-xs md:text-sm font-medium transition-colors"
                     >
-                        <FaSync />
-                        Refresh
+                        <FaSync className="w-3 h-3" />
+                        <span className="hidden md:inline">Refresh</span>
                     </button>
                 </div>
             </div>
@@ -390,49 +390,50 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
         }
 
         return (
-            <div className="mx-6 mt-6 bg-card rounded-xl border border-border shadow-sm group relative">
+            <div className="mx-1 mt-1 md:mx-2 md:mt-2 bg-card rounded-md border border-border shadow-sm group relative">
                 {/* Compact Header - Always Visible */}
-                <div className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-accent/50 transition-colors rounded-xl">
-                    <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${onlineCount > 0
-                                ? 'bg-emerald-50 text-emerald-600'
-                                : 'bg-red-50 text-red-600'
+                <div className="flex items-center justify-between px-2 py-1.5 md:px-3 md:py-2 cursor-pointer hover:bg-accent/50 transition-colors rounded-md">
+                    <div className="flex items-center gap-1.5">
+                        <div className={`w-6 h-6 md:w-7 md:h-7 rounded flex items-center justify-center ${onlineCount > 0
+                            ? 'bg-emerald-50 text-emerald-600'
+                            : 'bg-red-50 text-red-600'
                             }`}>
-                            <FaBolt className={`text-xl ${onlineCount > 0 ? 'animate-pulse' : ''}`} />
+                            <FaBolt className={`text-xs md:text-sm ${onlineCount > 0 ? 'animate-pulse' : ''}`} />
                         </div>
                         <div>
-                            <h3 className="text-lg font-semibold text-foreground">
+                            <h3 className="text-xs md:text-sm font-semibold text-foreground">
                                 Real Sensor Status
                             </h3>
-                            <p className="text-xs text-muted-foreground">
-                                Hover to view sensor details
+                            <p className="text-[9px] md:text-[10px] text-muted-foreground hidden sm:block">
+                                Hover to view details
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${onlineCount === realSensors.length
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                : 'bg-amber-50 text-amber-700 border border-amber-200'
+                    <div className="flex items-center gap-1.5">
+                        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 md:px-2 md:py-1 rounded-full text-[10px] md:text-xs font-medium ${onlineCount === realSensors.length
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-amber-50 text-amber-700 border border-amber-200'
                             }`}>
-                            <span className={`inline-block w-2 h-2 rounded-full ${onlineCount === realSensors.length
-                                    ? 'bg-emerald-500 animate-pulse'
-                                    : 'bg-amber-500'
+                            <span className={`inline-block w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${onlineCount === realSensors.length
+                                ? 'bg-emerald-500 animate-pulse'
+                                : 'bg-amber-500'
                                 }`}></span>
-                            {onlineCount}/{realSensors.length} Online
+                            <span className="hidden sm:inline">{onlineCount}/{realSensors.length}</span>
+                            <span className="sm:hidden">{onlineCount}/{realSensors.length}</span>
                         </span>
 
                         <button
                             onClick={handlers.refresh}
-                            className="p-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
+                            className="p-1 md:p-1.5 rounded hover:bg-accent hover:text-accent-foreground transition-colors"
                             title="Refresh data"
                         >
-                            <FaSync className="w-4 h-4" />
+                            <FaSync className="w-2.5 h-2.5 md:w-3 md:h-3" />
                         </button>
 
                         {/* Dropdown indicator */}
                         <svg
-                            className="w-5 h-5 text-muted-foreground transition-transform group-hover:rotate-180"
+                            className="w-3.5 h-3.5 md:w-4 md:h-4 text-muted-foreground transition-transform group-hover:rotate-180 hidden md:block"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -443,9 +444,9 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                 </div>
 
                 {/* Dropdown Content - Shows on Hover */}
-                <div className="absolute left-0 right-0 top-full mt-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
-                    <div className="bg-card rounded-xl border border-border shadow-2xl p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="absolute left-0 right-0 top-full mt-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+                    <div className="bg-card rounded-md border border-border shadow-2xl p-2 md:p-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 md:gap-2">
                             {realSensors.map(sensor => {
                                 const isOnline = utils.isOnline(sensor.last_update);
                                 const temp = utils.safeNumber(sensor.last_reading);
@@ -455,67 +456,67 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                                     <div
                                         key={sensor.sensor_id}
                                         onClick={() => handlers.selectSensor(sensor)}
-                                        className={`group/card relative bg-background rounded-lg border-2 p-4 cursor-pointer transition-all duration-200 hover:shadow-lg ${isOnline
-                                                ? 'border-emerald-200 hover:border-emerald-400'
-                                                : 'border-red-200 hover:border-red-400'
+                                        className={`group/card relative bg-background rounded border-2 p-2 cursor-pointer transition-all duration-200 hover:shadow-md ${isOnline
+                                            ? 'border-emerald-200 hover:border-emerald-400'
+                                            : 'border-red-200 hover:border-red-400'
                                             }`}
                                     >
-                                        <div className="flex items-start justify-between mb-3">
+                                        <div className="flex items-start justify-between mb-1.5">
                                             <div className="flex-1">
-                                                <h4 className="font-semibold text-foreground text-sm">
-                                                    {sensor.sensor_id.replace('REAL_TEMP_', 'Sensor ')}
+                                                <h4 className="font-semibold text-foreground text-[10px] md:text-xs">
+                                                    {sensor.sensor_id.replace('REAL_TEMP_', 'S')}
                                                 </h4>
                                             </div>
                                             {isOnline ? (
-                                                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50">
-                                                    <FaWifi className="w-4 h-4 text-emerald-600" />
+                                                <div className="flex items-center justify-center w-5 h-5 md:w-6 md:h-6 rounded-full bg-emerald-50">
+                                                    <FaWifi className="w-2.5 h-2.5 md:w-3 md:h-3 text-emerald-600" />
                                                 </div>
                                             ) : (
-                                                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-50">
-                                                    <FaTimes className="w-4 h-4 text-red-600" />
+                                                <div className="flex items-center justify-center w-5 h-5 md:w-6 md:h-6 rounded-full bg-red-50">
+                                                    <FaTimes className="w-2.5 h-2.5 md:w-3 md:h-3 text-red-600" />
                                                 </div>
                                             )}
                                         </div>
 
                                         <div
-                                            className="text-3xl font-bold mb-3 transition-colors"
+                                            className="text-base md:text-lg font-bold mb-1.5 transition-colors"
                                             style={{ color: isOnline ? tempStatus.color : '#dc2626' }}
                                         >
-                                            {isOnline ? utils.formatTemp(temp) : 'OFFLINE'}
+                                            {isOnline ? utils.formatTemp(temp) : 'OFF'}
                                         </div>
 
-                                        <div className="space-y-1 text-xs text-muted-foreground">
-                                            <div className="flex items-center gap-1">
-                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div className="space-y-0.5 text-[9px] md:text-[10px] text-muted-foreground">
+                                            <div className="flex items-center gap-0.5">
+                                                <svg className="w-2 h-2 md:w-2.5 md:h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 </svg>
-                                                <span>Position: ({sensor.x_coordinate}, {sensor.y_coordinate})</span>
+                                                <span className="truncate">({sensor.x_coordinate}, {sensor.y_coordinate})</span>
                                             </div>
 
                                             {sensor.mqtt_topic && (
-                                                <div className="flex items-center gap-1">
-                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div className="flex items-center gap-0.5">
+                                                    <svg className="w-2 h-2 md:w-2.5 md:h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                                     </svg>
-                                                    <span className="truncate">Topic: {sensor.mqtt_topic}</span>
+                                                    <span className="truncate">{sensor.mqtt_topic.split('/').pop()}</span>
                                                 </div>
                                             )}
 
                                             {isOnline && (
-                                                <div className="flex items-center gap-1">
-                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div className="flex items-center gap-0.5">
+                                                    <svg className="w-2 h-2 md:w-2.5 md:h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
-                                                    <span>Updated: {new Date(sensor.last_update).toLocaleTimeString()}</span>
+                                                    <span className="truncate">{new Date(sensor.last_update).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
                                             )}
                                         </div>
 
                                         {isOnline && (
-                                            <div className="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 transition-opacity">
-                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-full">
-                                                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                                            <div className="absolute top-1 right-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                                                <span className="inline-flex items-center gap-0.5 px-1 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-medium rounded-full">
+                                                    <span className="w-0.5 h-0.5 bg-emerald-500 rounded-full animate-pulse"></span>
                                                     Live
                                                 </span>
                                             </div>
@@ -543,18 +544,24 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
         const scaleY = (y) => ((y - bounds.minY) / (bounds.maxY - bounds.minY)) * (mapHeight - 2 * padding) + padding;
 
         return (
-            <div className="mx-6 my-6 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-                <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-border flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-foreground">Temperature Map</h3>
+            <div className="mx-2 my-2 md:mx-4 md:my-3 bg-card rounded-lg border border-border shadow-sm overflow-hidden">
+                <div className="px-3 py-2 md:px-4 md:py-2.5 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                    <h3 className="text-sm md:text-base font-semibold text-foreground">Temperature Map</h3>
                     {stats && (
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-xs text-muted-foreground">
                             Avg: {utils.formatTemp(stats.avg)} | Range: {utils.formatTemp(stats.min)} - {utils.formatTemp(stats.max)}
                         </div>
                     )}
                 </div>
 
-                <div className="p-6 bg-white relative">
-                    <svg width={mapWidth} height={mapHeight} className="mx-auto">
+                <div className="p-2 md:p-4 bg-white relative">
+                    <svg
+                        width={mapWidth}
+                        height={mapHeight}
+                        className="mx-auto w-full h-auto max-w-full"
+                        viewBox={`0 0 ${mapWidth} ${mapHeight}`}
+                        preserveAspectRatio="xMidYMid meet"
+                    >
                         <defs>
                             <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
                                 <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#f0f0f0" strokeWidth="1" />
@@ -594,10 +601,10 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                                     <circle
                                         cx={x}
                                         cy={y}
-                                        r={isReal ? 12 : 8}
+                                        r={isReal ? 10 : 7}
                                         fill={isOnline ? tempStatus.color : '#9ca3af'}
                                         stroke={isReal ? '#1f2937' : '#ffffff'}
-                                        strokeWidth={isReal ? 3 : 2}
+                                        strokeWidth={isReal ? 2.5 : 1.5}
                                         className="cursor-pointer hover:opacity-80 transition-opacity"
                                         onClick={() => handlers.selectSensor(sensor)}
                                         onMouseEnter={(e) => handlers.showTooltip(e,
@@ -608,9 +615,9 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                                     {isReal && (
                                         <text
                                             x={x}
-                                            y={y + 25}
+                                            y={y + 20}
                                             textAnchor="middle"
-                                            className="text-xs font-semibold fill-gray-700"
+                                            className="text-[10px] md:text-xs font-semibold fill-gray-700"
                                         >
                                             {sensor.sensor_id.replace('REAL_TEMP_', 'R')}
                                         </text>
@@ -637,14 +644,14 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                             return (
                                 <g key={`actuator-${idx}`}>
                                     <rect
-                                        x={x - 10}
-                                        y={y - 10}
-                                        width={20}
-                                        height={20}
+                                        x={x - 8}
+                                        y={y - 8}
+                                        width={16}
+                                        height={16}
                                         fill={isActive ? '#f59e0b' : '#e5e7eb'}
                                         stroke="#374151"
-                                        strokeWidth="2"
-                                        rx="3"
+                                        strokeWidth="1.5"
+                                        rx="2"
                                         className="cursor-pointer hover:opacity-80 transition-opacity"
                                         onClick={() => handlers.selectActuator(actuator)}
                                         onMouseEnter={(e) => handlers.showTooltip(e,
@@ -654,9 +661,9 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                                     />
                                     <text
                                         x={x}
-                                        y={y + 4}
+                                        y={y + 3}
                                         textAnchor="middle"
-                                        className="text-sm pointer-events-none"
+                                        className="text-xs pointer-events-none"
                                     >
                                         {getActuatorIcon(actuator.actuator_type)}
                                     </text>
@@ -665,20 +672,20 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                         })}
                     </svg>
 
-                    <div className="absolute bottom-8 right-8 bg-white/90 backdrop-blur-sm rounded-lg border border-border p-4 shadow-lg">
-                        <div className="text-sm font-semibold text-foreground mb-3">Legend</div>
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                                <div className="w-1 h-1 rounded-full bg-gray-700 border-2 border-white"></div>
-                                <span className="text-xs text-muted-foreground">Real Sensor</span>
+                    <div className="absolute bottom-0.5 right-0.5 md:bottom-1 md:right-1 bg-white/90 backdrop-blur-sm rounded border border-border p-1 md:p-1.5 shadow-md">
+                        <div className="text-[9px] md:text-[10px] font-semibold text-foreground mb-0.5">Legend</div>
+                        <div className="space-y-0.5">
+                            <div className="flex items-center gap-1">
+                                <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-gray-700 border border-white"></div>
+                                <span className="text-[8px] md:text-[9px] text-muted-foreground">Real</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                                <span className="text-xs text-muted-foreground">Simulated Sensor</span>
+                            <div className="flex items-center gap-1">
+                                <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-blue-500"></div>
+                                <span className="text-[8px] md:text-[9px] text-muted-foreground">Simulated</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-amber-500 border border-gray-700 rounded-sm"></div>
-                                <span className="text-xs text-muted-foreground">Actuator</span>
+                            <div className="flex items-center gap-1">
+                                <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-amber-500 border border-gray-700 rounded-sm"></div>
+                                <span className="text-[8px] md:text-[9px] text-muted-foreground">Actuator</span>
                             </div>
                         </div>
                     </div>

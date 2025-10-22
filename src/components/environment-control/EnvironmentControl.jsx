@@ -871,69 +871,69 @@ const EnvironmentControl = ({ selectedLocation }) => {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-3 md:space-y-4">
             {/* Minimalist Header */}
             <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-light text-gray-900 tracking-tight">Environment Control</h2>
-                <div className="flex items-center gap-2 text-sm">
-                    <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <h2 className="text-base md:text-lg font-medium text-gray-900">Environment Control</h2>
+                <div className="flex items-center gap-1.5 text-xs">
+                    <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                     </svg>
-                    <span className="text-gray-500">{selectedLocation}</span>
+                    <span className="text-gray-500 hidden sm:inline">{selectedLocation}</span>
                 </div>
             </div>
 
             {/* Clean Status Bar */}
-            <div className="flex items-center gap-4 pb-6 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full ${realTimeStatus.connected ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
-                    <span className="text-xs text-gray-500 uppercase tracking-wider">Broker</span>
+            <div className="flex items-center gap-3 pb-2 md:pb-3 border-b border-gray-100">
+                <div className="flex items-center gap-1.5">
+                    <div className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${realTimeStatus.connected ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
+                    <span className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wider">Broker</span>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full ${realTimeStatus.sensorActive ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
-                    <span className="text-xs text-gray-500 uppercase tracking-wider">Sensors</span>
+                <div className="flex items-center gap-1.5">
+                    <div className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${realTimeStatus.sensorActive ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
+                    <span className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wider">Sensors</span>
                 </div>
             </div>
 
             {/* Temperature Control - Ultra Clean Card */}
-            <div className="bg-white rounded-2xl border border-gray-100 hover:border-gray-200 transition-all duration-300 overflow-hidden">
-                <div className="p-8">
+            <div className="bg-white rounded-lg md:rounded-xl border border-gray-100 hover:border-gray-200 transition-all duration-300 overflow-hidden">
+                <div className="p-3 md:p-5">
                     {/* Card Header */}
-                    <div className="flex items-start justify-between mb-8">
+                    <div className="flex items-start justify-between mb-3 md:mb-4">
                         <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center">
-                                    <FaThermometerHalf className="text-white text-lg" />
+                            <div className="flex items-center gap-2 mb-1.5">
+                                <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center">
+                                    <FaThermometerHalf className="text-white text-sm md:text-base" />
                                 </div>
-                                <h3 className="text-xl font-medium text-gray-900">Temperature</h3>
+                                <h3 className="text-sm md:text-base font-medium text-gray-900">Temperature</h3>
                             </div>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-5xl font-light tracking-tight"
+                            <div className="flex items-baseline gap-1.5">
+                                <span className="text-2xl md:text-3xl font-light tracking-tight"
                                     style={{ color: getStatusColor(currentData.temperature, setpoints.temperature, 0.5) }}>
                                     {displayedTemperature}
                                 </span>
-                                <span className="text-2xl font-light text-gray-400">°C</span>
+                                <span className="text-base md:text-lg font-light text-gray-400">°C</span>
                             </div>
                         </div>
 
                         {/* Status Indicator */}
-                        <div className={`px-3 py-1.5 rounded-full text-xs font-medium ${realTimeStatus.sensorActive
+                        <div className={`px-2 py-1 md:px-2.5 md:py-1.5 rounded-full text-[10px] md:text-xs font-medium ${realTimeStatus.sensorActive
                             ? 'bg-emerald-50 text-emerald-700'
                             : 'bg-gray-100 text-gray-500'
                             }`}>
-                            {realTimeStatus.sensorActive ? 'Live' : 'Offline'}
+                            {realTimeStatus.sensorActive ? 'Live' : 'Off'}
                         </div>
                     </div>
 
                     {/* Target Display */}
-                    <div className="mb-6 pb-6 border-b border-gray-50">
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-500">Target Temperature</span>
+                    <div className="mb-3 md:mb-4 pb-3 md:pb-4 border-b border-gray-50">
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                            <span className="text-gray-500">Target</span>
                             <span className="font-medium text-gray-900">{setpoints.temperature}°C</span>
                         </div>
                         {currentData.temperature !== null && (
-                            <div className="mt-2">
-                                <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="mt-1.5">
+                                <div className="h-0.5 md:h-1 bg-gray-100 rounded-full overflow-hidden">
                                     <div
                                         className={`h-full transition-all duration-500 ${Math.abs(currentData.temperature - setpoints.temperature) <= 0.5
                                             ? 'bg-emerald-500'
@@ -949,30 +949,32 @@ const EnvironmentControl = ({ selectedLocation }) => {
                     </div>
 
                     {/* Sleek Knob Control */}
-                    <div className="flex flex-col items-center space-y-6">
+                    <div className="flex flex-col items-center space-y-3 md:space-y-4">
                         <div className="relative">
                             {/* Minimalist Progress Ring */}
-                            <svg className="w-48 h-48 -rotate-90" viewBox="0 0 160 160">
+                            <svg className="w-32 h-32 md:w-40 md:h-40 -rotate-90" viewBox="0 0 160 160">
                                 {/* Background ring */}
-                                ircle
-                                cx="80"
-                                cy="80"
-                                r="70"
-                                fill="none"
-                                stroke="#f3f4f6"6"
-                                strokeWidth="2"
+                                <circle
+                                    cx="80"
+                                    cy="80"
+                                    r="70"
+                                    fill="none"
+                                    stroke="#f3f4f6"
+                                    strokeWidth="2"
+                                />
 
                                 {/* Progress ring */}
-                                ircle
-                                cx="80"
-                                cy="80"
-                                r="70"
-                                fill="none"
-                                stroke="url(#tempGradient)"
-                                strokeWidth="2"
-                                strokeDasharray={`${((tempKnobValue - TEMP_MIN_VALUE) / (TEMP_MAX_VALUE - TEMP_MIN_VALUE)) * 440} 440`}
-                                className="transition-all duration-300"
-                                strokeLinecap="round"d"
+                                <circle
+                                    cx="80"
+                                    cy="80"
+                                    r="70"
+                                    fill="none"
+                                    stroke="url(#tempGradient)"
+                                    strokeWidth="2"
+                                    strokeDasharray={`${((tempKnobValue - TEMP_MIN_VALUE) / (TEMP_MAX_VALUE - TEMP_MIN_VALUE)) * 440} 440`}
+                                    className="transition-all duration-300"
+                                    strokeLinecap="round"
+                                />
 
                                 <defs>
                                     <linearGradient id="tempGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -986,8 +988,8 @@ const EnvironmentControl = ({ selectedLocation }) => {
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <div
                                     ref={tempKnobRef}
-                                    className={`relative w-32 h-32 rounded-full bg-white shadow-xl cursor-grab active:cursor-grabbing transition-all duration-200 ${tempIsDragging ? 'scale-105 shadow-2xl' : ''
-                                        } ${tempIsHovering ? 'shadow-2xl' : ''} ${!realTimeStatus.connected || !realTimeStatus.sensorActive ? 'opacity-40 cursor-not-allowed' : ''
+                                    className={`relative w-24 h-24 md:w-28 md:h-28 rounded-full bg-white shadow-lg cursor-grab active:cursor-grabbing transition-all duration-200 ${tempIsDragging ? 'scale-105 shadow-xl' : ''
+                                        } ${tempIsHovering ? 'shadow-xl' : ''} ${!realTimeStatus.connected || !realTimeStatus.sensorActive ? 'opacity-40 cursor-not-allowed' : ''
                                         }`}
                                     style={{
                                         transform: `rotate(${tempValueToAngle(tempKnobValue)}deg)`
@@ -998,25 +1000,25 @@ const EnvironmentControl = ({ selectedLocation }) => {
                                     onWheel={handleTempWheel}
                                 >
                                     {/* Knob indicator line */}
-                                    <div className="absolute top-2 left-1/2 -translate-x-1/2 w-0.5 h-6 bg-gradient-to-b from-orange-500 to-pink-500 rounded-full"></div>
+                                    <div className="absolute top-1.5 md:top-2 left-1/2 -translate-x-1/2 w-0.5 h-4 md:h-5 bg-gradient-to-b from-orange-500 to-pink-500 rounded-full"></div>
 
                                     {/* Center value */}
                                     <div className="absolute inset-0 flex items-center justify-center flex-col">
-                                        <span className="text-3xl font-light text-gray-900">{tempKnobValue}</span>
-                                        <span className="text-xs text-gray-400 uppercase tracking-wider">°C</span>
+                                        <span className="text-xl md:text-2xl font-light text-gray-900">{tempKnobValue}</span>
+                                        <span className="text-[9px] md:text-xs text-gray-400 uppercase tracking-wider">°C</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Input with Buttons */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                             <button
                                 onClick={() => handleTempValueChange({ target: { value: tempKnobValue - 1 } })}
                                 disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                className="w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-gray-600"
+                                className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gray-50 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-gray-600"
                             >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                                 </svg>
                             </button>
@@ -1028,15 +1030,15 @@ const EnvironmentControl = ({ selectedLocation }) => {
                                 value={tempKnobValue}
                                 onChange={handleTempValueChange}
                                 disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                className="w-20 px-4 py-2 text-center text-lg font-light bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                className="w-16 md:w-18 px-3 py-1.5 md:py-2 text-center text-base md:text-lg font-light bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                             />
 
                             <button
                                 onClick={() => handleTempValueChange({ target: { value: tempKnobValue + 1 } })}
                                 disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                className="w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-gray-600"
+                                className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gray-50 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-gray-600"
                             >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                 </svg>
                             </button>
@@ -1044,7 +1046,7 @@ const EnvironmentControl = ({ selectedLocation }) => {
 
                         {/* Status Message */}
                         {tempPublishStatus && (
-                            <div className={`text-xs px-4 py-2 rounded-full ${tempPublishStatus.includes('✅')
+                            <div className={`text-[10px] md:text-xs px-3 py-1.5 rounded-full ${tempPublishStatus.includes('✅')
                                 ? 'bg-emerald-50 text-emerald-700'
                                 : 'bg-red-50 text-red-700'
                                 }`}>

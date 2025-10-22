@@ -489,14 +489,14 @@ const CurrentEnvironment = ({ selectedLocation }) => {
     return (
         <div className="space-y-1">
             {/* Connection Status Bar */}
-            <div className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-between ${getConnectionStatusClass() === 'connected'
+            <div className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center justify-between ${getConnectionStatusClass() === 'connected'
                 ? 'bg-green-50 text-green-700 border border-green-200'
                 : getConnectionStatusClass() === 'connecting'
                     ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
                     : 'bg-red-50 text-red-700 border border-red-200'
                 }`}>
-                <span className="flex items-center gap-2">
-                    <span className={`inline-block w-2 h-2 rounded-full ${getConnectionStatusClass() === 'connected'
+                <span className="flex items-center gap-1.5">
+                    <span className={`inline-block w-1.5 h-1.5 rounded-full ${getConnectionStatusClass() === 'connected'
                         ? 'bg-green-500 animate-pulse'
                         : getConnectionStatusClass() === 'connecting'
                             ? 'bg-yellow-500 animate-pulse'
@@ -506,7 +506,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                 </span>
                 {isConnecting && (
                     <span className="flex items-center gap-1 text-xs">
-                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -515,96 +515,108 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                 )}
             </div>
 
+
             {/* Header */}
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-                <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-blue-500 rounded-lg flex items-center justify-center text-white text-xl">
+            <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                <div className="w-7 h-7 bg-gradient-to-br from-teal-500 to-blue-500 rounded-md flex items-center justify-center text-white text-sm">
                     🌡️
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800">Current Environment</h2>
+                <h2 className="text-lg font-bold text-gray-800">Current Environment</h2>
             </div>
 
+
             {/* Location Info */}
-            <div className="flex items-center gap-2 text-gray-600 bg-gray-50 px-4 py-3 rounded-lg">
-                <svg className="w-5 h-5 text-teal-600" fill="currentColor" viewBox="0 0 20 20">
+            <div className="flex items-center gap-1.5 text-gray-600 bg-gray-50 px-3 py-2 rounded-md">
+                <svg className="w-4 h-4 text-teal-600" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                 </svg>
-                <span className="text-sm">Location:</span>
-                <strong className="text-gray-800">{selectedLocation}</strong>
+                <span className="text-xs">Location:</span>
+                <strong className="text-xs text-gray-800">{selectedLocation}</strong>
             </div>
+
 
             {/* Last Update */}
             {lastUpdate && (
-                <div className="text-xs text-gray-500 flex items-center gap-2 px-4">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="text-xs text-gray-500 flex items-center gap-1.5 px-3">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Last updated: {formatTimestamp(lastUpdate)}
                 </div>
             )}
 
+
             {/* Show sensor data if active, otherwise show connect message */}
             {realTimeStatus.connected && realTimeStatus.sensorActive ? (
-                <div className="space-y-4 pt-2">
-                    {/* Temperature Card */}
-                    <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-xl p-6 border border-red-100 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                                <span className="text-2xl">🌡️</span>
-                                Temperature
-                            </h3>
-                            {realTimeStatus.temperature && (
-                                <span className="inline-flex h-2 w-2 rounded-full bg-red-500 animate-ping"></span>
-                            )}
+                <div className="space-y-2 pt-1">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        {/* Temperature Card */}
+                        <div className="flex-1 bg-gradient-to-br from-red-50 to-orange-50 rounded-md p-2 md:p-2.5 border border-red-100 shadow-sm hover:shadow transition-shadow">
+                            <div className="flex items-center justify-between mb-1">
+                                <h3 className="text-[10px] md:text-xs font-semibold text-gray-700 flex items-center gap-1">
+                                    <span className="text-sm">🌡️</span>
+                                    <span className="hidden sm:inline">Temperature</span>
+                                    <span className="sm:hidden">Temp</span>
+                                </h3>
+                                {realTimeStatus.temperature && (
+                                    <span className="inline-flex h-1 w-1 md:h-1.5 md:w-1.5 rounded-full bg-red-500 animate-ping"></span>
+                                )}
+                            </div>
+                            <div
+                                className={`text-lg md:text-xl font-bold transition-all duration-300 ${realTimeStatus.temperature ? 'scale-105' : ''
+                                    }`}
+                                style={{ color: getStatusColor(currentData.temperature, setpoints.temperature, 0.5) }}
+                            >
+                                {safeToFixed(currentData.temperature, 1)}°C
+                            </div>
+                            <div className="mt-1 text-[9px] md:text-[10px] text-gray-500">
+                                Target: {setpoints.temperature}°C
+                            </div>
                         </div>
-                        <div
-                            className={`text-4xl font-bold transition-all duration-300 ${realTimeStatus.temperature ? 'scale-105' : ''
-                                }`}
-                            style={{ color: getStatusColor(currentData.temperature, setpoints.temperature, 0.5) }}
-                        >
-                            {safeToFixed(currentData.temperature, 1)}°C
-                        </div>
-                        <div className="mt-2 text-xs text-gray-500">
-                            Target: {setpoints.temperature}°C
+
+                        {/* Humidity Card */}
+                        <div className="flex-1 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-md p-2 md:p-2.5 border border-blue-100 shadow-sm hover:shadow transition-shadow">
+                            <div className="flex items-center justify-between mb-1">
+                                <h3 className="text-[10px] md:text-xs font-semibold text-gray-700 flex items-center gap-1">
+                                    <span className="text-sm">💧</span>
+                                    <span className="hidden sm:inline">Humidity</span>
+                                    <span className="sm:hidden">Humid</span>
+                                </h3>
+                                {realTimeStatus.humidity && (
+                                    <span className="inline-flex h-1 w-1 md:h-1.5 md:w-1.5 rounded-full bg-blue-500 animate-ping"></span>
+                                )}
+                            </div>
+                            <div
+                                className={`text-lg md:text-xl font-bold transition-all duration-300 ${realTimeStatus.humidity ? 'scale-105' : ''
+                                    }`}
+                                style={{ color: getStatusColor(currentData.humidity, setpoints.humidity, 2.0) }}
+                            >
+                                {safeToFixed(currentData.humidity, 1)}%
+                            </div>
+                            <div className="mt-1 text-[9px] md:text-[10px] text-gray-500">
+                                Target: {setpoints.humidity}%
+                            </div>
                         </div>
                     </div>
 
-                    {/* Humidity Card */}
-                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-100 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                                <span className="text-2xl">💧</span>
-                                Humidity
-                            </h3>
-                            {realTimeStatus.humidity && (
-                                <span className="inline-flex h-2 w-2 rounded-full bg-blue-500 animate-ping"></span>
-                            )}
-                        </div>
-                        <div
-                            className={`text-4xl font-bold transition-all duration-300 ${realTimeStatus.humidity ? 'scale-105' : ''
-                                }`}
-                            style={{ color: getStatusColor(currentData.humidity, setpoints.humidity, 2.0) }}
-                        >
-                            {safeToFixed(currentData.humidity, 1)}%
-                        </div>
-                        <div className="mt-2 text-xs text-gray-500">
-                            Target: {setpoints.humidity}%
-                        </div>
-                    </div>
+
                 </div>
             ) : (
                 /* Connection Message */
-                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-8 text-center border border-gray-200">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-md mb-4">
-                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-5 text-center border border-gray-200">
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-md mb-3">
+                        <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                     </div>
 
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
+
+                    <h3 className="text-sm font-semibold text-gray-800 mb-1.5">
                         Sensor Connection Required 📡
                     </h3>
 
-                    <p className="text-sm text-gray-600 mb-6">
+
+                    <p className="text-xs text-gray-600 mb-4">
                         {realTimeStatus.connected
                             ? 'Connected to server. Waiting for sensor data...'
                             : isConnecting
@@ -613,28 +625,31 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                         }
                     </p>
 
+
                     {/* Connection Activity Indicators */}
-                    <div className="space-y-3 bg-white rounded-lg p-4 shadow-sm">
+                    <div className="space-y-2 bg-white rounded-md p-3 shadow-sm">
                         <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Broker Status</span>
-                            <div className="flex items-center gap-2">
-                                <span className={`inline-block w-2 h-2 rounded-full ${realTimeStatus.connected ? 'bg-green-500 animate-pulse' : 'bg-gray-300'
+                            <span className="text-xs text-gray-600">Broker Status</span>
+                            <div className="flex items-center gap-1.5">
+                                <span className={`inline-block w-1.5 h-1.5 rounded-full ${realTimeStatus.connected ? 'bg-green-500 animate-pulse' : 'bg-gray-300'
                                     }`}></span>
-                                <span className={`text-sm font-medium ${realTimeStatus.connected ? 'text-green-600' : 'text-gray-500'
+                                <span className={`text-xs font-medium ${realTimeStatus.connected ? 'text-green-600' : 'text-gray-500'
                                     }`}>
                                     {realTimeStatus.connected ? 'Connected' : 'Disconnected'}
                                 </span>
                             </div>
                         </div>
 
+
                         <div className="h-px bg-gray-200"></div>
 
+
                         <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Sensor Status</span>
-                            <div className="flex items-center gap-2">
-                                <span className={`inline-block w-2 h-2 rounded-full ${realTimeStatus.sensorActive ? 'bg-green-500 animate-pulse' : 'bg-gray-300'
+                            <span className="text-xs text-gray-600">Sensor Status</span>
+                            <div className="flex items-center gap-1.5">
+                                <span className={`inline-block w-1.5 h-1.5 rounded-full ${realTimeStatus.sensorActive ? 'bg-green-500 animate-pulse' : 'bg-gray-300'
                                     }`}></span>
-                                <span className={`text-sm font-medium ${realTimeStatus.sensorActive ? 'text-green-600' : 'text-gray-500'
+                                <span className={`text-xs font-medium ${realTimeStatus.sensorActive ? 'text-green-600' : 'text-gray-500'
                                     }`}>
                                     {realTimeStatus.sensorActive ? 'Active' : 'Inactive'}
                                 </span>

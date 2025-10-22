@@ -261,63 +261,63 @@ const DeviceStatus = ({ selectedLocation }) => {
     };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-2">
             {/* Header */}
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white text-xl">
+            <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-md flex items-center justify-center text-white text-sm">
                     📡
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800">Device Status</h2>
+                <h2 className="text-base font-bold text-gray-800">Device Status</h2>
             </div>
 
             {/* Location Info */}
-            <div className="flex items-center gap-2 text-gray-600 bg-gray-50 px-4 py-3 rounded-lg">
-                <svg className="w-5 h-5 text-teal-600" fill="currentColor" viewBox="0 0 20 20">
+            <div className="flex items-center gap-1.5 text-gray-600 bg-gray-50 px-2 py-1.5 rounded-md">
+                <svg className="w-4 h-4 text-teal-600" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                 </svg>
-                <span className="text-sm">Location:</span>
-                <strong className="text-gray-800">{selectedLocation}</strong>
+                <span className="text-xs">Location:</span>
+                <strong className="text-xs text-gray-800">{selectedLocation}</strong>
             </div>
 
             {/* Status Details */}
-            <div className="space-y-3">
+            <div className="space-y-2">
 
                 {/* Broker Status Card */}
-                <div className={`rounded-xl p-4 border-2 transition-all duration-300 ${brokerStatus.connected
-                        ? 'bg-green-50 border-green-200 shadow-sm'
-                        : 'bg-red-50 border-red-200'
+                <div className={`rounded-lg p-2 border transition-all duration-300 ${brokerStatus.connected
+                    ? 'bg-green-50 border-green-200'
+                    : 'bg-red-50 border-red-200'
                     }`}>
-                    <div className="flex items-start gap-4">
-                        <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${brokerStatus.connected
-                                ? 'bg-green-100'
-                                : 'bg-red-100'
+                    <div className="flex items-start gap-2">
+                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${brokerStatus.connected
+                            ? 'bg-green-100'
+                            : 'bg-red-100'
                             }`}>
-                            <FaWifi className={`text-xl ${brokerStatus.connected
-                                    ? 'text-green-600'
-                                    : 'text-red-600'
+                            <FaWifi className={`text-sm ${brokerStatus.connected
+                                ? 'text-green-600'
+                                : 'text-red-600'
                                 }`} />
                         </div>
 
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-semibold text-gray-800">MQTT Broker</h4>
-                                <span className={`inline-block w-2 h-2 rounded-full ${brokerStatus.connected
-                                        ? 'bg-green-500 animate-pulse'
-                                        : 'bg-red-500'
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                                <h4 className="text-xs font-semibold text-gray-800">MQTT Broker</h4>
+                                <span className={`inline-block w-1.5 h-1.5 rounded-full ${brokerStatus.connected
+                                    ? 'bg-green-500 animate-pulse'
+                                    : 'bg-red-500'
                                     }`}></span>
                             </div>
 
-                            <p className={`text-sm font-medium mb-2 ${brokerStatus.connected
-                                    ? 'text-green-700'
-                                    : 'text-red-700'
+                            <p className={`text-xs font-medium mb-1 ${brokerStatus.connected
+                                ? 'text-green-700'
+                                : 'text-red-700'
                                 }`}>
                                 {brokerStatus.status}
                             </p>
 
-                            <div className="space-y-1 text-xs text-gray-600">
+                            <div className="space-y-0.5 text-[10px] text-gray-600">
                                 {brokerStatus.lastSeen && (
                                     <div className="flex items-center gap-1">
-                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         Connected: {formatTimestamp(brokerStatus.lastSeen)}
@@ -325,7 +325,7 @@ const DeviceStatus = ({ selectedLocation }) => {
                                 )}
                                 {brokerStatus.lastHeartbeat && (
                                     <div className="flex items-center gap-1">
-                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         Last check: {formatTimestamp(brokerStatus.lastHeartbeat)}
@@ -337,50 +337,50 @@ const DeviceStatus = ({ selectedLocation }) => {
                 </div>
 
                 {/* Sensor Status Card */}
-                <div className={`rounded-xl p-4 border-2 transition-all duration-300 ${sensorStatus.active
-                        ? 'bg-blue-50 border-blue-200 shadow-sm'
-                        : brokerStatus.connected
-                            ? 'bg-yellow-50 border-yellow-200'
-                            : 'bg-gray-50 border-gray-200'
+                <div className={`rounded-lg p-2 border transition-all duration-300 ${sensorStatus.active
+                    ? 'bg-blue-50 border-blue-200'
+                    : brokerStatus.connected
+                        ? 'bg-yellow-50 border-yellow-200'
+                        : 'bg-gray-50 border-gray-200'
                     }`}>
-                    <div className="flex items-start gap-4">
-                        <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${sensorStatus.active
-                                ? 'bg-blue-100'
-                                : brokerStatus.connected
-                                    ? 'bg-yellow-100'
-                                    : 'bg-gray-100'
+                    <div className="flex items-start gap-2">
+                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${sensorStatus.active
+                            ? 'bg-blue-100'
+                            : brokerStatus.connected
+                                ? 'bg-yellow-100'
+                                : 'bg-gray-100'
                             }`}>
-                            <FaSignal className={`text-xl ${sensorStatus.active
-                                    ? 'text-blue-600'
-                                    : brokerStatus.connected
-                                        ? 'text-yellow-600'
-                                        : 'text-gray-600'
+                            <FaSignal className={`text-sm ${sensorStatus.active
+                                ? 'text-blue-600'
+                                : brokerStatus.connected
+                                    ? 'text-yellow-600'
+                                    : 'text-gray-600'
                                 }`} />
                         </div>
 
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-semibold text-gray-800">Sensor Data Stream</h4>
-                                <span className={`inline-block w-2 h-2 rounded-full ${sensorStatus.active
-                                        ? 'bg-blue-500 animate-pulse'
-                                        : brokerStatus.connected
-                                            ? 'bg-yellow-500 animate-pulse'
-                                            : 'bg-gray-400'
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                                <h4 className="text-xs font-semibold text-gray-800">Sensor Data Stream</h4>
+                                <span className={`inline-block w-1.5 h-1.5 rounded-full ${sensorStatus.active
+                                    ? 'bg-blue-500 animate-pulse'
+                                    : brokerStatus.connected
+                                        ? 'bg-yellow-500 animate-pulse'
+                                        : 'bg-gray-400'
                                     }`}></span>
                             </div>
 
-                            <p className={`text-sm font-medium mb-2 ${sensorStatus.active
-                                    ? 'text-blue-700'
-                                    : brokerStatus.connected
-                                        ? 'text-yellow-700'
-                                        : 'text-gray-700'
+                            <p className={`text-xs font-medium mb-1 ${sensorStatus.active
+                                ? 'text-blue-700'
+                                : brokerStatus.connected
+                                    ? 'text-yellow-700'
+                                    : 'text-gray-700'
                                 }`}>
                                 {sensorStatus.status}
                             </p>
 
                             {sensorStatus.lastDataReceived && (
-                                <div className="flex items-center gap-1 text-xs text-gray-600">
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="flex items-center gap-1 text-[10px] text-gray-600">
+                                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                     </svg>
                                     Last data: {formatTimestamp(sensorStatus.lastDataReceived)}
@@ -392,35 +392,35 @@ const DeviceStatus = ({ selectedLocation }) => {
 
                 {/* Control Status or No Data Message */}
                 {sensorStatus.active ? (
-                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200">
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-200">
                         <div className="text-center">
-                            <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-md mb-3">
-                                <svg className="w-8 h-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="inline-flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-sm mb-1.5">
+                                <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
-                            <p className="text-sm font-medium text-gray-700">
+                            <p className="text-xs font-medium text-gray-700">
                                 ✅ All systems operational
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-[10px] text-gray-500 mt-0.5">
                                 Sensors are actively streaming data
                             </p>
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 text-center">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-md mb-3">
-                            <svg className={`w-8 h-8 ${brokerStatus.connected ? 'text-yellow-500 animate-pulse' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 border border-gray-200 text-center">
+                        <div className="inline-flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-sm mb-1.5">
+                            <svg className={`w-5 h-5 ${brokerStatus.connected ? 'text-yellow-500 animate-pulse' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <p className="text-sm font-medium text-gray-700">
+                        <p className="text-xs font-medium text-gray-700">
                             {brokerStatus.connected
                                 ? '⏳ Waiting for sensor data...'
                                 : '📵 Connect to broker first'
                             }
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-[10px] text-gray-500 mt-0.5">
                             {brokerStatus.connected
                                 ? '5 second timeout for sensor activation'
                                 : 'Establish broker connection to receive data'
@@ -430,6 +430,7 @@ const DeviceStatus = ({ selectedLocation }) => {
                 )}
             </div>
         </div>
+
 
     );
 };
