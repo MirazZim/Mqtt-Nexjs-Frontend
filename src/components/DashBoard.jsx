@@ -6,6 +6,8 @@ import DeviceStatus from '../components/device-status/DeviceStatus.jsx';
 import EnvironmentControl from '../components/environment-control/EnvironmentControl.jsx';
 import LocationSelector from '../components/locationSelector/LocationSelector.jsx';
 import AuthContext from '../context/AuthContext.jsx';
+import BowlFanStatus from '../components/Third-Column/Bowl-Fan-Status/BowlFanStatus.jsx';
+import SonarPumpStatus from '../components/Third-Column/Sonar-pump-status/SonarPumpStatus.jsx';
 
 // Lazy load heavy components
 const EnvironmentChart = lazy(() => import('../components/environment-chart/EnvironmentChart.jsx'));
@@ -276,35 +278,19 @@ const Dashboard = () => {
                                 <span className="text-base">📊</span>
                                 Additional Sensors
                             </h3>
+
                             <div className="space-y-2">
                                 {/* Sensor Item */}
                                 <div className="bg-gray-50 rounded-md p-2 border border-gray-200">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className="text-xs font-medium text-gray-700">CO₂ Level</span>
-                                        <span className="inline-flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                                    </div>
-                                    <div className="text-lg font-bold text-green-600">420 ppm</div>
-                                    <div className="text-xs text-gray-500 mt-1">Normal</div>
-                                </div>
+                                    <div className="space-y-4">
+                                        {/* Bowl Fan Status Component */}
+                                        <BowlFanStatus selectedLocation={selectedLocation} />
 
-                                {/* Sensor Item */}
-                                <div className="bg-gray-50 rounded-md p-2 border border-gray-200">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className="text-xs font-medium text-gray-700">Light Level</span>
-                                        <span className="inline-flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                                        {/* Sonar Pump Status Component */}
+                                        <SonarPumpStatus selectedLocation={selectedLocation} />
                                     </div>
-                                    <div className="text-lg font-bold text-yellow-600">750 lux</div>
-                                    <div className="text-xs text-gray-500 mt-1">Optimal</div>
-                                </div>
 
-                                {/* Sensor Item */}
-                                <div className="bg-gray-50 rounded-md p-2 border border-gray-200">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className="text-xs font-medium text-gray-700">Air Quality</span>
-                                        <span className="inline-flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                                    </div>
-                                    <div className="text-lg font-bold text-blue-600">95%</div>
-                                    <div className="text-xs text-gray-500 mt-1">Excellent</div>
+
                                 </div>
                             </div>
                         </div>
