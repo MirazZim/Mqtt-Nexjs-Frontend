@@ -18,7 +18,9 @@ const CurrentEnvironment = ({ selectedLocation }) => {
         humidity: null,
         airflow: null,
         bowl_temp: null,  // NEW
-        sonar_distance: null
+        sonar_distance: null,
+        co2_level: null,        // NEW
+        sugar_level: null       // NEW
     });
 
     const [setpoints, setSetpoints] = useState({
@@ -26,7 +28,33 @@ const CurrentEnvironment = ({ selectedLocation }) => {
         humidity: 55.0,
         airflow: 2.0,
         bowl_temp: 45.0,  // NEW - default setpoint
-        sonar_distance: 30.0  // NEW - default setpoint (cm)
+        sonar_distance: 30.0,  // NEW - default setpoint (cm)
+        co2_level: 400.0,       // NEW - default CO2 setpoint (ppm)
+        sugar_level: 35.0       // NEW - default sugar setpoint (g/L)
+    });
+
+    // Add status states for all 4 actuators
+    const [actuatorStatus, setActuatorStatus] = useState({
+        bowlFan: {
+            status: null,
+            message: 'Waiting for status...',
+            active: false
+        },
+        sonarPump: {
+            status: null,
+            message: 'Waiting for status...',
+            active: false
+        },
+        co2Fermentation: {      // NEW
+            status: null,
+            message: 'Waiting for status...',
+            active: false
+        },
+        sugarFermentation: {    // NEW
+            status: null,
+            message: 'Waiting for status...',
+            complete: false
+        }
     });
 
     // Simplified connection state management
@@ -36,6 +64,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
         airflow: false,
         bowl_temp: false,  // NEW
         sonar_distance: false,  // NEW
+        co2_level: false,       // NEW
+        sugar_level: false,     // NEW
         connected: false,
         sensorActive: false
     });
@@ -143,7 +173,9 @@ const CurrentEnvironment = ({ selectedLocation }) => {
             humidity: null,
             airflow: null,
             bowl_temp: null,
-            sonar_distance: null
+            sonar_distance: null,
+            co2_level: null,        // ADD
+            sugar_level: null       // ADD
         });
 
         // Reset sensor status
@@ -153,6 +185,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
             airflow: false,
             bowl_temp: false,
             sonar_distance: false,
+            co2_level: false,       // ADD
+            sugar_level: false,     // ADD
             connected: false,
             sensorActive: false
         });
@@ -322,6 +356,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                         hum: data.humidity,
                         bowl: data.bowl_temp,
                         sonar: data.sonar_distance,  // NEW
+                        co2: data.co2_level,        // NEW
+                        sugar: data.sugar_level,    // NEW
                         timestamp: new Date().toLocaleTimeString()
                     });
 
@@ -333,7 +369,10 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                         humidity: typeof data.humidity === 'number' ? data.humidity : prev.humidity,
                         airflow: typeof data.airflow === 'number' ? data.airflow : prev.airflow,
                         bowl_temp: typeof data.bowl_temp === 'number' ? data.bowl_temp : prev.bowl_temp,
-                        sonar_distance: typeof data.sonar_distance === 'number' ? data.sonar_distance : prev.sonar_distance  // NEW
+                        sonar_distance: typeof data.sonar_distance === 'number' ? data.sonar_distance : prev.sonar_distance,  // NEW
+                        co2_level: typeof data.co2_level === 'number' ? data.co2_level : prev.co2_level,           // NEW
+                        sugar_level: typeof data.sugar_level === 'number' ? data.sugar_level : prev.sugar_level    // NEW
+
                     }));
 
                     setLastUpdate(new Date());
@@ -360,6 +399,18 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                         setTimeout(() => setRealTimeStatus(prev => ({ ...prev, sonar_distance: false })), 1500);
                     }
 
+                    // NEW: CO2 visual feedback
+                    if (typeof data.co2_level === 'number') {
+                        setRealTimeStatus(prev => ({ ...prev, co2_level: true }));
+                        setTimeout(() => setRealTimeStatus(prev => ({ ...prev, co2_level: false })), 1500);
+                    }
+
+                    // NEW: Sugar visual feedback
+                    if (typeof data.sugar_level === 'number') {
+                        setRealTimeStatus(prev => ({ ...prev, sugar_level: true }));
+                        setTimeout(() => setRealTimeStatus(prev => ({ ...prev, sugar_level: false })), 1500);
+                    }
+
                     // Update setpoints
                     if (typeof data.desiredTemperature === 'number') {
                         setSetpoints(prev => ({ ...prev, temperature: data.desiredTemperature }));
@@ -373,6 +424,44 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                     if (typeof data.desiredSonarDistance === 'number') {  // NEW
                         setSetpoints(prev => ({ ...prev, sonar_distance: data.desiredSonarDistance }));
                     }
+
+                    if (typeof data.desiredCO2Level === 'number') {  // NEW
+                        setSetpoints(prev => ({ ...prev, co2_level: data.desiredCO2Level }));
+                    }
+                    if (typeof data.desiredSugarLevel === 'number') {  // NEW
+                        setSetpoints(prev => ({ ...prev, sugar_level: data.desiredSugarLevel }));
+                    }
+                }
+            });
+            // CO2 Fermentation Status
+            socketConnection.on('co2FermentationStatus', (data) => {
+                if (data.location === selectedLocation) {
+                    console.log('🫧 CO2 fermentation status:', data.message);
+
+                    setActuatorStatus(prev => ({
+                        ...prev,
+                        co2Fermentation: {
+                            status: data.status,
+                            message: data.message,
+                            active: data.fermentationActive
+                        }
+                    }));
+                }
+            });
+
+            // Sugar Fermentation Status
+            socketConnection.on('sugarFermentationStatus', (data) => {
+                if (data.location === selectedLocation) {
+                    console.log('🍬 Sugar fermentation status:', data.message);
+
+                    setActuatorStatus(prev => ({
+                        ...prev,
+                        sugarFermentation: {
+                            status: data.status,
+                            message: data.message,
+                            complete: data.fermentationComplete
+                        }
+                    }));
                 }
             });
 
@@ -434,7 +523,9 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                         humidity: typeof measurement.humidity === 'number' ? measurement.humidity : null,
                         airflow: typeof measurement.airflow === 'number' ? measurement.airflow : null,
                         bowl_temp: typeof measurement.bowl_temp === 'number' ? measurement.bowl_temp : null,  // NEW
-                        sonar_distance: typeof measurement.sonar_distance === 'number' ? measurement.sonar_distance : null  // NEW
+                        sonar_distance: typeof measurement.sonar_distance === 'number' ? measurement.sonar_distance : null,  // NEW
+                        co2_level: typeof measurement.co2_level === 'number' ? measurement.co2_level : null,         // NEW
+                        sugar_level: typeof measurement.sugar_level === 'number' ? measurement.sugar_level : null    // NEW
                     });
                     setLastUpdate(measurementTime);
 
@@ -468,7 +559,9 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                         humidity: data.data.desiredHumidity || 55.0,
                         airflow: data.data.desiredAirflow || 2.0,
                         bowl_temp: data.data.desiredBowlTemp || 45.0,
-                        sonar_distance: data.data.desiredSonarDistance || 30.0
+                        sonar_distance: data.data.desiredSonarDistance || 30.0,
+                        co2_level: data.data.desiredCO2Level || 400.0,      // NEW
+                        sugar_level: data.data.desiredSugarLevel || 35.0    // NEW
                     });
                 }
             }
@@ -573,11 +666,13 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
             {/* Show sensor data if active, otherwise show connect message */}
             {realTimeStatus.connected && realTimeStatus.sensorActive ? (
-                <div className="space-y-2 pt-1">
-                    {/* Grid container for 2x2 layout */}
+                <div className="space-y-3 pt-1">
+                    {/* Grid container for 2x3 layout (6 sensors) */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {/* Row 1: Temperature & Humidity */}
+
                         {/* Temperature Card */}
-                        <div className="flex-1 bg-gradient-to-br from-red-50 to-orange-50 rounded-md p-2 md:p-2.5 border border-red-100 shadow-sm hover:shadow transition-shadow">
+                        <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-md p-2 md:p-2.5 border border-red-100 shadow-sm hover:shadow transition-shadow">
                             <div className="flex items-center justify-between mb-1">
                                 <h3 className="text-[10px] md:text-xs font-semibold text-gray-700 flex items-center gap-1">
                                     <span className="text-sm">🌡️</span>
@@ -589,8 +684,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 )}
                             </div>
                             <div
-                                className={`text-lg md:text-xl font-bold transition-all duration-300 ${realTimeStatus.temperature ? 'scale-105' : ''
-                                    }`}
+                                className={`text-lg md:text-xl font-bold transition-all duration-300 ${realTimeStatus.temperature ? 'scale-105' : ''}`}
                                 style={{ color: getStatusColor(currentData.temperature, setpoints.temperature, 0.5) }}
                             >
                                 {safeToFixed(currentData.temperature, 1)}°C
@@ -601,7 +695,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                         </div>
 
                         {/* Humidity Card */}
-                        <div className="flex-1 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-md p-2 md:p-2.5 border border-blue-100 shadow-sm hover:shadow transition-shadow">
+                        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-md p-2 md:p-2.5 border border-blue-100 shadow-sm hover:shadow transition-shadow">
                             <div className="flex items-center justify-between mb-1">
                                 <h3 className="text-[10px] md:text-xs font-semibold text-gray-700 flex items-center gap-1">
                                     <span className="text-sm">💧</span>
@@ -613,8 +707,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 )}
                             </div>
                             <div
-                                className={`text-lg md:text-xl font-bold transition-all duration-300 ${realTimeStatus.humidity ? 'scale-105' : ''
-                                    }`}
+                                className={`text-lg md:text-xl font-bold transition-all duration-300 ${realTimeStatus.humidity ? 'scale-105' : ''}`}
                                 style={{ color: getStatusColor(currentData.humidity, setpoints.humidity, 2.0) }}
                             >
                                 {safeToFixed(currentData.humidity, 1)}%
@@ -624,8 +717,10 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                             </div>
                         </div>
 
+                        {/* Row 2: Bowl Temperature & Liquid Level */}
+
                         {/* Bowl Temperature Card */}
-                        <div className="flex-1 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-md p-2 md:p-2.5 border border-amber-100 shadow-sm hover:shadow transition-shadow">
+                        <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-md p-2 md:p-2.5 border border-amber-100 shadow-sm hover:shadow transition-shadow">
                             <div className="flex items-center justify-between mb-1">
                                 <h3 className="text-[10px] md:text-xs font-semibold text-gray-700 flex items-center gap-1">
                                     <span className="text-sm">🥣</span>
@@ -637,8 +732,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 )}
                             </div>
                             <div
-                                className={`text-lg md:text-xl font-bold transition-all duration-300 ${realTimeStatus.bowl_temp ? 'scale-105' : ''
-                                    }`}
+                                className={`text-lg md:text-xl font-bold transition-all duration-300 ${realTimeStatus.bowl_temp ? 'scale-105' : ''}`}
                                 style={{ color: getStatusColor(currentData.bowl_temp, setpoints.bowl_temp, 3) }}
                             >
                                 {safeToFixed(currentData.bowl_temp, 1)}°C
@@ -649,10 +743,10 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                         </div>
 
                         {/* Sonar/Liquid Level Card */}
-                        <div className="flex-1 bg-gradient-to-br from-purple-50 to-pink-50 rounded-md p-2 md:p-2.5 border border-purple-100 shadow-sm hover:shadow transition-shadow">
+                        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-md p-2 md:p-2.5 border border-purple-100 shadow-sm hover:shadow transition-shadow">
                             <div className="flex items-center justify-between mb-1">
                                 <h3 className="text-[10px] md:text-xs font-semibold text-gray-700 flex items-center gap-1">
-                                    <span className="text-sm">💦🪣</span>
+                                    <span className="text-sm">💦</span>
                                     <span className="hidden sm:inline">Liquid Level</span>
                                     <span className="sm:hidden">Liquid</span>
                                 </h3>
@@ -661,14 +755,92 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 )}
                             </div>
                             <div
-                                className={`text-lg md:text-xl font-bold transition-all duration-300 ${realTimeStatus.sonar_distance ? 'scale-105' : ''
-                                    }`}
+                                className={`text-lg md:text-xl font-bold transition-all duration-300 ${realTimeStatus.sonar_distance ? 'scale-105' : ''}`}
                                 style={{ color: getStatusColor(currentData.sonar_distance, setpoints.sonar_distance, 5) }}
                             >
                                 {safeToFixed(currentData.sonar_distance, 1)} cm
                             </div>
                             <div className="mt-1 text-[9px] md:text-[10px] text-gray-500">
                                 Target: {setpoints.sonar_distance} cm
+                            </div>
+                        </div>
+
+                        {/* Row 3: CO2 Level & Sugar Level */}
+
+                        {/* CO2 Level Card */}
+                        <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-md p-2 md:p-2.5 border border-green-100 shadow-sm hover:shadow transition-shadow">
+                            <div className="flex items-center justify-between mb-1">
+                                <h3 className="text-[10px] md:text-xs font-semibold text-gray-700 flex items-center gap-1">
+                                    <span className="text-sm">🫧</span>
+                                    <span className="hidden sm:inline">CO2 Level</span>
+                                    <span className="sm:hidden">CO2</span>
+                                </h3>
+                                {realTimeStatus.co2_level && (
+                                    <span className="inline-flex h-1 w-1 md:h-1.5 md:w-1.5 rounded-full bg-green-500 animate-ping"></span>
+                                )}
+                            </div>
+                            <div
+                                className={`text-lg md:text-xl font-bold transition-all duration-300 ${realTimeStatus.co2_level ? 'scale-105' : ''}`}
+                                style={{ color: getStatusColor(currentData.co2_level, setpoints.co2_level, 50) }}
+                            >
+                                {safeToFixed(currentData.co2_level, 0)} ppm
+                            </div>
+                            <div className="mt-1 text-[9px] md:text-[10px] text-gray-500">
+                                Target: {setpoints.co2_level} ppm
+                            </div>
+                        </div>
+
+                        {/* Sugar Level Card */}
+                        <div className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-md p-2 md:p-2.5 border border-pink-100 shadow-sm hover:shadow transition-shadow">
+                            <div className="flex items-center justify-between mb-1">
+                                <h3 className="text-[10px] md:text-xs font-semibold text-gray-700 flex items-center gap-1">
+                                    <span className="text-sm">🍬</span>
+                                    <span className="hidden sm:inline">Sugar Level</span>
+                                    <span className="sm:hidden">Sugar</span>
+                                </h3>
+                                {realTimeStatus.sugar_level && (
+                                    <span className="inline-flex h-1 w-1 md:h-1.5 md:w-1.5 rounded-full bg-pink-500 animate-ping"></span>
+                                )}
+                            </div>
+                            <div
+                                className={`text-lg md:text-xl font-bold transition-all duration-300 ${realTimeStatus.sugar_level ? 'scale-105' : ''}`}
+                                style={{ color: getStatusColor(currentData.sugar_level, setpoints.sugar_level, 5) }}
+                            >
+                                {safeToFixed(currentData.sugar_level, 1)} g/L
+                            </div>
+                            <div className="mt-1 text-[9px] md:text-[10px] text-gray-500">
+                                Target: {setpoints.sugar_level} g/L
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Status Badges Section - Only CO2 & Sugar (1x2 Grid) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                        {/* CO2 Fermentation Status */}
+                        <div className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${actuatorStatus.co2Fermentation.active
+                                ? 'bg-green-50 border-2 border-green-200'
+                                : 'bg-red-50 border-2 border-red-200'
+                            }`}>
+                            <div className="flex items-center gap-2">
+                                <span className="text-lg">{actuatorStatus.co2Fermentation.active ? '⚗️' : '⚠️'}</span>
+                                <div className="flex-1">
+                                    <p className="font-semibold text-gray-700 mb-0.5">CO2 Monitor</p>
+                                    <p className="text-[10px] text-gray-600 leading-tight">{actuatorStatus.co2Fermentation.message}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Sugar Fermentation Status */}
+                        <div className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${actuatorStatus.sugarFermentation.complete
+                                ? 'bg-blue-50 border-2 border-blue-200'
+                                : 'bg-gray-50 border-2 border-gray-200'
+                            }`}>
+                            <div className="flex items-center gap-2">
+                                <span className="text-lg">{actuatorStatus.sugarFermentation.complete ? '✅' : '🔒'}</span>
+                                <div className="flex-1">
+                                    <p className="font-semibold text-gray-700 mb-0.5">Sugar Monitor</p>
+                                    <p className="text-[10px] text-gray-600 leading-tight">{actuatorStatus.sugarFermentation.message}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
