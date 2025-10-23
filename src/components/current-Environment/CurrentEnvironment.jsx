@@ -16,13 +16,15 @@ const CurrentEnvironment = ({ selectedLocation }) => {
     const [currentData, setCurrentData] = useState({
         temperature: null,
         humidity: null,
-        airflow: null
+        airflow: null,
+        bowl_temp: null  // NEW
     });
 
     const [setpoints, setSetpoints] = useState({
         temperature: 22.0,
         humidity: 55.0,
-        airflow: 2.0
+        airflow: 2.0,
+        bowl_temp: 45.0  // NEW - default setpoint
     });
 
     // Simplified connection state management
@@ -30,6 +32,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
         temperature: false,
         humidity: false,
         airflow: false,
+        bowl_temp: false,  // NEW
         connected: false,
         sensorActive: false
     });
@@ -135,7 +138,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
         setCurrentData({
             temperature: null,
             humidity: null,
-            airflow: null
+            airflow: null,
+            bowl_temp: null
         });
 
         // Reset sensor status
@@ -143,6 +147,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
             temperature: false,
             humidity: false,
             airflow: false,
+            bowl_temp: false,
             connected: false,
             sensorActive: false
         });
@@ -297,6 +302,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                 }
             });
 
+
             // ✅ TEXT MESSAGE RECEIVED HANDLER
             socketConnection.on('textMessageReceived', (data) => {
                 console.log('📝 Text message received from MQTT:', data.message);
@@ -305,45 +311,48 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
             // Real-time environment updates with instant feedback
             socketConnection.on('environmentUpdate', (data) => {
-                if (data.location === selectedLocation && data.userId === user.id) {
-                    console.log('🌡️ CurrentEnvironment real-time data received:', data);
+                if (data.location === selectedLocation) {  // ✅ Remove userId check
+                    console.log('🌡️ REAL-TIME UPDATE:', {
+                        temp: data.temperature,
+                        hum: data.humidity,
+                        bowl: data.bowl_temp,
+                        airflow: data.airflow,
+                        timestamp: new Date().toLocaleTimeString()
+                    });
 
-                    // Mark sensor as active and reset timeout
+                    // Mark sensor as active
                     setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
                     setSensorTimeout();
 
-                    // Immediate state update - ZERO DELAY
-                    setCurrentData({
-                        temperature: typeof data.temperature === 'number' ? data.temperature : null,
-                        humidity: typeof data.humidity === 'number' ? data.humidity : null,
-                        airflow: typeof data.airflow === 'number' ? data.airflow : null
-                    });
+                    // ✅ FIXED: Preserve existing values if new data is null
+                    setCurrentData(prev => ({
+                        temperature: typeof data.temperature === 'number' ? data.temperature : prev.temperature,
+                        humidity: typeof data.humidity === 'number' ? data.humidity : prev.humidity,
+                        airflow: typeof data.airflow === 'number' ? data.airflow : prev.airflow,
+                        bowl_temp: typeof data.bowl_temp === 'number' ? data.bowl_temp : prev.bowl_temp
+                    }));
 
-                    // Update last update timestamp
                     setLastUpdate(new Date());
 
-                    // Visual feedback for temperature update
+                    // Visual feedback animations
                     if (typeof data.temperature === 'number') {
                         setRealTimeStatus(prev => ({ ...prev, temperature: true }));
-                        setTimeout(() => {
-                            setRealTimeStatus(prev => ({ ...prev, temperature: false }));
-                        }, 1500);
+                        setTimeout(() => setRealTimeStatus(prev => ({ ...prev, temperature: false })), 1500);
                     }
 
-                    // Visual feedback for humidity update
                     if (typeof data.humidity === 'number') {
                         setRealTimeStatus(prev => ({ ...prev, humidity: true }));
-                        setTimeout(() => {
-                            setRealTimeStatus(prev => ({ ...prev, humidity: false }));
-                        }, 1500);
+                        setTimeout(() => setRealTimeStatus(prev => ({ ...prev, humidity: false })), 1500);
                     }
 
-                    // Visual feedback for airflow update
                     if (typeof data.airflow === 'number') {
                         setRealTimeStatus(prev => ({ ...prev, airflow: true }));
-                        setTimeout(() => {
-                            setRealTimeStatus(prev => ({ ...prev, airflow: false }));
-                        }, 1500);
+                        setTimeout(() => setRealTimeStatus(prev => ({ ...prev, airflow: false })), 1500);
+                    }
+
+                    if (typeof data.bowl_temp === 'number') {
+                        setRealTimeStatus(prev => ({ ...prev, bowl_temp: true }));
+                        setTimeout(() => setRealTimeStatus(prev => ({ ...prev, bowl_temp: false })), 1500);
                     }
 
                     // Update setpoints if included
@@ -355,6 +364,9 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                     }
                     if (typeof data.desiredAirflow === 'number') {
                         setSetpoints(prev => ({ ...prev, airflow: data.desiredAirflow }));
+                    }
+                    if (typeof data.desiredBowlTemp === 'number') {
+                        setSetpoints(prev => ({ ...prev, bowl_temp: data.desiredBowlTemp }));
                     }
                 }
             });
@@ -372,6 +384,9 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                     }
                     if (typeof data.desiredAirflow === 'number') {
                         setSetpoints(prev => ({ ...prev, airflow: data.desiredAirflow }));
+                    }
+                    if (typeof data.desiredBowlTemp === 'number') {  // ADD THIS
+                        setSetpoints(prev => ({ ...prev, bowl_temp: data.desiredBowlTemp }));
                     }
                 }
             });
@@ -411,7 +426,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                     setCurrentData({
                         temperature: typeof measurement.temperature === 'number' ? measurement.temperature : null,
                         humidity: typeof measurement.humidity === 'number' ? measurement.humidity : null,
-                        airflow: typeof measurement.airflow === 'number' ? measurement.airflow : null
+                        airflow: typeof measurement.airflow === 'number' ? measurement.airflow : null,
+                        bowl_temp: typeof measurement.bowl_temp === 'number' ? measurement.bowl_temp : null  // NEW
                     });
                     setLastUpdate(measurementTime);
 
@@ -443,7 +459,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                     setSetpoints({
                         temperature: data.data.desiredTemperature || 22.0,
                         humidity: data.data.desiredHumidity || 55.0,
-                        airflow: data.data.desiredAirflow || 2.0
+                        airflow: data.data.desiredAirflow || 2.0,
+                        bowl_temp: data.data.desiredBowlTemp || 45.0
                     });
                 }
             }
@@ -549,7 +566,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
             {/* Show sensor data if active, otherwise show connect message */}
             {realTimeStatus.connected && realTimeStatus.sensorActive ? (
                 <div className="space-y-2 pt-1">
-                    <div className="flex flex-col sm:flex-row gap-2">
+                    {/* Grid container for 2x1 layout */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {/* Temperature Card */}
                         <div className="flex-1 bg-gradient-to-br from-red-50 to-orange-50 rounded-md p-2 md:p-2.5 border border-red-100 shadow-sm hover:shadow transition-shadow">
                             <div className="flex items-center justify-between mb-1">
@@ -597,9 +615,31 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 Target: {setpoints.humidity}%
                             </div>
                         </div>
+
+                        {/* Bowl Temperature Card */}
+                        <div className="flex-1 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-md p-2 md:p-2.5 border border-amber-100 shadow-sm hover:shadow transition-shadow sm:col-span-2">
+                            <div className="flex items-center justify-between mb-1">
+                                <h3 className="text-[10px] md:text-xs font-semibold text-gray-700 flex items-center gap-1">
+                                    <span className="text-sm">🥣</span>
+                                    <span className="hidden sm:inline">Bowl Temperature</span>
+                                    <span className="sm:hidden">Bowl</span>
+                                </h3>
+                                {realTimeStatus.bowl_temp && (
+                                    <span className="inline-flex h-1 w-1 md:h-1.5 md:w-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                                )}
+                            </div>
+                            <div
+                                className={`text-lg md:text-xl font-bold transition-all duration-300 ${realTimeStatus.bowl_temp ? 'scale-105' : ''
+                                    }`}
+                                style={{ color: getStatusColor(currentData.bowl_temp, setpoints.bowl_temp, 3) }}
+                            >
+                                {safeToFixed(currentData.bowl_temp, 1)}°C
+                            </div>
+                            <div className="mt-1 text-[9px] md:text-[10px] text-gray-500">
+                                Target: {setpoints.bowl_temp}°C
+                            </div>
+                        </div>
                     </div>
-
-
                 </div>
             ) : (
                 /* Connection Message */
