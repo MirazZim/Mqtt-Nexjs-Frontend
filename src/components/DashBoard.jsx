@@ -149,7 +149,7 @@ const Dashboard = () => {
             {/* Compact Top Header */}
             <div className="bg-gradient-to-r from-teal-700 via-teal-600 to-blue-600 px-4 py-2 flex items-center justify-between shadow-lg">
                 <h1 className="text-white text-xl font-bold tracking-wide">
-                    Sake Monitoring System
+                    Sake Brewing Monitoring System
                 </h1>
             </div>
 
