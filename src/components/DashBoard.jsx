@@ -8,6 +8,7 @@ import LocationSelector from '../components/locationSelector/LocationSelector.js
 import AuthContext from '../context/AuthContext.jsx';
 import BowlFanStatus from '../components/Third-Column/Bowl-Fan-Status/BowlFanStatus.jsx';
 import SonarPumpStatus from '../components/Third-Column/Sonar-pump-status/SonarPumpStatus.jsx';
+import IPCamera from '../components/Third-Column/Ip-camera/ip-camera.jsx';
 
 // Lazy load heavy components
 const EnvironmentChart = lazy(() => import('../components/environment-chart/EnvironmentChart.jsx'));
@@ -280,6 +281,8 @@ const Dashboard = () => {
                                 <span className="text-base">📊</span>
                                 Additional Sensors
                             </h3>
+
+                            <IPCamera selectedLocation={selectedLocation} />
 
                             <div className="space-y-2">
                                 {/* Sensor Item */}

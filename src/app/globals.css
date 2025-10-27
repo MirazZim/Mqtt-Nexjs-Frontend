@@ -43,6 +43,16 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.animate-pulse {
+  will-change: opacity;
+  transform: translateZ(0);
+}
+
 /* Modern Ultra-Thin White Scrollbar */
 * {
   scrollbar-width: thin;
