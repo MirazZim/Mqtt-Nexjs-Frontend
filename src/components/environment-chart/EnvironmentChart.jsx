@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useContext, useMemo, useRef, useCallback } from 'react';
+
 import {
     LineChart,
     AreaChart,
@@ -8,8 +9,13 @@ import {
     XAxis,
     YAxis,
     CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer
 } from 'recharts';
+
 import AuthContext from '../../context/AuthContext';
+
 import {
     Card,
     CardContent,
@@ -17,6 +23,7 @@ import {
     CardHeader,
     CardTitle,
 } from "../ui/card";
+
 import {
     ChartContainer,
     ChartTooltip,
@@ -24,6 +31,7 @@ import {
     ChartLegend,
     ChartLegendContent,
 } from "../ui/chart";
+
 import {
     Select,
     SelectContent,
@@ -67,7 +75,45 @@ const chartConfig = {
     },
 };
 
-// Memoized Chart Component for Performance
+// ✅ FIXED: Custom Tooltip Component
+const CustomTooltip = ({ active, payload, label, selectedMetrics }) => {
+    if (!active || !payload || payload.length === 0) return null;
+
+    // ✅ Format the timestamp properly
+    const date = new Date(label);
+    const isValidDate = !isNaN(date.getTime());
+
+    return (
+        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+            <p className="text-xs font-semibold text-gray-700 mb-2">
+                {isValidDate ? date.toLocaleString() : 'Invalid Date'}
+            </p>
+            {payload.map((entry, index) => {
+                // Only show if value is not null and metric is selected
+                if (entry.value === null || entry.value === undefined) return null;
+
+                return (
+                    <div key={index} className="flex items-center justify-between gap-3 text-xs">
+                        <span className="flex items-center gap-1.5">
+                            <span
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: entry.color }}
+                            />
+                            <span className="text-gray-600">{entry.name}:</span>
+                        </span>
+                        <span className="font-semibold text-gray-800">
+                            {typeof entry.value === 'number' ? entry.value.toFixed(2) : 'N/A'}
+                            {entry.dataKey === 'temperature' ? '°C' :
+                                entry.dataKey === 'humidity' ? '%' : ' m/s'}
+                        </span>
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
+// ✅ FIXED: Memoized Chart Component
 const MemoizedChart = React.memo(({
     data,
     chartType,
@@ -81,176 +127,168 @@ const MemoizedChart = React.memo(({
     const ChartComponent = chartType === 'area' ? AreaChart : LineChart;
 
     return (
-        <ChartContainer config={chartConfig} className="h-[250px] w-full">
-            <ChartComponent
-                key={chartKey}
-                data={data}
-                margin={{ top: 10, right: 20, left: 20, bottom: 10 }}
-            >
-                <defs>
-                    <linearGradient id="fillTemperature" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f72585" stopOpacity={0.8} />
-                        <stop offset="95%" stopColor="#f72585" stopOpacity={0.1} />
-                    </linearGradient>
-                    <linearGradient id="fillHumidity" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#4cc9f0" stopOpacity={0.8} />
-                        <stop offset="95%" stopColor="#4cc9f0" stopOpacity={0.1} />
-                    </linearGradient>
-                    <linearGradient id="fillAirflow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#4361ee" stopOpacity={0.8} />
-                        <stop offset="95%" stopColor="#4361ee" stopOpacity={0.1} />
-                    </linearGradient>
-                </defs>
+        <ChartContainer config={chartConfig} className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+                <ChartComponent
+                    data={data}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                >
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
 
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
-
-                <XAxis
-                    dataKey="timestamp"
-                    type="number"
-                    scale="time"
-                    domain={['dataMin', 'dataMax']}
-                    tickFormatter={formatXAxisTick}
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={4}
-                    minTickGap={30}
-                    className="text-[10px]"
-                    height={30}
-                />
-
-                {/* Dynamic temperature Y-axis (left) */}
-                {selectedMetrics.temperature && (
-                    <YAxis
-                        yAxisId="temperature"
-                        orientation="left"
-                        domain={tempDomain}
-                        tickFormatter={(value) => `${Math.round(value * 10) / 10}°C`}
+                    {/* ✅ FIXED: X-Axis using timestamp */}
+                    <XAxis
+                        dataKey="timestamp"
+                        tickFormatter={formatXAxisTick}
+                        stroke="#888888"
+                        fontSize={10}
                         tickLine={false}
                         axisLine={false}
-                        className="text-[10px]"
-                        width={50}
                     />
-                )}
 
-                {/* Dynamic humidity Y-axis (right) */}
-                {selectedMetrics.humidity && (
-                    <YAxis
-                        yAxisId="humidity"
-                        orientation="right"
-                        domain={humidityDomain}
-                        tickFormatter={(value) => `${Math.round(value)}%`}
-                        tickLine={false}
-                        axisLine={false}
-                        className="text-xs"
-                        width={60}
-                    />
-                )}
-
-                {/* Airflow Y-axis (uses temperature axis if no temperature selected) */}
-                {selectedMetrics.airflow && !selectedMetrics.temperature && (
-                    <YAxis
-                        yAxisId="airflow"
-                        orientation="left"
-                        domain={airflowDomain}
-                        tickFormatter={(value) => `${Math.round(value * 10) / 10} m/s`}
-                        tickLine={false}
-                        axisLine={false}
-                        className="text-xs"
-                        width={60}
-                    />
-                )}
-
-                <ChartTooltip
-                    content={
-                        <ChartTooltipContent
-                            labelFormatter={(value) => new Date(value).toLocaleString()}
-                            indicator="dot"
+                    {/* Dynamic temperature Y-axis (left) */}
+                    {selectedMetrics.temperature && (
+                        <YAxis
+                            yAxisId="temp"
+                            domain={tempDomain}
+                            tickFormatter={(value) => `${Math.round(value * 10) / 10}°C`}
+                            tickLine={false}
+                            axisLine={false}
+                            className="text-[10px]"
+                            width={50}
                         />
-                    }
-                />
-                <ChartLegend content={<ChartLegendContent />} />
+                    )}
 
-                {/* Temperature line/area */}
-                {selectedMetrics.temperature && (
-                    chartType === 'area' ? (
-                        <Area
-                            yAxisId="temperature"
-                            type="monotone"
-                            dataKey="temperature"
-                            stroke="var(--color-temperature)"
-                            fill="url(#fillTemperature)"
-                            strokeWidth={2}
-                            dot={false}
-                            connectNulls={false}
-                        />
-                    ) : (
-                        <Line
-                            yAxisId="temperature"
-                            type="monotone"
-                            dataKey="temperature"
-                            stroke="var(--color-temperature)"
-                            strokeWidth={2}
-                            dot={false}
-                            connectNulls={false}
-                        />
-                    )
-                )}
-
-                {/* Humidity line/area */}
-                {selectedMetrics.humidity && (
-                    chartType === 'area' ? (
-                        <Area
+                    {/* Dynamic humidity Y-axis (right) */}
+                    {selectedMetrics.humidity && (
+                        <YAxis
                             yAxisId="humidity"
-                            type="monotone"
-                            dataKey="humidity"
-                            stroke="var(--color-humidity)"
-                            fill="url(#fillHumidity)"
-                            strokeWidth={2}
-                            dot={false}
-                            connectNulls={false}
+                            orientation="right"
+                            domain={humidityDomain}
+                            tickFormatter={(value) => `${Math.round(value)}%`}
+                            tickLine={false}
+                            axisLine={false}
+                            className="text-xs"
+                            width={60}
                         />
-                    ) : (
-                        <Line
-                            yAxisId="humidity"
-                            type="monotone"
-                            dataKey="humidity"
-                            stroke="var(--color-humidity)"
-                            strokeWidth={2}
-                            dot={false}
-                            connectNulls={false}
-                        />
-                    )
-                )}
+                    )}
 
-                {/* Airflow line/area */}
-                {selectedMetrics.airflow && (
-                    chartType === 'area' ? (
-                        <Area
-                            yAxisId={selectedMetrics.temperature ? "temperature" : "airflow"}
-                            type="monotone"
-                            dataKey="airflow"
-                            stroke="var(--color-airflow)"
-                            fill="url(#fillAirflow)"
-                            strokeWidth={2}
-                            dot={false}
-                            connectNulls={false}
+                    {/* Airflow Y-axis (uses temperature axis if no temperature selected) */}
+                    {selectedMetrics.airflow && !selectedMetrics.temperature && (
+                        <YAxis
+                            yAxisId="airflow"
+                            domain={airflowDomain}
+                            tickFormatter={(value) => `${Math.round(value * 10) / 10} m/s`}
+                            tickLine={false}
+                            axisLine={false}
+                            className="text-xs"
+                            width={60}
                         />
-                    ) : (
-                        <Line
-                            yAxisId={selectedMetrics.temperature ? "temperature" : "airflow"}
-                            type="monotone"
-                            dataKey="airflow"
-                            stroke="var(--color-airflow)"
-                            strokeWidth={2}
-                            dot={false}
-                            connectNulls={false}
-                        />
-                    )
-                )}
-            </ChartComponent>
+                    )}
+
+                    {/* ✅ FIXED: Tooltip with proper label */}
+                    <Tooltip
+                        content={<CustomTooltip selectedMetrics={selectedMetrics} />}
+                        cursor={{ stroke: '#888', strokeWidth: 1, strokeDasharray: '5 5' }}
+                    />
+
+                    <Legend
+                        content={<ChartLegendContent />}
+                        wrapperStyle={{ paddingTop: '20px' }}
+                    />
+
+                    {/* ✅ Temperature line/area - ADDED connectNulls */}
+                    {selectedMetrics.temperature && (
+                        chartType === 'area' ? (
+                            <Area
+                                yAxisId="temp"
+                                type="monotone"
+                                dataKey="temperature"
+                                stroke={chartConfig.temperature.color}
+                                fill={chartConfig.temperature.color}
+                                fillOpacity={0.3}
+                                strokeWidth={2}
+                                name="Temperature"
+                                connectNulls={true}
+                                dot={false}
+                            />
+                        ) : (
+                            <Line
+                                yAxisId="temp"
+                                type="monotone"
+                                dataKey="temperature"
+                                stroke={chartConfig.temperature.color}
+                                strokeWidth={2}
+                                name="Temperature"
+                                connectNulls={true}
+                                dot={false}
+                            />
+                        )
+                    )}
+
+                    {/* ✅ Humidity line/area - ADDED connectNulls */}
+                    {selectedMetrics.humidity && (
+                        chartType === 'area' ? (
+                            <Area
+                                yAxisId="humidity"
+                                type="monotone"
+                                dataKey="humidity"
+                                stroke={chartConfig.humidity.color}
+                                fill={chartConfig.humidity.color}
+                                fillOpacity={0.3}
+                                strokeWidth={2}
+                                name="Humidity"
+                                connectNulls={true}
+                                dot={false}
+                            />
+                        ) : (
+                            <Line
+                                yAxisId="humidity"
+                                type="monotone"
+                                dataKey="humidity"
+                                stroke={chartConfig.humidity.color}
+                                strokeWidth={2}
+                                name="Humidity"
+                                connectNulls={true}
+                                dot={false}
+                            />
+                        )
+                    )}
+
+                    {/* ✅ Airflow line/area - ADDED connectNulls */}
+                    {selectedMetrics.airflow && (
+                        chartType === 'area' ? (
+                            <Area
+                                yAxisId={selectedMetrics.temperature ? "temp" : "airflow"}
+                                type="monotone"
+                                dataKey="airflow"
+                                stroke={chartConfig.airflow.color}
+                                fill={chartConfig.airflow.color}
+                                fillOpacity={0.3}
+                                strokeWidth={2}
+                                name="Airflow"
+                                connectNulls={true}
+                                dot={false}
+                            />
+                        ) : (
+                            <Line
+                                yAxisId={selectedMetrics.temperature ? "temp" : "airflow"}
+                                type="monotone"
+                                dataKey="airflow"
+                                stroke={chartConfig.airflow.color}
+                                strokeWidth={2}
+                                name="Airflow"
+                                connectNulls={true}
+                                dot={false}
+                            />
+                        )
+                    )}
+                </ChartComponent>
+            </ResponsiveContainer>
         </ChartContainer>
     );
 });
+
+MemoizedChart.displayName = 'MemoizedChart';
 
 const EnvironmentChart = ({ selectedLocation }) => {
     const { user, socket } = useContext(AuthContext);
