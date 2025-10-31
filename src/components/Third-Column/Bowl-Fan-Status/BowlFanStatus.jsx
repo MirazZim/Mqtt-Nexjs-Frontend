@@ -1,18 +1,17 @@
-"use client";
+'use client';
+
 import React, { useState, useEffect, useContext } from 'react';
 import { createSocket } from '../../../lib/socket';
 import AuthContext from '../../../context/AuthContext';
 
 const BowlFanStatus = ({ selectedLocation }) => {
     const { user } = useContext(AuthContext);
-
     const [fanStatus, setFanStatus] = useState({
         status: null,
         message: 'Waiting for status...',
         active: false,
         lastUpdate: null
     });
-
     const [socket, setSocket] = useState(null);
     const [connected, setConnected] = useState(false);
 
@@ -25,7 +24,13 @@ const BowlFanStatus = ({ selectedLocation }) => {
         socketConnection.on('connect', () => {
             console.log('🌀 Bowl Fan Status connected');
             setConnected(true);
-            socketConnection.emit('joinLocation', selectedLocation);
+
+            // ✅ FIXED: Use registerUser instead of joinLocation
+            socketConnection.emit('registerUser', {
+                userId: user.id,
+                room: selectedLocation
+            });
+            console.log(`🌀 Registered for location: ${selectedLocation}`);
         });
 
         socketConnection.on('disconnect', () => {
@@ -33,17 +38,18 @@ const BowlFanStatus = ({ selectedLocation }) => {
             setConnected(false);
         });
 
-        socketConnection.on('bowlFanStatus', (data) => {
-            if (data.location === selectedLocation) {
-                console.log('🌀 Fan status update:', data.message);
+        // ✅ FIXED: Listen to bowlFanUpdate (not bowlFanStatus)
+        socketConnection.on('bowlFanUpdate', (data) => {
+            console.log('🌀 Fan status update:', data);
 
-                setFanStatus({
-                    status: data.status,
-                    message: data.message,
-                    active: data.fanState,
-                    lastUpdate: new Date()
-                });
-            }
+            const isFanOn = data.state === 'FO' || parseInt(data.state) === 1;
+
+            setFanStatus({
+                status: isFanOn ? 'ON' : 'OFF',
+                message: isFanOn ? '🌡️ Temp High, Fan is ON' : '✅ Temp normal, Fan off',
+                active: isFanOn,
+                lastUpdate: new Date()
+            });
         });
 
         return () => {
@@ -52,62 +58,46 @@ const BowlFanStatus = ({ selectedLocation }) => {
     }, [user, selectedLocation]);
 
     return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            {/* Header */}
+        <div className={`p-4 rounded-lg border transition-all ${fanStatus.active
+            ? 'bg-red-50 border-red-300 shadow-md'
+            : 'bg-green-50 border-green-300 shadow-sm'
+            }`}>
+            {/* Title with Bowl Name */}
             <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
-                        <span className="text-lg">🌀</span>
-                    </div>
-                    <div>
-                        <h3 className="text-sm font-semibold text-gray-800">Bowl Fan</h3>
-                        <p className="text-xs text-gray-500">Cooling System</p>
-                    </div>
+                <div>
+                    <h3 className="text-sm font-bold text-gray-800">
+                        🌀Bowl Cooling System
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                        Bowl Name: Fermentation Tank 01
+                    </p>
                 </div>
-
-                {/* Connection Status */}
-                <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></div>
+                <div className={`px-3 py-1 rounded-full text-xs font-semibold ${fanStatus.active
+                    ? 'bg-red-200 text-red-700'
+                    : 'bg-green-200 text-green-700'
+                    }`}>
+                    {fanStatus.status || 'OFFLINE'}
+                </div>
             </div>
 
-            {/* Status Display */}
-            <div className={`p-3 rounded-lg border-2 transition-all ${fanStatus.active
-                ? 'bg-green-50 border-green-200'
-                : 'bg-gray-50 border-gray-200'
+            {/* Message */}
+            <p className={`text-sm font-medium mb-3 ${fanStatus.active ? 'text-red-700' : 'text-green-700'
                 }`}>
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-gray-600">Status</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${fanStatus.active
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-200 text-gray-600'
-                        }`}>
-                        {fanStatus.active ? 'RUNNING' : 'STANDBY'}
-                    </span>
-                </div>
+                {fanStatus.message}
+            </p>
 
-                <div className="flex items-center gap-2 mb-2">
-                    <span className="text-2xl">{fanStatus.active ? '🌀' : '💤'}</span>
-                    <p className="text-sm font-medium text-gray-800 leading-tight">
-                        {fanStatus.message}
-                    </p>
-                </div>
-
-                {fanStatus.lastUpdate && (
-                    <p className="text-xs text-gray-500 mt-2">
-                        Updated: {fanStatus.lastUpdate.toLocaleTimeString()}
-                    </p>
-                )}
+            {/* Footer */}
+            <div className="flex items-center justify-between text-xs text-gray-600 pt-2 border-t border-gray-200">
+                <span>
+                    {fanStatus.lastUpdate
+                        ? fanStatus.lastUpdate.toLocaleTimeString()
+                        : 'Awaiting data...'
+                    }
+                </span>
+                {!connected && <span className="text-red-600 font-medium">⚠️ Offline</span>}
             </div>
-
-            {/* Status Code Display */}
-            {fanStatus.status && (
-                <div className="mt-3 flex items-center justify-between text-xs">
-                    <span className="text-gray-500">Signal Code:</span>
-                    <code className="px-2 py-1 bg-gray-100 rounded font-mono text-gray-700">
-                        {fanStatus.status}
-                    </code>
-                </div>
-            )}
         </div>
+
     );
 };
 

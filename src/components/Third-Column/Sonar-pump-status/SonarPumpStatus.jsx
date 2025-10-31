@@ -1,18 +1,17 @@
-"use client";
+'use client';
+
 import React, { useState, useEffect, useContext } from 'react';
 import { createSocket } from '../../../lib/socket';
 import AuthContext from '../../../context/AuthContext';
 
 const SonarPumpStatus = ({ selectedLocation }) => {
     const { user } = useContext(AuthContext);
-
     const [pumpStatus, setPumpStatus] = useState({
         status: null,
         message: 'Waiting for status...',
         active: false,
         lastUpdate: null
     });
-
     const [socket, setSocket] = useState(null);
     const [connected, setConnected] = useState(false);
 
@@ -25,7 +24,13 @@ const SonarPumpStatus = ({ selectedLocation }) => {
         socketConnection.on('connect', () => {
             console.log('💦 Sonar Pump Status connected');
             setConnected(true);
-            socketConnection.emit('joinLocation', selectedLocation);
+
+            // ✅ FIXED: Use registerUser instead of joinLocation
+            socketConnection.emit('registerUser', {
+                userId: user.id,
+                room: selectedLocation
+            });
+            console.log(`💦 Registered for location: ${selectedLocation}`);
         });
 
         socketConnection.on('disconnect', () => {
@@ -33,17 +38,18 @@ const SonarPumpStatus = ({ selectedLocation }) => {
             setConnected(false);
         });
 
-        socketConnection.on('sonarPumpStatus', (data) => {
-            if (data.location === selectedLocation) {
-                console.log('💦 Pump status update:', data.message);
+        // ✅ FIXED: Listen to pumpUpdate (not sonarPumpStatus)
+        socketConnection.on('pumpUpdate', (data) => {
+            console.log('💦 Pump status update:', data);
 
-                setPumpStatus({
-                    status: data.status,
-                    message: data.message,
-                    active: data.pumpState,
-                    lastUpdate: new Date()
-                });
-            }
+            const isPumpOn = data.state === 'PO' || parseInt(data.state) === 1;
+
+            setPumpStatus({
+                status: isPumpOn ? 'ON' : 'OFF',
+                message: isPumpOn ? '💧 Water level low, Pump is ON' : '✅ Water level normal, Pump is Off',
+                active: isPumpOn,
+                lastUpdate: new Date()
+            });
         });
 
         return () => {
@@ -52,61 +58,44 @@ const SonarPumpStatus = ({ selectedLocation }) => {
     }, [user, selectedLocation]);
 
     return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            {/* Header */}
+        <div className={`p-4 rounded-lg border transition-all ${pumpStatus.active
+            ? 'bg-orange-50 border-orange-300 shadow-md'
+            : 'bg-green-50 border-green-300 shadow-sm'
+            }`}>
+            {/* Title with Bowl Name */}
             <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                        <span className="text-lg">💧</span>
-                    </div>
-                    <div>
-                        <h3 className="text-sm font-semibold text-gray-800">Water Pump</h3>
-                        <p className="text-xs text-gray-500">Level Control</p>
-                    </div>
+                <div>
+                    <h3 className="text-sm font-bold text-gray-800">
+                        💧Water Level Control
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                        Bowl: Fermentation Tank 01
+                    </p>
                 </div>
-
-                {/* Connection Status */}
-                <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></div>
+                <div className={`px-3 py-1 rounded-full text-xs font-semibold ${pumpStatus.active
+                    ? 'bg-orange-200 text-orange-700'
+                    : 'bg-green-200 text-green-700'
+                    }`}>
+                    {pumpStatus.status || 'OFFLINE'}
+                </div>
             </div>
 
-            {/* Status Display */}
-            <div className={`p-3 rounded-lg border-2 transition-all ${pumpStatus.active
-                ? 'bg-blue-50 border-blue-200'
-                : 'bg-gray-50 border-gray-200'
+            {/* Message */}
+            <p className={`text-sm font-medium mb-3 ${pumpStatus.active ? 'text-orange-700' : 'text-green-700'
                 }`}>
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-gray-600">Status</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${pumpStatus.active
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'bg-gray-200 text-gray-600'
-                        }`}>
-                        {pumpStatus.active ? 'PUMPING' : 'IDLE'}
-                    </span>
-                </div>
+                {pumpStatus.message}
+            </p>
 
-                <div className="flex items-center gap-2 mb-2">
-                    <span className="text-2xl">{pumpStatus.active ? '💧' : '💤'}</span>
-                    <p className="text-sm font-medium text-gray-800 leading-tight">
-                        {pumpStatus.message}
-                    </p>
-                </div>
-
-                {pumpStatus.lastUpdate && (
-                    <p className="text-xs text-gray-500 mt-2">
-                        Updated: {pumpStatus.lastUpdate.toLocaleTimeString()}
-                    </p>
-                )}
+            {/* Footer */}
+            <div className="flex items-center justify-between text-xs text-gray-600 pt-2 border-t border-gray-200">
+                <span>
+                    {pumpStatus.lastUpdate
+                        ? pumpStatus.lastUpdate.toLocaleTimeString()
+                        : 'Awaiting data...'
+                    }
+                </span>
+                {!connected && <span className="text-red-600 font-medium">⚠️ Offline</span>}
             </div>
-
-            {/* Status Code Display */}
-            {pumpStatus.status && (
-                <div className="mt-3 flex items-center justify-between text-xs">
-                    <span className="text-gray-500">Signal Code:</span>
-                    <code className="px-2 py-1 bg-gray-100 rounded font-mono text-gray-700">
-                        {pumpStatus.status}
-                    </code>
-                </div>
-            )}
         </div>
     );
 };

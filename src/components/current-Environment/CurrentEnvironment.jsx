@@ -321,6 +321,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                 console.log(`🔄 CurrentEnvironment joined location: ${selectedLocation}`);
             });
 
+
             socketConnection.on('disconnect', (reason) => {
                 console.log('🔴 CurrentEnvironment disconnected:', reason);
                 setRealTimeStatus(prev => ({
@@ -446,6 +447,9 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                 }
             });
 
+
+
+
             socketConnection.on('sugarFermentationStatus', (data) => {
                 if (data.location === selectedLocation) {
                     console.log('🍬 Sugar fermentation status:', data.message);
@@ -478,6 +482,190 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                     }
                 }
             });
+            socketConnection.on('temperatureUpdate', (data) => {
+                console.log('🌡️ [CurrentEnvironment] temperatureUpdate:', data);
+                setCurrentData(prev => ({
+                    ...prev,
+                    temperature: data.temperature
+                }));
+                updateSensorStatus('temperature', data.temperature);
+                setSensorTimeout();
+                setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
+            });
+
+            // Humidity Handler
+            socketConnection.on('humidityUpdate', (data) => {
+                console.log('💧 [CurrentEnvironment] humidityUpdate:', data);
+                setCurrentData(prev => ({
+                    ...prev,
+                    humidity: data.humidity
+                }));
+                updateSensorStatus('humidity', data.humidity);
+                setSensorTimeout();
+                setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
+            });
+
+            // Bowl Temperature Handler
+            socketConnection.on('bowlTemperatureUpdate', (data) => {
+                console.log('🍲 [CurrentEnvironment] bowlTemperatureUpdate:', data);
+                setCurrentData(prev => ({
+                    ...prev,
+                    bowl_temp: data.bowl_temp
+                }));
+                updateSensorStatus('bowl_temp', data.bowl_temp);
+                setSensorTimeout();
+                setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
+            });
+
+            // Sonar Distance Handler
+            socketConnection.on('sonarUpdate', (data) => {
+                console.log('📏 [CurrentEnvironment] sonarUpdate:', data);
+                setCurrentData(prev => ({
+                    ...prev,
+                    sonar_distance: data.sonar_distance
+                }));
+                updateSensorStatus('sonar_distance', data.sonar_distance);
+                setSensorTimeout();
+                setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
+            });
+
+            // CO2 Handler
+            socketConnection.on('co2Update', (data) => {
+                console.log('💨 [CurrentEnvironment] co2Update:', data);
+                setCurrentData(prev => ({
+                    ...prev,
+                    co2_level: data.co2_level
+                }));
+                updateSensorStatus('co2_level', data.co2_level);
+                setSensorTimeout();
+                setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
+            });
+
+            // Sugar Handler
+            socketConnection.on('sugarUpdate', (data) => {
+                console.log('🍬 [CurrentEnvironment] sugarUpdate:', data);
+                setCurrentData(prev => ({
+                    ...prev,
+                    sugar_level: data.sugar_level
+                }));
+                updateSensorStatus('sugar_level', data.sugar_level);
+                setSensorTimeout();
+                setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
+            });
+
+            // Bowl Fan Handler
+            socketConnection.on('bowlFanUpdate', (data) => {
+                console.log('🌀 [CurrentEnvironment] bowlFanUpdate:', data);
+                setActuatorStatus(prev => ({
+                    ...prev,
+                    bowlFan: {
+                        status: data.state === 1 ? 'ON' : 'OFF',
+                        message: data.state === 1 ? 'Bowl Fan is ON' : 'Bowl Fan is OFF',
+                        active: data.state === 1
+                    }
+                }));
+            });
+
+            // Pump Handler
+            socketConnection.on('pumpUpdate', (data) => {
+                console.log('💧 [CurrentEnvironment] pumpUpdate:', data);
+                setActuatorStatus(prev => ({
+                    ...prev,
+                    sonarPump: {
+                        status: data.state === 1 ? 'ON' : 'OFF',
+                        message: data.state === 1 ? 'Pump is ON' : 'Pump is OFF',
+                        active: data.state === 1
+                    }
+                }));
+            });
+
+            // ESP3 Alert Handler
+            socketConnection.on('esp3Alert', (data) => {
+                console.log('🚨 [CurrentEnvironment] esp3Alert:', data);
+                // You can set an alert state or notification here
+                console.warn('⚠️ ESP3 Alert:', data.value);
+            });
+
+            // Sensor Update Handler (Generic)
+            socketConnection.on('sensorUpdate', (data) => {
+                console.log('📊 [CurrentEnvironment] sensorUpdate:', data);
+                const { sensorType, value } = data;
+
+                const sensorTypeMap = {
+                    'temperature': 'temperature',
+                    'humidity': 'humidity',
+                    'bowl_temp': 'bowl_temp',
+                    'sonar_distance': 'sonar_distance',
+                    'co2_level': 'co2_level',
+                    'sugar_level': 'sugar_level',
+                    'airflow': 'airflow'
+                };
+
+                const fieldName = sensorTypeMap[sensorType];
+                if (fieldName) {
+                    setCurrentData(prev => ({
+                        ...prev,
+                        [fieldName]: value
+                    }));
+                    updateSensorStatus(fieldName, value);
+                    setSensorTimeout();
+                    setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
+                }
+            });
+
+            // CO2 Handler
+            socketConnection.on('co2Update', (data) => {
+                console.log('💨 [CurrentEnvironment] co2Update:', data);
+                setCurrentData(prev => ({
+                    ...prev,
+                    co2_level: data.co2_level
+                }));
+                updateSensorStatus('co2_level', data.co2_level);
+                setSensorTimeout();
+                setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
+            });
+
+            // Sugar Handler
+            socketConnection.on('sugarUpdate', (data) => {
+                console.log('🍬 [CurrentEnvironment] sugarUpdate:', data);
+                setCurrentData(prev => ({
+                    ...prev,
+                    sugar_level: data.sugar_level
+                }));
+                updateSensorStatus('sugar_level', data.sugar_level);
+                setSensorTimeout();
+                setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
+            });
+
+            // ✅ SUGAR FERMENTATION - sugarT topic
+            socketConnection.on('sugarFermentationUpdate', (data) => {
+                console.log('🍯 [CurrentEnvironment] sugarFermentationUpdate:', data);
+
+                const isFermentationComplete = data.value === 'FFC';
+
+                setActuatorStatus(prev => ({
+                    ...prev,
+                    sugarFermentation: {
+                        complete: isFermentationComplete,
+                        message: isFermentationComplete ? 'Fermentation complete ✅' : 'Fermentation closed ❌'
+                    }
+                }));
+            });
+
+            // ✅ CO2 FERMENTATION - CO2T topic
+            socketConnection.on('co2FermentationUpdate', (data) => {
+                console.log('⚗️ [CurrentEnvironment] co2FermentationUpdate:', data);
+
+                const isFermentationGoing = data.value === 'AF';
+
+                setActuatorStatus(prev => ({
+                    ...prev,
+                    co2Fermentation: {
+                        active: isFermentationGoing,
+                        message: isFermentationGoing ? 'Fermentation going 🫧' : 'Fermentation is Off ⚠️'
+                    }
+                }));
+            });
 
         } catch (error) {
             console.error('❌ Error setting up socket connection:', error);
@@ -494,44 +682,76 @@ const CurrentEnvironment = ({ selectedLocation }) => {
     const fetchLatestEnvironment = async () => {
         if (!selectedLocation || !user) return;
 
+        console.log(`🔵 [CurrentEnvironment] Fetching latest for: ${selectedLocation}`);
+
         try {
             const response = await fetch(
                 `${API_BASE_URL}/api/locations/${encodeURIComponent(selectedLocation)}/latest`,
-                {
-                    headers: { 'Authorization': `Bearer ${user.token}` }
-                }
+                { headers: { 'Authorization': `Bearer ${user.token}` } }
             );
 
             if (response.ok) {
                 const data = await response.json();
+                console.log(`✅ [CurrentEnvironment] Received data:`, data);
+
                 if (data.status === 'success' && data.measurement) {
                     const measurement = data.measurement;
-                    const measurementTime = new Date(measurement.created_at);
-                    const timeSinceLastMeasurement = Date.now() - measurementTime.getTime();
 
-                    setCurrentData({
-                        temperature: typeof measurement.temperature === 'number' ? measurement.temperature : null,
-                        humidity: typeof measurement.humidity === 'number' ? measurement.humidity : null,
-                        airflow: typeof measurement.airflow === 'number' ? measurement.airflow : null,
-                        bowl_temp: typeof measurement.bowl_temp === 'number' ? measurement.bowl_temp : null,
-                        sonar_distance: typeof measurement.sonar_distance === 'number' ? measurement.sonar_distance : null,
-                        co2_level: typeof measurement.co2_level === 'number' ? measurement.co2_level : null,
-                        sugar_level: typeof measurement.sugar_level === 'number' ? measurement.sugar_level : null
-                    });
-                    setLastUpdate(measurementTime);
+                    // Check if we have any non-null data
+                    const hasData = Object.values(measurement).some(val =>
+                        val !== null && typeof val === 'number'
+                    );
 
-                    if (timeSinceLastMeasurement < 120000) {
-                        setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
-                        setSensorTimeout();
+                    if (hasData) {
+                        console.log(`✅ [CurrentEnvironment] Setting measurement data:`, measurement);
+
+                        setCurrentData({
+                            temperature: measurement.temperature,
+                            humidity: measurement.humidity,
+                            airflow: measurement.airflow,
+                            bowl_temp: measurement.bowl_temp,
+                            sonar_distance: measurement.sonar_distance,
+                            co2_level: measurement.co2_level,
+                            sugar_level: measurement.sugar_level
+                        });
+
+                        if (measurement.created_at) {
+                            const timestamp = new Date(measurement.created_at);
+                            setLastUpdate(timestamp);
+
+                            // Check if data is recent (within 2 minutes)
+                            const timeSinceLastMeasurement = Date.now() - timestamp.getTime();
+
+                            if (timeSinceLastMeasurement < 120000) {
+                                console.log(`✅ [CurrentEnvironment] Sensors ACTIVE (${Math.round(timeSinceLastMeasurement / 1000)}s ago)`);
+                                setRealTimeStatus(prev => ({
+                                    ...prev,
+                                    sensorActive: true
+                                }));
+                                setSensorTimeout();
+                            } else {
+                                console.warn(`⚠️ [CurrentEnvironment] Data is old (${Math.round(timeSinceLastMeasurement / 1000)}s ago)`);
+                                setRealTimeStatus(prev => ({
+                                    ...prev,
+                                    sensorActive: false
+                                }));
+                            }
+                        }
+                    } else {
+                        console.warn(`⚠️ [CurrentEnvironment] No measurement data available`);
                     }
                 }
+            } else {
+                console.warn(`⚠️ [CurrentEnvironment] API returned status: ${response.status}`);
             }
         } catch (err) {
-            console.error('Error fetching latest environment:', err);
+            console.error('❌ [CurrentEnvironment] Error fetching latest environment:', err);
         } finally {
             setLoading(false);
         }
     };
+
+
 
     const fetchSetpoints = async () => {
         if (!user) return;

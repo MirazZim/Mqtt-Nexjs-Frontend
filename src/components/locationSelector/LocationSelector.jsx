@@ -228,8 +228,8 @@ const LocationSelector = ({ selectedLocation, onLocationChange }) => {
                         <button
                             key={`${loc.location}-${index}`}
                             className={`w-full px-4 py-3 text-left hover:bg-teal-50 transition-colors flex items-start gap-3 border-l-4 ${selectedLocation === loc.location
-                                    ? 'border-teal-600 bg-teal-50'
-                                    : 'border-transparent'
+                                ? 'border-teal-600 bg-teal-50'
+                                : 'border-transparent'
                                 } ${updatingLocations.has(loc.location)
                                     ? 'bg-blue-50 animate-pulse'
                                     : ''
@@ -237,15 +237,15 @@ const LocationSelector = ({ selectedLocation, onLocationChange }) => {
                             onClick={() => handleLocationClick(loc.location)}
                         >
                             <FaMapMarkerAlt className={`mt-1 ${selectedLocation === loc.location
-                                    ? 'text-teal-600'
-                                    : 'text-gray-400'
+                                ? 'text-teal-600'
+                                : 'text-gray-400'
                                 }`} />
 
                             <div className="flex-1">
                                 <div className="flex items-center justify-between">
                                     <span className={`font-medium ${selectedLocation === loc.location
-                                            ? 'text-teal-700'
-                                            : 'text-gray-800'
+                                        ? 'text-teal-700'
+                                        : 'text-gray-800'
                                         }`}>
                                         {loc.location}
                                     </span>

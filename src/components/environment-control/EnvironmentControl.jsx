@@ -107,7 +107,7 @@ const EnvironmentControl = ({ selectedLocation }) => {
         sensorTimeoutRef.current = setTimeout(() => {
             console.log('🔴 EnvironmentControl sensor timeout - no data for 5 seconds');
             setRealTimeStatus(prev => ({ ...prev, sensorActive: false }));
-        }, 5000);
+        }, 15000);
     };
 
     // Cleanup function
