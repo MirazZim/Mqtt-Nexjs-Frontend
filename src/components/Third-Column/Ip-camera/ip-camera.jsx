@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from 'react';
+import IP_Camera_BASE_URL from '../../../config/ipCameraApi';
 
 const IPCamera = ({ selectedLocation }) => {
     const [autoSave, setAutoSave] = useState(false);
@@ -43,7 +44,7 @@ const IPCamera = ({ selectedLocation }) => {
             <div className="space-y-2">
                 <div className="bg-gray-50 rounded-md border border-gray-200 overflow-hidden">
                     <iframe
-                        src="http://192.168.88.42:8080/jsfs.html"
+                        src={IP_Camera_BASE_URL}
                         className="w-full h-48"
                         title="IP Camera Live Feed"
                         style={{ border: 'none' }}

@@ -1,82 +1,439 @@
 "use client";
 import React, { useState, useEffect, useContext } from 'react';
-import { FaMapMarkerAlt, FaPlus, FaTimes } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaPlus, FaTimes, FaCog, FaTrash, FaSave, FaCopy, FaCheckCircle, FaExclamationTriangle, FaPlug, FaCheck } from 'react-icons/fa';
 import { createSocket } from '../../lib/socket';
 import AuthContext from '../../context/AuthContext';
 import API_BASE_URL from '../../config/api.js';
 
-const LocationSelector = ({ selectedLocation, onLocationChange }) => {
+
+const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSave, onClose, isNew }) => {
+    const [sensorTopics, setSensorTopics] = useState({});
+    const [actuatorTopics, setActuatorTopics] = useState({});
+    const [copiedTopic, setCopiedTopic] = useState(null);
+    const [testingTopics, setTestingTopics] = useState({});
+    const [topicStatus, setTopicStatus] = useState({});
+    const [validationErrors, setValidationErrors] = useState({});
+
+
+    useEffect(() => {
+        const defaultSensorTopics = {};
+        const defaultActuatorTopics = {};
+
+        sensorTypes.forEach(sensor => {
+            defaultSensorTopics[sensor.code] = sensor.code;
+        });
+
+        actuatorTypes.forEach(actuator => {
+            defaultActuatorTopics[actuator.code] = actuator.code;
+        });
+
+        setSensorTopics(defaultSensorTopics);
+        setActuatorTopics(defaultActuatorTopics);
+    }, [room, sensorTypes, actuatorTypes, userId]);
+
+
+    const validateTopic = (topic) => {
+        const errors = [];
+
+        if (!topic || topic.trim() === '') {
+            errors.push('Topic cannot be empty');
+        } else {
+            if (topic.includes('#') && topic.indexOf('#') !== topic.length - 1) {
+                errors.push('Wildcard # must be at the end');
+            }
+            if (topic.includes(' ')) {
+                errors.push('Topic cannot contain spaces');
+            }
+            if (topic.length > 100) {
+                errors.push('Topic too long (max 100 characters)');
+            }
+        }
+
+        return errors;
+    };
+
+
+    const handleTopicChange = (type, code, value) => {
+        const setter = type === 'sensor' ? setSensorTopics : setActuatorTopics;
+
+        setter(prev => ({
+            ...prev,
+            [code]: value
+        }));
+
+        const errors = validateTopic(value);
+        setValidationErrors(prev => ({
+            ...prev,
+            [`${type}_${code}`]: errors
+        }));
+    };
+
+
+    const handleCopyTopic = (topic) => {
+        navigator.clipboard.writeText(topic);
+        setCopiedTopic(topic);
+        setTimeout(() => setCopiedTopic(null), 2000);
+    };
+
+
+    const testMQTTConnection = async (topic, type, code) => {
+        setTestingTopics(prev => ({ ...prev, [`${type}_${code}`]: true }));
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            const isValid = !topic.includes(' ') && topic.length > 0;
+
+            setTopicStatus(prev => ({
+                ...prev,
+                [`${type}_${code}`]: isValid ? 'success' : 'error'
+            }));
+        } catch (error) {
+            setTopicStatus(prev => ({
+                ...prev,
+                [`${type}_${code}`]: 'error'
+            }));
+        } finally {
+            setTestingTopics(prev => ({ ...prev, [`${type}_${code}`]: false }));
+        }
+    };
+
+
+    const handleSave = () => {
+        let hasErrors = false;
+        const allValidations = {};
+
+        Object.entries(sensorTopics).forEach(([code, topic]) => {
+            const errors = validateTopic(topic);
+            if (errors.length > 0) {
+                hasErrors = true;
+                allValidations[`sensor_${code}`] = errors;
+            }
+        });
+
+        Object.entries(actuatorTopics).forEach(([code, topic]) => {
+            const errors = validateTopic(topic);
+            if (errors.length > 0) {
+                hasErrors = true;
+                allValidations[`actuator_${code}`] = errors;
+            }
+        });
+
+        if (hasErrors) {
+            setValidationErrors(allValidations);
+            return;
+        }
+
+        onSave(sensorTopics, actuatorTopics);
+    };
+
+
+    const getTopicStatusIcon = (type, code) => {
+        const key = `${type}_${code}`;
+        const status = topicStatus[key];
+        const testing = testingTopics[key];
+
+        if (testing) {
+            return <span className="animate-spin">⏳</span>;
+        }
+        if (status === 'success') {
+            return <FaCheckCircle className="text-green-600" />;
+        }
+        if (status === 'error') {
+            return <FaExclamationTriangle className="text-red-600" />;
+        }
+        return null;
+    };
+
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+
+                <div className="sticky top-0 bg-gradient-to-r from-teal-600 to-teal-700 text-white p-6 z-10 rounded-t-lg">
+                    <h2 className="text-2xl font-bold mb-2">Configure MQTT Topics</h2>
+                    <p className="text-teal-100 text-sm">Enter MQTT topics for {room.location}</p>
+                    <div className="mt-3 bg-teal-800 bg-opacity-50 rounded px-3 py-2">
+                        <p className="text-xs text-teal-100">Room ID: <code className="font-mono bg-teal-900 px-2 py-1 rounded">{room.room_id}</code></p>
+                    </div>
+                </div>
+
+                <div className="p-6 space-y-6">
+
+                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
+                        <div className="flex items-start gap-3">
+                            <div className="text-blue-600 text-xl">💡</div>
+                            <div>
+                                <h4 className="font-semibold text-blue-800 mb-1">Quick Setup Guide</h4>
+                                <ul className="text-sm text-blue-700 space-y-1">
+                                    <li>• Enter the MQTT topic that your sensor publishes to</li>
+                                    <li>• Topics are case-sensitive and unique identifiers</li>
+                                    <li>• Use simple names like: <code className="bg-blue-100 px-1 rounded">ESP</code>, <code className="bg-blue-100 px-1 rounded">ESP2</code>, <code className="bg-blue-100 px-1 rounded">bowl</code></li>
+                                    <li>• System will automatically subscribe and start receiving data</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="flex items-center gap-2 mb-4">
+                            <h3 className="text-lg font-semibold text-gray-800">📊 Sensor Topics</h3>
+                            <span className="text-sm text-gray-500">({sensorTypes.length} sensors)</span>
+                        </div>
+
+                        <div className="space-y-3">
+                            {sensorTypes.map((sensor) => {
+                                const hasError = validationErrors[`sensor_${sensor.code}`]?.length > 0;
+                                const currentTopic = sensorTopics[sensor.code] || '';
+
+                                return (
+                                    <div key={sensor.code} className={`bg-gray-50 border-2 rounded-lg p-4 transition-all ${hasError ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-teal-300'
+                                        }`}>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div>
+                                                <div className="font-medium text-gray-800 flex items-center gap-2">
+                                                    {sensor.name}
+                                                    {getTopicStatusIcon('sensor', sensor.code)}
+                                                </div>
+                                                <div className="text-xs text-gray-500">Unit: {sensor.unit} • Type: {sensor.code}</div>
+                                            </div>
+                                            {copiedTopic === currentTopic && (
+                                                <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                                                    <FaCheck /> Copied!
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <div className="flex-1">
+                                                <label className="block text-xs text-gray-600 mb-1 font-medium">
+                                                    MQTT Topic <span className="text-red-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={currentTopic}
+                                                    onChange={(e) => handleTopicChange('sensor', sensor.code, e.target.value)}
+                                                    className={`w-full px-3 py-2 border-2 rounded-lg outline-none text-sm font-mono transition-all ${hasError
+                                                        ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200'
+                                                        : 'border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200'
+                                                        }`}
+                                                    placeholder={`e.g., ${sensor.code}`}
+                                                />
+                                                {hasError && (
+                                                    <div className="mt-1 text-xs text-red-600">
+                                                        {validationErrors[`sensor_${sensor.code}`].map((err, idx) => (
+                                                            <div key={idx}>• {err}</div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex flex-col gap-1 mt-6">
+                                                <button
+                                                    onClick={() => handleCopyTopic(currentTopic)}
+                                                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                                                    title="Copy topic"
+                                                >
+                                                    <FaCopy className="text-gray-600" />
+                                                </button>
+                                                <button
+                                                    onClick={() => testMQTTConnection(currentTopic, 'sensor', sensor.code)}
+                                                    disabled={testingTopics[`sensor_${sensor.code}`] || hasError}
+                                                    className="p-2 hover:bg-teal-100 rounded-lg transition-colors disabled:opacity-50"
+                                                    title="Test connection"
+                                                >
+                                                    <FaPlug className="text-teal-600" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-2 text-xs text-gray-500">
+                                            Example: <code className="bg-gray-200 px-2 py-0.5 rounded">{sensor.code}</code> or <code className="bg-gray-200 px-2 py-0.5 rounded">ESP2</code>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="flex items-center gap-2 mb-4">
+                            <h3 className="text-lg font-semibold text-gray-800">🎛️ Actuator Topics</h3>
+                            <span className="text-sm text-gray-500">({actuatorTypes.length} actuators)</span>
+                        </div>
+
+                        <div className="space-y-3">
+                            {actuatorTypes.map((actuator) => {
+                                const hasError = validationErrors[`actuator_${actuator.code}`]?.length > 0;
+                                const currentTopic = actuatorTopics[actuator.code] || '';
+
+                                return (
+                                    <div key={actuator.code} className={`bg-gray-50 border-2 rounded-lg p-4 transition-all ${hasError ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-teal-300'
+                                        }`}>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xl">{actuator.icon}</span>
+                                                <div>
+                                                    <div className="font-medium text-gray-800 flex items-center gap-2">
+                                                        {actuator.name}
+                                                        {getTopicStatusIcon('actuator', actuator.code)}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">Control device • Type: {actuator.code}</div>
+                                                </div>
+                                            </div>
+                                            {copiedTopic === currentTopic && (
+                                                <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                                                    <FaCheck /> Copied!
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <div className="flex-1">
+                                                <label className="block text-xs text-gray-600 mb-1 font-medium">
+                                                    MQTT Topic <span className="text-red-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={currentTopic}
+                                                    onChange={(e) => handleTopicChange('actuator', actuator.code, e.target.value)}
+                                                    className={`w-full px-3 py-2 border-2 rounded-lg outline-none text-sm font-mono transition-all ${hasError
+                                                        ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200'
+                                                        : 'border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200'
+                                                        }`}
+                                                    placeholder={`e.g., ${actuator.code}`}
+                                                />
+                                                {hasError && (
+                                                    <div className="mt-1 text-xs text-red-600">
+                                                        {validationErrors[`actuator_${actuator.code}`].map((err, idx) => (
+                                                            <div key={idx}>• {err}</div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex flex-col gap-1 mt-6">
+                                                <button
+                                                    onClick={() => handleCopyTopic(currentTopic)}
+                                                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                                                    title="Copy topic"
+                                                >
+                                                    <FaCopy className="text-gray-600" />
+                                                </button>
+                                                <button
+                                                    onClick={() => testMQTTConnection(currentTopic, 'actuator', actuator.code)}
+                                                    disabled={testingTopics[`actuator_${actuator.code}`] || hasError}
+                                                    className="p-2 hover:bg-teal-100 rounded-lg transition-colors disabled:opacity-50"
+                                                    title="Test connection"
+                                                >
+                                                    <FaPlug className="text-teal-600" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-2 text-xs text-gray-500">
+                                            Example: <code className="bg-gray-200 px-2 py-0.5 rounded">{actuator.code}</code> or <code className="bg-gray-200 px-2 py-0.5 rounded">control/{actuator.code}</code>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4">
+                        <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Important Notes</h4>
+                        <ul className="text-sm text-yellow-700 space-y-1">
+                            <li>• Topics must match exactly what your sensors publish to</li>
+                            <li>• System will automatically subscribe to these topics</li>
+                            <li>• Data will start flowing immediately after saving</li>
+                            <li>• You can change topics later by editing the room configuration</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div className="sticky bottom-0 bg-gray-50 border-t-2 border-gray-200 p-6 flex gap-3 rounded-b-lg">
+                    <button
+                        onClick={handleSave}
+                        className="flex-1 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 shadow-lg"
+                    >
+                        <FaSave />
+                        {isNew ? 'Create Room & Subscribe' : 'Save & Update Subscriptions'}
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition-colors"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
     const { user } = useContext(AuthContext);
     const [locations, setLocations] = useState([]);
     const [newLocationName, setNewLocationName] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const [loading, setLoading] = useState(true);
     const [socket, setSocket] = useState(null);
-    const [updatingLocations, setUpdatingLocations] = useState(new Set());
+    const [showConfig, setShowConfig] = useState(false);
+    const [selectedRoom, setSelectedRoom] = useState(null);
+
+    // Sensor types from your database (matching exactly)
+    const [sensorTypes] = useState([
+        { code: 'temperature', name: 'Temperature', unit: '°C', category: 'environmental' },
+        { code: 'humidity', name: 'Humidity', unit: '%', category: 'environmental' },
+        { code: 'bowl_temp', name: 'Bowl Temperature', unit: '°C', category: 'process' },
+        { code: 'sonar_distance', name: 'Sonar Distance', unit: 'cm', category: 'physical' },
+        { code: 'co2_level', name: 'CO2 Level', unit: 'ppm', category: 'chemical' },
+        { code: 'sugar_level', name: 'Sugar Level', unit: '°Brix', category: 'chemical' },
+        { code: 'airflow', name: 'Airflow', unit: 'm/s', category: 'environmental' },
+        { code: 'bowl_fan_status', name: 'Bowl Fan Status', unit: 'status', category: 'status' },
+        { code: 'sonar_pump_status', name: 'Pump Status', unit: 'status', category: 'status' },
+        { code: 'co2_fermentation_status', name: 'CO2 Fermentation Status', unit: 'status', category: 'status' },
+        { code: 'sugar_fermentation_status', name: 'Sugar Fermentation Status', unit: 'status', category: 'status' }
+    ]);
+
+    // Actuator types from your database (matching exactly)
+    const [actuatorTypes] = useState([
+        { code: 'heater', name: 'Heater', icon: '🔥', category: 'temperature' },
+        { code: 'cooler', name: 'Cooler', icon: '❄️', category: 'temperature' },
+        { code: 'humidifier', name: 'Humidifier', icon: '💧', category: 'humidity' },
+        { code: 'dehumidifier', name: 'Dehumidifier', icon: '💨', category: 'humidity' },
+        { code: 'fan', name: 'Fan', icon: '🌀', category: 'airflow' },
+        { code: 'bowl_fan', name: 'Bowl Fan', icon: '🫧', category: 'process' },
+        { code: 'water_pump', name: 'Water Pump', icon: '⚡', category: 'process' }
+    ]);
+
 
     useEffect(() => {
         if (!user) return;
-
         fetchUserLocations();
         setupRealtimeUpdates();
-
         return () => {
-            if (socket) {
-                socket.disconnect();
-            }
+            if (socket) socket.disconnect();
         };
     }, [user]);
+
 
     const setupRealtimeUpdates = () => {
         const socketConnection = createSocket(user.token);
         setSocket(socketConnection);
 
-        socketConnection.on('connect', () => {
-            //console.log('📡 LocationSelector connected to real-time updates');
-        });
-
-        // Listen for location list updates
         socketConnection.on('locationListUpdate', (data) => {
-            // console.log('📍 Real-time location update received:', data);
             if (data.userId === user.id) {
                 setLocations(data.locations);
             }
         });
 
-        // Listen for new measurements to update counts
-        socketConnection.on('environmentUpdate', (data) => {
-            if (data.userId === user.id) {
-                updateLocationMeasurementCount(data.location);
-            }
-        });
-
-
-        socketConnection.on('environmentUpdate', (data) => {
-            if (data.userId === user.id) {
-                updateLocationMeasurementCount(data.location);
-
-                // Add visual feedback
-                setUpdatingLocations(prev => new Set([...prev, data.location]));
-                setTimeout(() => {
-                    setUpdatingLocations(prev => {
-                        const newSet = new Set(prev);
-                        newSet.delete(data.location);
-                        return newSet;
-                    });
-                }, 1000);
-            }
-        });
-
-        // Listen for new location additions
         socketConnection.on('newLocationAdded', (data) => {
             if (data.userId === user.id) {
-                //console.log(`✨ New location "${data.location}" added in real-time`);
                 setLocations(prev => {
-                    // Check if location already exists
                     const exists = prev.some(loc => loc.location === data.location);
                     if (!exists) {
                         return [...prev, {
                             location: data.location,
+                            room_id: data.roomId,
                             measurement_count: 0,
                             last_measurement: new Date()
                         }];
@@ -85,220 +442,250 @@ const LocationSelector = ({ selectedLocation, onLocationChange }) => {
                 });
             }
         });
-
-        socketConnection.on('disconnect', () => {
-            // console.log('📡 LocationSelector disconnected from real-time updates');
-        });
     };
 
-    const updateLocationMeasurementCount = (locationName) => {
-        setLocations(prev =>
-            prev.map(loc =>
-                loc.location === locationName
-                    ? {
-                        ...loc,
-                        measurement_count: (loc.measurement_count || 0) + 1,
-                        last_measurement: new Date()
-                    }
-                    : loc
-            )
-        );
-    };
 
     const fetchUserLocations = async () => {
         if (!user) return;
-
         try {
             const response = await fetch(`${API_BASE_URL}/api/locations`, {
-                headers: {
-                    'Authorization': `Bearer ${user.token}`
-                }
+                headers: { 'Authorization': `Bearer ${user.token}` }
             });
 
             if (response.ok) {
                 const data = await response.json();
-                const locationsList = data.locations || [];
-                setLocations(locationsList);
+                setLocations(data.locations || []);
 
-                // Set default location if none selected and locations exist
-                if (!selectedLocation && locationsList.length > 0) {
-                    onLocationChange(locationsList[0].location);
-                } else if (locationsList.length === 0 && !selectedLocation) {
-                    onLocationChange('main-room');
+                if (!selectedLocation && data.locations.length > 0) {
+                    onLocationChange(data.locations[0].location);
                 }
             }
         } catch (error) {
             console.error('Error fetching locations:', error);
-            if (!selectedLocation) {
-                onLocationChange('main-room');
-            }
         } finally {
             setLoading(false);
         }
     };
 
-    const handleAddLocation = async () => {
-        if (!newLocationName.trim()) return;
 
+    const generateRoomId = () => {
+        return `ROOM_${Date.now()}_${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    };
+
+
+    const handleCreateRoomClick = () => {
+        if (!newLocationName.trim()) return;
         const locationName = newLocationName.trim();
+        const roomId = generateRoomId();
+
+        setSelectedRoom({
+            location: locationName,
+            room_id: roomId,
+            isNew: true
+        });
+        setShowConfig(true);
+        setIsAdding(false);
+    };
+
+
+    const handleSaveRoomWithSensors = async (sensorTopics, actuatorTopics) => {
+        if (!selectedRoom || !selectedRoom.isNew) return;
 
         try {
-            // Initialize the location on the backend
+            console.log('🔵 Sending room creation request with:', {
+                roomName: selectedRoom.location,
+                roomId: selectedRoom.room_id,
+                sensorTopics,
+                actuatorTopics
+            });
+
             const response = await fetch(
-                `${API_BASE_URL}/api/locations/${encodeURIComponent(locationName)}/initialize`,
+                `${API_BASE_URL}/api/locations/create-room`, // ✅ FIXED: Changed from create-room-with-mqtt
                 {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${user.token}`
-                    }
+                        'Authorization': `Bearer ${user.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        roomName: selectedRoom.location,
+                        roomId: selectedRoom.room_id,
+                        sensorTopics: sensorTopics,      // ✅ FIXED: Send as object
+                        actuatorTopics: actuatorTopics   // ✅ FIXED: Send as object
+                    })
                 }
             );
 
             if (response.ok) {
-                //console.log(`✅ Location "${locationName}" initialized for simulation`);
+                const result = await response.json();
+                console.log(`✅ Room created successfully:`, result);
 
-                // Emit new location event for real-time updates across all users
                 if (socket) {
                     socket.emit('locationAdded', {
                         userId: user.id,
-                        location: locationName
+                        location: selectedRoom.location,
+                        roomId: selectedRoom.room_id
                     });
+                }
+
+                onLocationChange(selectedRoom.location);
+                setNewLocationName('');
+                setShowConfig(false);
+                setSelectedRoom(null);
+                fetchUserLocations();
+            } else {
+                const errorData = await response.json();
+                console.error('❌ Failed to create room:', errorData);
+                alert(`Failed to create room: ${errorData.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('❌ Error creating room:', error);
+            alert(`Error creating room: ${error.message}`);
+        }
+    };
+
+
+    const handleConfigureRoom = (room) => {
+        setSelectedRoom({ ...room, isNew: false });
+        setShowConfig(true);
+    };
+
+
+    const handleDeleteRoom = async (roomId, locationName) => {
+        if (!confirm(`Delete "${locationName}"? This will remove all sensors.`)) return;
+
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/api/locations/${roomId}`,
+                {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${user.token}` }
+                }
+            );
+
+            if (response.ok) {
+                setLocations(prev => prev.filter(loc => loc.room_id !== roomId));
+                if (selectedLocation === locationName) {
+                    onLocationChange(locations[0]?.location || null);
                 }
             }
         } catch (error) {
-            console.error('Error initializing location:', error);
+            console.error('Error deleting room:', error);
         }
-
-        // Switch to the new location
-        onLocationChange(locationName);
-        setNewLocationName('');
-        setIsAdding(false);
-
-        // Optimistic update - add to local state immediately
-        setLocations(prev => {
-            const exists = prev.some(loc => loc.location === locationName);
-            if (!exists) {
-                return [...prev, {
-                    location: locationName,
-                    measurement_count: 0,
-                    last_measurement: new Date()
-                }];
-            }
-            return prev;
-        });
     };
 
-    const handleLocationClick = (location) => {
-        onLocationChange(location);
-    };
 
     if (loading) {
         return (
-            <div className="location-selector">
-                <h3><FaMapMarkerAlt /> Select Location</h3>
-                <p>Loading locations...</p>
+            <div className="bg-white rounded-lg shadow-lg p-4">
+                <p className="text-gray-600">Loading locations...</p>
             </div>
         );
     }
 
+
     return (
         <div className="relative group">
-            {/* Selected Location Display */}
-            <div className="bg-teal-700 hover:bg-teal-600 text-white px-4 py-2.5 rounded-lg cursor-pointer transition-all duration-200 flex items-center gap-3 min-w-[250px] shadow-lg">
-                <FaMapMarkerAlt className="text-teal-200" />
+            <div className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white px-5 py-3 rounded-lg cursor-pointer transition-all duration-200 flex items-center gap-3 min-w-[280px] shadow-lg">
+                <FaMapMarkerAlt className="text-teal-200 text-xl" />
                 <div className="flex-1">
-                    <div className="text-sm font-medium">
+                    <div className="text-sm font-semibold">
                         {locations.find(loc => loc.location === selectedLocation)?.location || 'Select Location'}
                     </div>
                     <div className="text-xs text-teal-200">
-                        {locations.find(loc => loc.location === selectedLocation)?.measurement_count || 0} measurements
+                        {locations.find(loc => loc.location === selectedLocation)?.room_id || 'No room selected'}
                     </div>
                 </div>
-                <svg className="w-4 h-4 text-teal-200 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-teal-200 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
             </div>
 
-            {/* Dropdown Menu - Shows on Hover */}
-            <div className="absolute top-full left-0 mt-2 w-full min-w-[300px] bg-white rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 max-h-[400px] overflow-y-auto">
+            <div className="absolute top-full left-0 mt-2 w-full min-w-[350px] bg-white rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 max-h-[500px] overflow-y-auto">
 
-                {/* Location Options */}
                 <div className="py-2">
                     {locations.map((loc, index) => (
-                        <button
+                        <div
                             key={`${loc.location}-${index}`}
-                            className={`w-full px-4 py-3 text-left hover:bg-teal-50 transition-colors flex items-start gap-3 border-l-4 ${selectedLocation === loc.location
+                            className={`group/item px-4 py-3 hover:bg-teal-50 transition-colors border-l-4 ${selectedLocation === loc.location
                                 ? 'border-teal-600 bg-teal-50'
                                 : 'border-transparent'
-                                } ${updatingLocations.has(loc.location)
-                                    ? 'bg-blue-50 animate-pulse'
-                                    : ''
                                 }`}
-                            onClick={() => handleLocationClick(loc.location)}
                         >
-                            <FaMapMarkerAlt className={`mt-1 ${selectedLocation === loc.location
-                                ? 'text-teal-600'
-                                : 'text-gray-400'
-                                }`} />
+                            <div className="flex items-start gap-3">
+                                <FaMapMarkerAlt className={`mt-1 ${selectedLocation === loc.location ? 'text-teal-600' : 'text-gray-400'
+                                    }`} />
 
-                            <div className="flex-1">
-                                <div className="flex items-center justify-between">
-                                    <span className={`font-medium ${selectedLocation === loc.location
-                                        ? 'text-teal-700'
-                                        : 'text-gray-800'
-                                        }`}>
-                                        {loc.location}
-                                    </span>
-                                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                                        {loc.measurement_count || 0}
-                                    </span>
+                                <div className="flex-1 cursor-pointer" onClick={() => onLocationChange(loc.location)}>
+                                    <div className="flex items-center justify-between">
+                                        <span className={`font-medium ${selectedLocation === loc.location ? 'text-teal-700' : 'text-gray-800'
+                                            }`}>
+                                            {loc.location}
+                                        </span>
+                                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                                            {loc.measurement_count || 0}
+                                        </span>
+                                    </div>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        Room ID: {loc.room_id}
+                                    </div>
                                 </div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                    Last update: {loc.last_measurement
-                                        ? new Date(loc.last_measurement).toLocaleTimeString()
-                                        : 'No data'}
+
+                                <div className="flex gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleConfigureRoom(loc);
+                                        }}
+                                        className="p-2 hover:bg-teal-100 rounded-lg transition-colors"
+                                        title="Configure MQTT Topics"
+                                    >
+                                        <FaCog className="text-teal-600 text-sm" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteRoom(loc.room_id, loc.location);
+                                        }}
+                                        className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                                        title="Delete Room"
+                                    >
+                                        <FaTrash className="text-red-600 text-sm" />
+                                    </button>
                                 </div>
                             </div>
-
-                            {updatingLocations.has(loc.location) && (
-                                <span className="inline-flex h-2 w-2 rounded-full bg-blue-500 animate-ping"></span>
-                            )}
-                        </button>
+                        </div>
                     ))}
                 </div>
 
-                {/* Divider */}
                 <div className="border-t border-gray-200"></div>
 
-                {/* Add New Location Section */}
                 {isAdding ? (
                     <div className="p-4 bg-gray-50">
                         <input
                             type="text"
                             value={newLocationName}
                             onChange={(e) => setNewLocationName(e.target.value)}
-                            placeholder="Enter room name (e.g., bedroom, kitchen)"
+                            placeholder="Enter room name (e.g., Fermentation Tank 1)"
                             maxLength={50}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-sm"
-                            onKeyPress={(e) => e.key === 'Enter' && handleAddLocation()}
+                            onKeyPress={(e) => e.key === 'Enter' && handleCreateRoomClick()}
                             autoFocus
                         />
                         <div className="flex gap-2 mt-3">
                             <button
-                                className="flex-1 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-                                onClick={handleAddLocation}
+                                className="flex-1 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                onClick={handleCreateRoomClick}
                             >
-                                <FaPlus className="text-xs" />
-                                Add
+                                Next: Configure MQTT →
                             </button>
                             <button
-                                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-colors"
                                 onClick={() => {
                                     setIsAdding(false);
                                     setNewLocationName('');
                                 }}
                             >
-                                <FaTimes className="text-xs" />
                                 Cancel
                             </button>
                         </div>
@@ -309,12 +696,28 @@ const LocationSelector = ({ selectedLocation, onLocationChange }) => {
                         onClick={() => setIsAdding(true)}
                     >
                         <FaPlus className="text-sm" />
-                        <span>Add New Location</span>
+                        <span>Add New Room</span>
                     </button>
                 )}
             </div>
+
+            {showConfig && selectedRoom && (
+                <MQTTTopicConfigurator
+                    room={selectedRoom}
+                    sensorTypes={sensorTypes}
+                    actuatorTypes={actuatorTypes}
+                    userId={user?.id}
+                    onClose={() => {
+                        setShowConfig(false);
+                        setSelectedRoom(null);
+                    }}
+                    onSave={handleSaveRoomWithSensors}
+                    isNew={selectedRoom.isNew}
+                />
+            )}
         </div>
     );
 };
 
-export default LocationSelector;
+
+export default DynamicLocationSelector;

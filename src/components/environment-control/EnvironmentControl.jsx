@@ -9,8 +9,13 @@ const EnvironmentControl = ({ selectedLocation }) => {
     const { user } = useContext(AuthContext);
 
     // Safe number formatting function
-    const safeToFixed = (value, digits) => {
-        return (typeof value === 'number' && !isNaN(value)) ? value.toFixed(digits) : 'N/A';
+    const safeToFixed = (value, digits = 1) => {
+        // ✅ Handle null/undefined explicitly
+        if (value === null || value === undefined) return 'N/A';
+        // ✅ Convert to number if it's a string
+        const numValue = typeof value === 'string' ? parseFloat(value) : value;
+        // ✅ Check if it's a valid number
+        return (typeof numValue === 'number' && !isNaN(numValue)) ? numValue.toFixed(digits) : 'N/A';
     };
 
     const [currentData, setCurrentData] = useState({
@@ -128,22 +133,42 @@ const EnvironmentControl = ({ selectedLocation }) => {
 
     // Fetch latest environment data to check initial sensor status
     const fetchLatestEnvironment = async () => {
-        if (!selectedLocation || !user) return;
+        if (!selectedLocation || !user) {
+            console.warn('⚠️ [fetchLatestEnvironment] Missing selectedLocation or user', { selectedLocation, user: user?.id });
+            return;
+        }
+
+        console.log('📊 [fetchLatestEnvironment] START - Location:', selectedLocation);
 
         try {
-            const response = await fetch(
-                `${API_BASE_URL}/api/locations/${encodeURIComponent(selectedLocation)}/latest`,
-                { headers: { 'Authorization': `Bearer ${user.token}` } }
-            );
+            const url = `${API_BASE_URL}/api/locations/${encodeURIComponent(selectedLocation)}/latest`;
+            console.log('📡 [fetchLatestEnvironment] Fetching from:', url);
+
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${user.token}` }
+            });
+
+            console.log('📬 [fetchLatestEnvironment] Response status:', response.status, response.statusText);
 
             if (response.ok) {
                 const data = await response.json();
+                console.log('✅ [fetchLatestEnvironment] Data received:', data);
+
                 if (data.status === 'success' && data.measurement) {
                     const measurement = data.measurement;
+                    console.log('📦 [fetchLatestEnvironment] Measurement:', {
+                        temp: measurement.temperature,
+                        humidity: measurement.humidity,
+                        airflow: measurement.airflow,
+                        created_at: measurement.created_at
+                    });
 
-                    // Check if we have recent data and mark sensor as active
+                    // Check if we have recent data
                     const measurementTime = new Date(measurement.created_at);
                     const timeSinceLastMeasurement = Date.now() - measurementTime.getTime();
+
+                    console.log('⏱️ [fetchLatestEnvironment] Time since last measurement:',
+                        `${(timeSinceLastMeasurement / 1000).toFixed(1)}s`);
 
                     setCurrentData({
                         temperature: typeof measurement.temperature === 'number' ? measurement.temperature : null,
@@ -151,17 +176,30 @@ const EnvironmentControl = ({ selectedLocation }) => {
                         airflow: typeof measurement.airflow === 'number' ? measurement.airflow : null
                     });
 
+                    console.log('✅ [fetchLatestEnvironment] State updated');
+
                     // If data is recent (less than 2 minutes), mark sensor as active
-                    if (timeSinceLastMeasurement < 120000) { // 2 minutes
+                    if (timeSinceLastMeasurement < 120000) {
+                        console.log('🟢 [fetchLatestEnvironment] Data is FRESH - Marking sensor ACTIVE');
                         setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
-                        setSensorTimeout();
+                    } else {
+                        console.log('🔴 [fetchLatestEnvironment] Data is STALE - Sensor marked INACTIVE');
+                        setRealTimeStatus(prev => ({ ...prev, sensorActive: false }));
                     }
+                } else {
+                    console.warn('⚠️ [fetchLatestEnvironment] Invalid response structure:', data);
                 }
+            } else {
+                console.error('❌ [fetchLatestEnvironment] API error:', response.status, await response.text());
             }
         } catch (err) {
-            console.error('Error fetching latest environment:', err);
+            console.error('❌ [fetchLatestEnvironment] Exception:', err.message, err);
         }
+
+        console.log('📊 [fetchLatestEnvironment] END\n');
     };
+
+
 
     // SINGLE effect to handle location changes and socket management
     useEffect(() => {
@@ -907,13 +945,13 @@ const EnvironmentControl = ({ selectedLocation }) => {
                                 </div>
                                 <h3 className="text-sm md:text-base font-medium text-gray-900">Temperature</h3>
                             </div>
-                            <div className="flex items-baseline gap-1.5">
+                            {/* <div className="flex items-baseline gap-1.5">
                                 <span className="text-2xl md:text-3xl font-light tracking-tight"
                                     style={{ color: getStatusColor(currentData.temperature, setpoints.temperature, 0.5) }}>
                                     {displayedTemperature}
                                 </span>
                                 <span className="text-base md:text-lg font-light text-gray-400">°C</span>
-                            </div>
+                            </div> */}
                         </div>
 
                         {/* Status Indicator */}

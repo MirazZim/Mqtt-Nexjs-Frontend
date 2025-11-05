@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect, useContext, useMemo, useRef, useCallback } from 'react';
-
 import {
     LineChart,
     AreaChart,
@@ -13,129 +12,55 @@ import {
     Legend,
     ResponsiveContainer
 } from 'recharts';
-
 import AuthContext from '../../context/AuthContext';
+import { Card, CardContent, CardHeader } from "../ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "../ui/card";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-import {
-    ChartContainer,
-    ChartTooltip,
-    ChartTooltipContent,
-    ChartLegend,
-    ChartLegendContent,
-} from "../ui/chart";
-
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "../ui/select";
-
-// Enhanced throttle utility function
-const throttle = (func, delay) => {
-    let timeoutId;
-    let lastExecTime = 0;
-    return function (...args) {
-        const currentTime = Date.now();
-        if (currentTime - lastExecTime > delay) {
-            func.apply(this, args);
-            lastExecTime = currentTime;
-        } else {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-                func.apply(this, args);
-                lastExecTime = Date.now();
-            }, delay - (currentTime - lastExecTime));
-        }
-    };
+const sensorTypeConfigs = {
+    temperature: { label: "Temperature (°C)", color: "#ef4444", icon: "🌡️" },
+    humidity: { label: "Humidity (%)", color: "#3b82f6", icon: "💧" },
+    airflow: { label: "Airflow (m/s)", color: "#8b5cf6", icon: "💨" },
+    co2_level: { label: "CO2 (ppm)", color: "#f59e0b", icon: "🫧" },
+    sugar_level: { label: "Sugar (Brix)", color: "#ec4899", icon: "🍬" },
+    bowl_temp: { label: "Bowl Temp (°C)", color: "#14b8a6", icon: "🍲" },
+    sonar_distance: { label: "Distance (cm)", color: "#06b6d4", icon: "📏" }
 };
 
-// Chart configuration for shadcn
-const chartConfig = {
-    temperature: {
-        label: "Temperature (°C)",
-        color: "hsl(var(--chart-1))",
-    },
-    humidity: {
-        label: "Humidity (%)",
-        color: "#4cc9f0",
-    },
-    airflow: {
-        label: "Airflow (m/s)",
-        color: "#4361ee",
-    },
-};
-
-// ✅ FIXED: Custom Tooltip Component
-const CustomTooltip = ({ active, payload, label, selectedMetrics }) => {
+const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || payload.length === 0) return null;
-
-    // ✅ Format the timestamp properly
     const date = new Date(label);
-    const isValidDate = !isNaN(date.getTime());
-
     return (
         <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
             <p className="text-xs font-semibold text-gray-700 mb-2">
-                {isValidDate ? date.toLocaleString() : 'Invalid Date'}
+                {date.toLocaleString()}
             </p>
-            {payload.map((entry, index) => {
-                // Only show if value is not null and metric is selected
-                if (entry.value === null || entry.value === undefined) return null;
-
-                return (
+            {payload.map((entry, index) => (
+                entry.value != null && (
                     <div key={index} className="flex items-center justify-between gap-3 text-xs">
                         <span className="flex items-center gap-1.5">
-                            <span
-                                className="w-2 h-2 rounded-full"
-                                style={{ backgroundColor: entry.color }}
-                            />
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
                             <span className="text-gray-600">{entry.name}:</span>
                         </span>
                         <span className="font-semibold text-gray-800">
                             {typeof entry.value === 'number' ? entry.value.toFixed(2) : 'N/A'}
-                            {entry.dataKey === 'temperature' ? '°C' :
-                                entry.dataKey === 'humidity' ? '%' : ' m/s'}
                         </span>
                     </div>
-                );
-            })}
+                )
+            ))}
         </div>
     );
 };
 
-// ✅ FIXED: Memoized Chart Component
-const MemoizedChart = React.memo(({
-    data,
-    chartType,
-    selectedMetrics,
-    tempDomain,
-    humidityDomain,
-    airflowDomain,
-    formatXAxisTick,
-    chartKey
-}) => {
+const MemoizedChart = React.memo(({ data, chartType, sensorConfig, yAxisDomain, formatXAxisTick }) => {
     const ChartComponent = chartType === 'area' ? AreaChart : LineChart;
 
     return (
-        <ChartContainer config={chartConfig} className="h-[300px] w-full">
+        <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-                <ChartComponent
-                    data={data}
-                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                >
+                <ChartComponent data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-
-                    {/* ✅ FIXED: X-Axis using timestamp */}
                     <XAxis
                         dataKey="timestamp"
                         tickFormatter={formatXAxisTick}
@@ -144,567 +69,366 @@ const MemoizedChart = React.memo(({
                         tickLine={false}
                         axisLine={false}
                     />
-
-                    {/* Dynamic temperature Y-axis (left) */}
-                    {selectedMetrics.temperature && (
-                        <YAxis
-                            yAxisId="temp"
-                            domain={tempDomain}
-                            tickFormatter={(value) => `${Math.round(value * 10) / 10}°C`}
-                            tickLine={false}
-                            axisLine={false}
-                            className="text-[10px]"
-                            width={50}
+                    <YAxis domain={yAxisDomain} tickLine={false} axisLine={false} fontSize={10} width={50} />
+                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#888', strokeWidth: 1, strokeDasharray: '5 5' }} />
+                    <Legend />
+                    {chartType === 'area' ? (
+                        <Area
+                            type="monotone"
+                            dataKey="value"
+                            stroke={sensorConfig.color}
+                            fill={sensorConfig.color}
+                            fillOpacity={0.3}
+                            strokeWidth={2}
+                            name={sensorConfig.label}
+                            connectNulls={true}
+                            dot={false}
+                            isAnimationActive={false}
                         />
-                    )}
-
-                    {/* Dynamic humidity Y-axis (right) */}
-                    {selectedMetrics.humidity && (
-                        <YAxis
-                            yAxisId="humidity"
-                            orientation="right"
-                            domain={humidityDomain}
-                            tickFormatter={(value) => `${Math.round(value)}%`}
-                            tickLine={false}
-                            axisLine={false}
-                            className="text-xs"
-                            width={60}
+                    ) : (
+                        <Line
+                            type="monotone"
+                            dataKey="value"
+                            stroke={sensorConfig.color}
+                            strokeWidth={2}
+                            name={sensorConfig.label}
+                            connectNulls={true}
+                            dot={false}
+                            isAnimationActive={false}
                         />
-                    )}
-
-                    {/* Airflow Y-axis (uses temperature axis if no temperature selected) */}
-                    {selectedMetrics.airflow && !selectedMetrics.temperature && (
-                        <YAxis
-                            yAxisId="airflow"
-                            domain={airflowDomain}
-                            tickFormatter={(value) => `${Math.round(value * 10) / 10} m/s`}
-                            tickLine={false}
-                            axisLine={false}
-                            className="text-xs"
-                            width={60}
-                        />
-                    )}
-
-                    {/* ✅ FIXED: Tooltip with proper label */}
-                    <Tooltip
-                        content={<CustomTooltip selectedMetrics={selectedMetrics} />}
-                        cursor={{ stroke: '#888', strokeWidth: 1, strokeDasharray: '5 5' }}
-                    />
-
-                    <Legend
-                        content={<ChartLegendContent />}
-                        wrapperStyle={{ paddingTop: '20px' }}
-                    />
-
-                    {/* ✅ Temperature line/area - ADDED connectNulls */}
-                    {selectedMetrics.temperature && (
-                        chartType === 'area' ? (
-                            <Area
-                                yAxisId="temp"
-                                type="monotone"
-                                dataKey="temperature"
-                                stroke={chartConfig.temperature.color}
-                                fill={chartConfig.temperature.color}
-                                fillOpacity={0.3}
-                                strokeWidth={2}
-                                name="Temperature"
-                                connectNulls={true}
-                                dot={false}
-                            />
-                        ) : (
-                            <Line
-                                yAxisId="temp"
-                                type="monotone"
-                                dataKey="temperature"
-                                stroke={chartConfig.temperature.color}
-                                strokeWidth={2}
-                                name="Temperature"
-                                connectNulls={true}
-                                dot={false}
-                            />
-                        )
-                    )}
-
-                    {/* ✅ Humidity line/area - ADDED connectNulls */}
-                    {selectedMetrics.humidity && (
-                        chartType === 'area' ? (
-                            <Area
-                                yAxisId="humidity"
-                                type="monotone"
-                                dataKey="humidity"
-                                stroke={chartConfig.humidity.color}
-                                fill={chartConfig.humidity.color}
-                                fillOpacity={0.3}
-                                strokeWidth={2}
-                                name="Humidity"
-                                connectNulls={true}
-                                dot={false}
-                            />
-                        ) : (
-                            <Line
-                                yAxisId="humidity"
-                                type="monotone"
-                                dataKey="humidity"
-                                stroke={chartConfig.humidity.color}
-                                strokeWidth={2}
-                                name="Humidity"
-                                connectNulls={true}
-                                dot={false}
-                            />
-                        )
-                    )}
-
-                    {/* ✅ Airflow line/area - ADDED connectNulls */}
-                    {selectedMetrics.airflow && (
-                        chartType === 'area' ? (
-                            <Area
-                                yAxisId={selectedMetrics.temperature ? "temp" : "airflow"}
-                                type="monotone"
-                                dataKey="airflow"
-                                stroke={chartConfig.airflow.color}
-                                fill={chartConfig.airflow.color}
-                                fillOpacity={0.3}
-                                strokeWidth={2}
-                                name="Airflow"
-                                connectNulls={true}
-                                dot={false}
-                            />
-                        ) : (
-                            <Line
-                                yAxisId={selectedMetrics.temperature ? "temp" : "airflow"}
-                                type="monotone"
-                                dataKey="airflow"
-                                stroke={chartConfig.airflow.color}
-                                strokeWidth={2}
-                                name="Airflow"
-                                connectNulls={true}
-                                dot={false}
-                            />
-                        )
                     )}
                 </ChartComponent>
             </ResponsiveContainer>
-        </ChartContainer>
+        </div>
     );
 });
 
 MemoizedChart.displayName = 'MemoizedChart';
 
-const EnvironmentChart = ({ selectedLocation }) => {
+const EnvironmentChart = () => {
     const { user, socket } = useContext(AuthContext);
-    const chartContainerRef = useRef(null);
-    const isInitialMount = useRef(true);
-
+    const isMountedRef = useRef(true);
+    const [availableSensors, setAvailableSensors] = useState([]);
+    const [selectedSensorType, setSelectedSensorType] = useState('temperature');
+    const [currentSensor, setCurrentSensor] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [selectedDays, setSelectedDays] = useState(5); // Default to 5 minutes
+    const [selectedPeriod, setSelectedPeriod] = useState('1h');
     const [chartType, setChartType] = useState('area');
-    const [selectedMetrics, setSelectedMetrics] = useState({
-        temperature: true,
-        humidity: true,
-        airflow: false
-    });
     const [measurements, setMeasurements] = useState([]);
     const [lastUpdate, setLastUpdate] = useState(null);
-    const [isConnected, setIsConnected] = useState(false);
 
-    // Stable chart key for React optimization
-    const chartKey = useMemo(() =>
-        `${selectedLocation}-${selectedDays}-${chartType}-${Object.entries(selectedMetrics).filter(([, v]) => v).map(([k]) => k).join('-')}`,
-        [selectedLocation, selectedDays, selectedMetrics, chartType]
-    );
-
-    // Data validation utilities (memoized)
-    const validateAndCleanTimestamp = useCallback((timestamp) => {
-        const date = new Date(timestamp).getTime();
-        return Number.isFinite(date) && date > 0;
+    // Mount tracking
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => { isMountedRef.current = false; };
     }, []);
 
-    const cleanNumericValue = useCallback((value) => {
-        if (value === null || value === undefined) return null;
-        const numValue = parseFloat(value);
-        return Number.isFinite(numValue) ? numValue : null;
-    }, []);
+    // Fetch sensors
+    useEffect(() => {
+        const fetchSensors = async () => {
+            if (!user?.token) {
+                setError('Please log in');
+                setLoading(false);
+                return;
+            }
 
-    const validateAndCleanData = useCallback((data) => {
-        if (!Array.isArray(data)) {
-            console.warn('Invalid data format - not an array');
-            return [];
-        }
-
-        return data
-            .filter(measurement => {
-                if (!measurement || !measurement.created_at) {
-                    return false;
-                }
-                return validateAndCleanTimestamp(measurement.created_at);
-            })
-            .map(measurement => {
-                const cleanMeasurement = { ...measurement };
-                ['temperature', 'humidity', 'airflow'].forEach(key => {
-                    cleanMeasurement[key] = cleanNumericValue(measurement[key]);
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/sensors`, {
+                    headers: { 'Authorization': `Bearer ${user.token}`, 'Content-Type': 'application/json' },
+                    cache: 'no-store'
                 });
-                return cleanMeasurement;
-            });
-    }, [validateAndCleanTimestamp, cleanNumericValue]);
 
-    // Filter data for last 5 minutes (super fast!)
-    const filterLast5Minutes = useCallback((data) => {
-        const now = Date.now();
-        const fiveMinutesAgo = now - (5 * 60 * 1000); // 5 minutes in milliseconds
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const result = await response.json();
 
-        return data.filter(measurement => {
-            const timestamp = new Date(measurement.created_at).getTime();
-            return timestamp >= fiveMinutesAgo;
-        });
-    }, []);
-
-    // Enhanced data processing with intelligent sampling and Y-axis calculation
-    const { chartData, axisDomains } = useMemo(() => {
-        if (!measurements || measurements.length === 0) {
-            return {
-                chartData: [],
-                axisDomains: {
-                    tempDomain: [0, 100],
-                    humidityDomain: [0, 100],
-                    airflowDomain: [0, 10]
+                if (result.status === 'success' && result.sensors && isMountedRef.current) {
+                    setAvailableSensors(result.sensors);
                 }
-            };
+            } catch (err) {
+                if (isMountedRef.current) setError(`Failed: ${err.message}`);
+            }
+        };
+
+        fetchSensors();
+    }, [user]);
+
+    // Available sensor types
+    const availableSensorTypes = useMemo(() => {
+        const types = new Set();
+        availableSensors.forEach(sensor => {
+            if (sensor.type_code && sensor.is_active) types.add(sensor.type_code.toLowerCase());
+        });
+        return Array.from(types);
+    }, [availableSensors]);
+
+    // Find sensor with data
+    useEffect(() => {
+        const findSensor = async () => {
+            if (availableSensors.length === 0 || !selectedSensorType || !user?.token) {
+                setCurrentSensor(null);
+                return;
+            }
+
+            const sensorsOfType = availableSensors
+                .filter(s => s.type_code?.toLowerCase() === selectedSensorType.toLowerCase() && s.is_active)
+                .sort((a, b) => a.id - b.id);
+
+            if (sensorsOfType.length === 0) {
+                setCurrentSensor(null);
+                return;
+            }
+
+            // Find sensor with recent data
+            for (const sensor of sensorsOfType) {
+                try {
+                    const response = await fetch(
+                        `${API_BASE_URL}/api/environment/${sensor.id}?period=1h`,
+                        {
+                            headers: { 'Authorization': `Bearer ${user.token}`, 'Content-Type': 'application/json' },
+                            cache: 'no-store'
+                        }
+                    );
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.status === 'success' && result.data?.length > 0) {
+                            if (isMountedRef.current) setCurrentSensor(sensor);
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    console.error(`Error checking sensor ${sensor.id}:`, err);
+                }
+            }
+
+            // Fallback to first sensor
+            if (isMountedRef.current) setCurrentSensor(sensorsOfType[0]);
+        };
+
+        findSensor();
+    }, [selectedSensorType, availableSensors, user]);
+
+    // Fetch historical data
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!currentSensor || !user?.token) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                setError(null);
+
+                const response = await fetch(
+                    `${API_BASE_URL}/api/environment/${currentSensor.id}?period=${selectedPeriod}`,
+                    {
+                        headers: { 'Authorization': `Bearer ${user.token}`, 'Content-Type': 'application/json' },
+                        cache: 'no-store',
+                        next: { revalidate: 0 }
+                    }
+                );
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const result = await response.json();
+
+                if (result.status === 'success' && isMountedRef.current) {
+                    setMeasurements(result.data || []);
+                    setLastUpdate(new Date());
+                } else if (isMountedRef.current) {
+                    setError(result.message || 'No data available');
+                    setMeasurements([]);
+                }
+            } catch (err) {
+                if (isMountedRef.current) {
+                    setError(`Failed: ${err.message}`);
+                    setMeasurements([]);
+                }
+            } finally {
+                if (isMountedRef.current) setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [currentSensor, selectedPeriod, user]);
+
+    // ✅ OPTIMAL: Real-time Socket.IO updates (event-driven, no polling)
+    useEffect(() => {
+        if (!socket || !currentSensor) return;
+
+        console.log(`🔌 Real-time updates: sensor_${currentSensor.id}`);
+
+        socket.emit('joinSensor', currentSensor.id);
+
+        const handleSensorData = (data) => {
+            if (data.sensorId === currentSensor.id && isMountedRef.current) {
+                console.log(`📊 Live update: ${data.value}`);
+
+                setMeasurements(prev => {
+                    const newPoint = {
+                        timestamp: data.timestamp,
+                        value: parseFloat(data.value),
+                        quality: data.quality || 'good'
+                    };
+
+                    // Add new point and keep last 5000 for performance
+                    const updated = [...prev, newPoint];
+
+                    // Apply period-based limits
+                    const limits = {
+                        '1h': 360,    // 1 hour = 360 points (1 per 10 sec)
+                        '6h': 720,    // 6 hours
+                        '24h': 1440,  // 24 hours
+                        '7d': 2016,   // 7 days
+                        '30d': 4320   // 30 days
+                    };
+
+                    const limit = limits[selectedPeriod] || 1000;
+                    return updated.slice(-limit);
+                });
+
+                setLastUpdate(new Date());
+            }
+        };
+
+        socket.on('sensorData', handleSensorData);
+
+        return () => {
+            socket.emit('leaveSensor', currentSensor.id);
+            socket.off('sensorData', handleSensorData);
+        };
+    }, [socket, currentSensor, selectedPeriod]);
+
+    // Process chart data with sampling
+    const { chartData, yAxisDomain } = useMemo(() => {
+        if (!measurements || measurements.length === 0) {
+            return { chartData: [], yAxisDomain: [0, 100] };
         }
 
-        // Filter data based on selected time period
-        let filteredMeasurements = measurements;
-        if (selectedDays === 5) { // 5 minutes
-            filteredMeasurements = filterLast5Minutes(measurements);
-        }
-
-        // Enhanced performance with adaptive sampling
-        const maxPoints = selectedDays === 5 ? 50 : // 5 minutes - keep all points
-            selectedDays <= 1 ? 200 :
-                selectedDays <= 7 ? 150 : 100;
-
-        const sampledMeasurements = filteredMeasurements.length > maxPoints
-            ? filteredMeasurements.filter((_, index) => index % Math.ceil(filteredMeasurements.length / maxPoints) === 0)
-            : filteredMeasurements;
+        // Adaptive sampling based on data volume
+        const maxPoints = 150; // Optimal for smooth performance
+        const sampledMeasurements = measurements.length > maxPoints
+            ? measurements.filter((_, index) => index % Math.ceil(measurements.length / maxPoints) === 0)
+            : measurements;
 
         const processedData = sampledMeasurements
-            .map(measurement => {
-                const timestamp = new Date(measurement.created_at).getTime();
-                if (!Number.isFinite(timestamp)) return null;
-
-                const dataPoint = {
-                    timestamp,
-                    time: new Date(timestamp).toLocaleTimeString(),
-                    fullTime: new Date(timestamp).toLocaleString()
-                };
-
-                // Add metrics with validation
-                if (selectedMetrics.temperature) {
-                    const temp = parseFloat(measurement.temperature);
-                    dataPoint.temperature = (Number.isFinite(temp) && temp > -50 && temp < 100)
-                        ? Math.round(temp * 100) / 100 : null;
-                }
-
-                if (selectedMetrics.humidity) {
-                    const humid = parseFloat(measurement.humidity);
-                    dataPoint.humidity = (Number.isFinite(humid) && humid >= 0 && humid <= 100)
-                        ? Math.round(humid * 100) / 100 : null;
-                }
-
-                if (selectedMetrics.airflow) {
-                    const flow = parseFloat(measurement.airflow);
-                    dataPoint.airflow = (Number.isFinite(flow) && flow >= 0 && flow <= 10)
-                        ? Math.round(flow * 100) / 100 : null;
-                }
-
-                return dataPoint;
+            .map(m => {
+                const timestamp = new Date(m.timestamp).getTime();
+                const value = parseFloat(m.value);
+                if (!Number.isFinite(timestamp) || !Number.isFinite(value)) return null;
+                return { timestamp, value: Math.round(value * 100) / 100 };
             })
             .filter(Boolean)
             .sort((a, b) => a.timestamp - b.timestamp);
 
-        // Intelligent Y-axis domain calculations
-        const temps = processedData.map(d => d.temperature).filter(v => v !== null);
-        const humidities = processedData.map(d => d.humidity).filter(v => v !== null);
-        const airflows = processedData.map(d => d.airflow).filter(v => v !== null);
-
-        // Temperature domain with intelligent padding
-        let tempDomain = [0, 100];
-        if (temps.length > 0) {
-            const tempMin = Math.min(...temps);
-            const tempMax = Math.max(...temps);
-            const tempRange = tempMax - tempMin;
-            const tempPadding = Math.max(tempRange * 0.1, 2);
-            tempDomain = [tempMin - tempPadding, tempMax + tempPadding];
+        // Calculate Y-axis domain
+        const values = processedData.map(d => d.value);
+        let domain = [0, 100];
+        if (values.length > 0) {
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const padding = Math.max((max - min) * 0.1, 2);
+            domain = [Math.floor(min - padding), Math.ceil(max + padding)];
         }
 
-        // Humidity domain - adaptive based on actual range
-        let humidityDomain = [0, 100];
-        if (humidities.length > 0) {
-            const humidMin = Math.min(...humidities);
-            const humidMax = Math.max(...humidities);
-            const humidRange = humidMax - humidMin;
+        return { chartData: processedData, yAxisDomain: domain };
+    }, [measurements]);
 
-            if (humidRange < 20) {
-                const center = (humidMin + humidMax) / 2;
-                humidityDomain = [Math.max(0, center - 10), Math.min(100, center + 10)];
-            } else {
-                const humidPadding = humidRange * 0.05;
-                humidityDomain = [
-                    Math.max(0, humidMin - humidPadding),
-                    Math.min(100, humidMax + humidPadding)
-                ];
-            }
+    // Format X-axis
+    const formatXAxisTick = useCallback((tickItem) => {
+        const date = new Date(tickItem);
+        if (['1h', '6h', '24h'].includes(selectedPeriod)) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
+        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }, [selectedPeriod]);
 
-        // Airflow domain
-        let airflowDomain = [0, 10];
-        if (airflows.length > 0) {
-            const airflowMin = Math.min(...airflows);
-            const airflowMax = Math.max(...airflows);
-            const airflowRange = airflowMax - airflowMin;
-            const airflowPadding = Math.max(airflowRange * 0.1, 0.5);
-            airflowDomain = [
-                Math.max(0, airflowMin - airflowPadding),
-                airflowMax + airflowPadding
-            ];
-        }
-
-        return {
-            chartData: processedData,
-            axisDomains: {
-                tempDomain,
-                humidityDomain,
-                airflowDomain
-            }
-        };
-    }, [measurements, selectedMetrics, selectedDays, filterLast5Minutes]);
-
-    // Enhanced throttled real-time updates (faster for 5 minutes)
-    const throttledMeasurementUpdate = useCallback(
-        throttle((newMeasurement) => {
-            const cleanedMeasurement = {
-                ...newMeasurement,
-                temperature: cleanNumericValue(newMeasurement.temperature),
-                humidity: cleanNumericValue(newMeasurement.humidity),
-                airflow: cleanNumericValue(newMeasurement.airflow)
-            };
-
-            setMeasurements(prevMeasurements => {
-                const maxDataPoints = selectedDays === 5 ? 100 : // 5 minutes - smaller buffer
-                    selectedDays <= 1 ? 500 : 200;
-                const updatedMeasurements = [...prevMeasurements, cleanedMeasurement];
-                return updatedMeasurements.slice(-maxDataPoints);
-            });
-
-            setLastUpdate(new Date());
-        }, selectedDays === 5 ? 500 : selectedDays <= 1 ? 1000 : 2000), // Faster updates for 5 minutes
-        [cleanNumericValue, selectedDays]
-    );
-
-    // Socket connection and data management
-    useEffect(() => {
-        if (!socket || !selectedLocation || !user) {
-            setIsConnected(false);
-            setMeasurements([]);
-            return;
-        }
-
-        setLoading(true);
-        setError(null);
-        setIsConnected(true);
-        isInitialMount.current = true;
-
-        socket.emit('joinLocation', selectedLocation);
-        socket.emit('requestChartData', { location: selectedLocation, days: selectedDays });
-
-        const handleChartDataUpdate = (data) => {
-            if (data.location === selectedLocation) {
-                const cleanedData = validateAndCleanData(data.measurements || []);
-                setMeasurements(cleanedData);
-                setError(null);
-                setLoading(false);
-                setLastUpdate(new Date());
-                isInitialMount.current = false;
-            }
-        };
-
-        const handleNewMeasurement = (newMeasurement) => {
-            if (!newMeasurement || !validateAndCleanTimestamp(newMeasurement.created_at)) {
-                return;
-            }
-            throttledMeasurementUpdate(newMeasurement);
-        };
-
-        const handleChartError = () => {
-            setError('Failed to load chart data');
-            setLoading(false);
-        };
-
-        socket.on('chartDataUpdate', handleChartDataUpdate);
-        socket.on('newMeasurement', handleNewMeasurement);
-        socket.on('chartError', handleChartError);
-
-        return () => {
-            socket.emit('leaveLocation', selectedLocation);
-            socket.off('chartDataUpdate', handleChartDataUpdate);
-            socket.off('newMeasurement', handleNewMeasurement);
-            socket.off('chartError', handleChartError);
-            throttledMeasurementUpdate.cancel?.();
-        };
-    }, [socket, selectedLocation, user, selectedDays, validateAndCleanData, validateAndCleanTimestamp, throttledMeasurementUpdate]);
-
-    // Event handlers
-    const handleMetricToggle = (metric) => {
-        setSelectedMetrics(prev => ({
-            ...prev,
-            [metric]: !prev[metric]
-        }));
-    };
-
-    const handleChartTypeChange = (type) => {
-        setChartType(type);
-    };
-
-    const handleRefresh = () => {
-        if (socket && selectedLocation && user) {
-            setLoading(true);
-            setError(null);
-            socket.emit('requestChartData', { location: selectedLocation, days: selectedDays });
-        }
-    };
-
-    // CSV Download function
+    // Download CSV
     const downloadCSV = useCallback(() => {
-        if (measurements.length === 0) {
-            alert('No data available to download');
-            return;
-        }
+        if (measurements.length === 0) return alert('No data to download');
 
-        const headers = ['Timestamp', 'Date', 'Time', 'Location'];
-        if (selectedMetrics.temperature) headers.push('Temperature (°C)');
-        if (selectedMetrics.humidity) headers.push('Humidity (%)');
-        if (selectedMetrics.airflow) headers.push('Airflow (m/s)');
-
+        const headers = ['Timestamp', 'Date', 'Time', 'Sensor', 'Value', 'Unit'];
         const csvData = [
             headers.join(','),
-            ...measurements.map(measurement => {
-                const date = new Date(measurement.created_at);
-                const row = [
-                    `"${measurement.created_at}"`,
+            ...measurements.map(m => {
+                const date = new Date(m.timestamp);
+                return [
+                    `"${m.timestamp}"`,
                     `"${date.toLocaleDateString()}"`,
                     `"${date.toLocaleTimeString()}"`,
-                    `"${selectedLocation}"`
-                ];
-
-                if (selectedMetrics.temperature) row.push(measurement.temperature || 'N/A');
-                if (selectedMetrics.humidity) row.push(measurement.humidity || 'N/A');
-                if (selectedMetrics.airflow) row.push(measurement.airflow || 'N/A');
-
-                return row.join(',');
+                    `"${currentSensor?.sensor_name || selectedSensorType}"`,
+                    m.value,
+                    `"${currentSensor?.unit || ''}"`
+                ].join(',');
             })
         ].join('\n');
 
-        const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([csvData], { type: 'text/csv' });
         const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        const filename = `environment-${selectedLocation.replace(/\s+/g, '-').toLowerCase()}-${selectedDays === 5 ? '5min' : selectedDays + 'days'}-${new Date().toISOString().split('T')[0]}.csv`;
-
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
+        link.href = URL.createObjectURL(blob);
+        link.download = `${currentSensor?.sensor_name || selectedSensorType}-${selectedPeriod}-${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    }, [measurements, selectedLocation, selectedDays, selectedMetrics]);
+        URL.revokeObjectURL(link.href);
+    }, [measurements, selectedSensorType, currentSensor, selectedPeriod]);
 
-    // Memoized Format X-axis ticks (enhanced for 5 minutes)
-    const formatXAxisTick = useCallback((tickItem) => {
-        if (selectedDays === 5) { // 5 minutes
-            return new Date(tickItem).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-        } else if (selectedDays === 1) {
-            return new Date(tickItem).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        } else if (selectedDays === 7) {
-            return new Date(tickItem).toLocaleDateString([], {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit'
-            });
-        } else {
-            return new Date(tickItem).toLocaleDateString([], {
-                month: 'short',
-                day: 'numeric'
-            });
+    const handleRefresh = useCallback(() => {
+        if (currentSensor && user) {
+            setLoading(true);
+            setError(null);
+            setMeasurements([]);
         }
-    }, [selectedDays]);
+    }, [currentSensor, user]);
+
+    const sensorConfig = useMemo(() => {
+        return sensorTypeConfigs[selectedSensorType] || sensorTypeConfigs.temperature;
+    }, [selectedSensorType]);
 
     const shouldRenderChart = chartData.length > 0 && !loading && !error;
 
     return (
         <Card className="w-full">
-            <CardHeader >
-                <div className="flex items-center justify-between flex-wrap">
-
-                    {/* Center: Metric Toggles */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <label className="flex items-center gap-1 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={selectedMetrics.temperature}
-                                onChange={() => handleMetricToggle('temperature')}
-                                className="w-3 h-3 rounded border-gray-300"
-                            />
-                            <span className="text-xs">🌡️ Temp</span>
-                        </label>
-                        <label className="flex items-center gap-1 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={selectedMetrics.humidity}
-                                onChange={() => handleMetricToggle('humidity')}
-                                className="w-3 h-3 rounded border-gray-300"
-                            />
-                            <span className="text-xs">💧 Humid</span>
-                        </label>
-                        <label className="flex items-center gap-1 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={selectedMetrics.airflow}
-                                onChange={() => handleMetricToggle('airflow')}
-                                className="w-3 h-3 rounded border-gray-300"
-                            />
-                            <span className="text-xs">💨 Air</span>
-                        </label>
-                    </div>
-
-                    {/* Right: Controls */}
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                        {/* Time Range Selector */}
-                        <Select
-                            value={selectedDays.toString()}
-                            onValueChange={(value) => setSelectedDays(Number(value))}
-                        >
-                            <SelectTrigger className="w-[110px] h-7 text-xs">
-                                <SelectValue placeholder="Range" />
+            <CardHeader>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium">{sensorConfig.icon}</span>
+                        <Select value={selectedSensorType} onValueChange={setSelectedSensorType}>
+                            <SelectTrigger className="w-[150px] h-7 text-xs">
+                                <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="5" className="text-xs">⚡ 5 Min</SelectItem>
-                                <SelectItem value="1" className="text-xs">24 Hr</SelectItem>
-                                <SelectItem value="7" className="text-xs">7 Days</SelectItem>
-                                <SelectItem value="30" className="text-xs">30 Days</SelectItem>
+                                {availableSensorTypes.map((type) => {
+                                    const config = sensorTypeConfigs[type] || {};
+                                    return (
+                                        <SelectItem key={type} value={type} className="text-xs">
+                                            {config.icon} {type.charAt(0).toUpperCase() + type.slice(1)}
+                                        </SelectItem>
+                                    );
+                                })}
+                            </SelectContent>
+                        </Select>
+                        {currentSensor && (
+                            <span className="text-xs text-gray-500">({currentSensor.sensor_name})</span>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                        <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                            <SelectTrigger className="w-[100px] h-7 text-xs">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="1h" className="text-xs">⚡ 1 Hour</SelectItem>
+                                <SelectItem value="6h" className="text-xs">6 Hours</SelectItem>
+                                <SelectItem value="24h" className="text-xs">24 Hours</SelectItem>
+                                <SelectItem value="7d" className="text-xs">7 Days</SelectItem>
+                                <SelectItem value="30d" className="text-xs">30 Days</SelectItem>
                             </SelectContent>
                         </Select>
 
-                        {/* Chart Type Selector */}
                         <Select value={chartType} onValueChange={setChartType}>
                             <SelectTrigger className="w-[85px] h-7 text-xs">
-                                <SelectValue placeholder="Type" />
+                                <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="line" className="text-xs">Line</SelectItem>
@@ -712,17 +436,15 @@ const EnvironmentChart = ({ selectedLocation }) => {
                             </SelectContent>
                         </Select>
 
-                        {/* Refresh Button */}
                         <button
                             onClick={handleRefresh}
                             disabled={loading}
                             className="px-2 py-1 text-xs rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-                            title="Refresh data"
+                            title="Refresh"
                         >
                             🔄
                         </button>
 
-                        {/* Download CSV Button */}
                         <button
                             onClick={downloadCSV}
                             disabled={loading || measurements.length === 0}
@@ -735,40 +457,65 @@ const EnvironmentChart = ({ selectedLocation }) => {
                 </div>
             </CardHeader>
 
-            <CardContent className="pt-0 px-3 pb-3" ref={chartContainerRef}>
+            <CardContent className="pt-0 px-3 pb-3">
                 {loading ? (
-                    <div className="flex items-center justify-center h-[400px]">
+                    <div className="flex items-center justify-center h-[300px]">
                         <div className="text-center">
                             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mb-2"></div>
-                            <p className="text-sm text-gray-600">Loading chart data...</p>
+                            <p className="text-sm text-gray-600">Loading data...</p>
                         </div>
                     </div>
                 ) : error ? (
-                    <div className="flex flex-col items-center justify-center h-[400px] gap-4">
-                        <p className="text-red-600">{error}</p>
-                        <button
-                            onClick={handleRefresh}
-                            className="px-4 py-2 text-sm font-medium rounded-md bg-teal-600 text-white hover:bg-teal-700 transition-colors"
-                        >
+                    <div className="flex flex-col items-center justify-center h-[300px] gap-4">
+                        <p className="text-red-600 text-sm">{error}</p>
+                        <button onClick={handleRefresh} className="px-4 py-2 text-sm rounded-md bg-teal-600 text-white hover:bg-teal-700">
                             Retry
                         </button>
                     </div>
+                ) : !currentSensor ? (
+                    <div className="flex items-center justify-center h-[300px]">
+                        <p className="text-gray-600 text-sm">No {selectedSensorType} sensor found</p>
+                    </div>
                 ) : measurements.length === 0 ? (
-                    <div className="flex items-center justify-center h-[400px]">
-                        <p className="text-gray-600">No data available for the selected period</p>
+                    <div className="flex items-center justify-center h-[300px]">
+                        <p className="text-gray-600 text-sm">No data for this period</p>
                     </div>
                 ) : shouldRenderChart ? (
                     <MemoizedChart
                         data={chartData}
                         chartType={chartType}
-                        selectedMetrics={selectedMetrics}
-                        tempDomain={axisDomains.tempDomain}
-                        humidityDomain={axisDomains.humidityDomain}
-                        airflowDomain={axisDomains.airflowDomain}
+                        sensorConfig={sensorConfig}
+                        yAxisDomain={yAxisDomain}
                         formatXAxisTick={formatXAxisTick}
-                        chartKey={chartKey}
                     />
                 ) : null}
+
+                {measurements.length > 0 && (
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                        <div>
+                            <p className="text-gray-500">Points</p>
+                            <p className="font-semibold">{measurements.length}</p>
+                        </div>
+                        <div>
+                            <p className="text-gray-500">Average</p>
+                            <p className="font-semibold">
+                                {(measurements.reduce((sum, m) => sum + m.value, 0) / measurements.length).toFixed(2)}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-gray-500">Latest</p>
+                            <p className="font-semibold">
+                                {measurements[measurements.length - 1]?.value.toFixed(2)}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {lastUpdate && (
+                    <div className="mt-2 text-xs text-gray-500 text-center">
+                        Last updated: {lastUpdate.toLocaleTimeString()}
+                    </div>
+                )}
             </CardContent>
         </Card>
     );
