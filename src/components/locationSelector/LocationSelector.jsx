@@ -1,9 +1,108 @@
 "use client";
 import React, { useState, useEffect, useContext } from 'react';
-import { FaMapMarkerAlt, FaPlus, FaTimes, FaCog, FaTrash, FaSave, FaCopy, FaCheckCircle, FaExclamationTriangle, FaPlug, FaCheck } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaPlus, FaTimes, FaCog, FaTrash, FaSave, FaCopy, FaCheckCircle, FaExclamationTriangle, FaPlug, FaCheck, FaExclamation } from 'react-icons/fa';
 import { createSocket } from '../../lib/socket';
 import AuthContext from '../../context/AuthContext';
 import API_BASE_URL from '../../config/api.js';
+import toast from 'react-hot-toast';  // ✅ Import toast
+
+
+// ✅ NEW: Delete Confirmation Modal
+const DeleteConfirmModal = ({ room, onConfirm, onCancel }) => {
+    const [confirmText, setConfirmText] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleConfirm = async () => {
+        if (confirmText !== room.location) {
+            toast.error('Room name does not match!');
+            return;
+        }
+
+        setIsDeleting(true);
+        await onConfirm();
+        setIsDeleting(false);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onCancel}>
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+
+                {/* Header */}
+                <div className="bg-red-600 text-white p-6 rounded-t-lg">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-red-700 p-3 rounded-full">
+                            <FaExclamation className="text-2xl" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold">Delete Room</h2>
+                            <p className="text-red-100 text-sm">This action cannot be undone</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Body */}
+                <div className="p-6">
+                    <div className="mb-4">
+                        <p className="text-gray-700 mb-2">
+                            You are about to delete <span className="font-bold text-red-600">"{room.location}"</span>
+                        </p>
+                        <div className="bg-red-50 border-l-4 border-red-500 p-3 mt-3">
+                            <p className="text-sm text-red-800 font-semibold mb-2">This will permanently:</p>
+                            <ul className="text-sm text-red-700 space-y-1">
+                                <li>• Deactivate all sensors and actuators</li>
+                                <li>• Unsubscribe from all MQTT topics</li>
+                                <li>• Remove all room configurations</li>
+                                <li>• Delete all measurement history</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Type <span className="font-mono bg-gray-100 px-2 py-1 rounded text-red-600">{room.location}</span> to confirm:
+                        </label>
+                        <input
+                            type="text"
+                            value={confirmText}
+                            onChange={(e) => setConfirmText(e.target.value)}
+                            className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none"
+                            placeholder="Enter room name"
+                            autoFocus
+                        />
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="bg-gray-50 p-6 rounded-b-lg flex gap-3">
+                    <button
+                        onClick={handleConfirm}
+                        disabled={confirmText !== room.location || isDeleting}
+                        className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                    >
+                        {isDeleting ? (
+                            <>
+                                <span className="animate-spin">⏳</span>
+                                Deleting...
+                            </>
+                        ) : (
+                            <>
+                                <FaTrash />
+                                Delete Permanently
+                            </>
+                        )}
+                    </button>
+                    <button
+                        onClick={onCancel}
+                        disabled={isDeleting}
+                        className="px-6 py-3 bg-gray-200 hover:bg-gray-300 disabled:opacity-50 text-gray-700 rounded-lg font-semibold transition-colors"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 
 const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSave, onClose, isNew }) => {
@@ -72,6 +171,16 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
     const handleCopyTopic = (topic) => {
         navigator.clipboard.writeText(topic);
         setCopiedTopic(topic);
+        // ✅ Toast notification with custom styling
+        toast.success('Topic copied to clipboard!', {
+            duration: 2000,
+            icon: '📋',
+            style: {
+                borderRadius: '10px',
+                background: '#10b981',
+                color: '#fff',
+            },
+        });
         setTimeout(() => setCopiedTopic(null), 2000);
     };
 
@@ -87,11 +196,35 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                 ...prev,
                 [`${type}_${code}`]: isValid ? 'success' : 'error'
             }));
+
+            // ✅ Toast notification for test result
+            if (isValid) {
+                toast.success(`Topic "${topic}" is valid!`, {
+                    icon: '✅',
+                    style: {
+                        borderRadius: '10px',
+                        background: '#10b981',
+                        color: '#fff',
+                    },
+                });
+            } else {
+                toast.error(`Topic "${topic}" validation failed!`, {
+                    icon: '❌',
+                    style: {
+                        borderRadius: '10px',
+                        background: '#ef4444',
+                        color: '#fff',
+                    },
+                });
+            }
         } catch (error) {
             setTopicStatus(prev => ({
                 ...prev,
                 [`${type}_${code}`]: 'error'
             }));
+            toast.error('Connection test failed!', {
+                icon: '❌',
+            });
         } finally {
             setTestingTopics(prev => ({ ...prev, [`${type}_${code}`]: false }));
         }
@@ -120,6 +253,11 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
 
         if (hasErrors) {
             setValidationErrors(allValidations);
+            // ✅ Error toast
+            toast.error('Please fix validation errors before saving!', {
+                icon: '⚠️',
+                duration: 3000,
+            });
             return;
         }
 
@@ -146,7 +284,8 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
 
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+        // ✅ Blurred backdrop
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
 
                 <div className="sticky top-0 bg-gradient-to-r from-teal-600 to-teal-700 text-white p-6 z-10 rounded-t-lg">
@@ -368,7 +507,6 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
     );
 };
 
-
 const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
     const { user } = useContext(AuthContext);
     const [locations, setLocations] = useState([]);
@@ -378,8 +516,9 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
     const [socket, setSocket] = useState(null);
     const [showConfig, setShowConfig] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false); // ✅ NEW
+    const [roomToDelete, setRoomToDelete] = useState(null); // ✅ NEW
 
-    // Sensor types from your database (matching exactly)
     const [sensorTypes] = useState([
         { code: 'temperature', name: 'Temperature', unit: '°C', category: 'environmental' },
         { code: 'humidity', name: 'Humidity', unit: '%', category: 'environmental' },
@@ -394,7 +533,6 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
         { code: 'sugar_fermentation_status', name: 'Sugar Fermentation Status', unit: 'status', category: 'status' }
     ]);
 
-    // Actuator types from your database (matching exactly)
     const [actuatorTypes] = useState([
         { code: 'heater', name: 'Heater', icon: '🔥', category: 'temperature' },
         { code: 'cooler', name: 'Cooler', icon: '❄️', category: 'temperature' },
@@ -462,6 +600,7 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
             }
         } catch (error) {
             console.error('Error fetching locations:', error);
+            toast.error('Failed to fetch locations');
         } finally {
             setLoading(false);
         }
@@ -489,89 +628,232 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
 
 
     const handleSaveRoomWithSensors = async (sensorTopics, actuatorTopics) => {
-        if (!selectedRoom || !selectedRoom.isNew) return;
+        if (!selectedRoom) return;
 
-        try {
-            console.log('🔵 Sending room creation request with:', {
+        const isNewRoom = selectedRoom.isNew;
+        const endpoint = isNewRoom
+            ? `${API_BASE_URL}/api/locations/create-room`
+            : `${API_BASE_URL}/api/locations/${selectedRoom.room_id}/update`;
+
+        const method = isNewRoom ? 'POST' : 'PUT';
+
+        const requestBody = isNewRoom
+            ? {
                 roomName: selectedRoom.location,
                 roomId: selectedRoom.room_id,
-                sensorTopics,
-                actuatorTopics
-            });
-
-            const response = await fetch(
-                `${API_BASE_URL}/api/locations/create-room`, // ✅ FIXED: Changed from create-room-with-mqtt
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${user.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        roomName: selectedRoom.location,
-                        roomId: selectedRoom.room_id,
-                        sensorTopics: sensorTopics,      // ✅ FIXED: Send as object
-                        actuatorTopics: actuatorTopics   // ✅ FIXED: Send as object
-                    })
-                }
-            );
-
-            if (response.ok) {
-                const result = await response.json();
-                console.log(`✅ Room created successfully:`, result);
-
-                if (socket) {
-                    socket.emit('locationAdded', {
-                        userId: user.id,
-                        location: selectedRoom.location,
-                        roomId: selectedRoom.room_id
-                    });
-                }
-
-                onLocationChange(selectedRoom.location);
-                setNewLocationName('');
-                setShowConfig(false);
-                setSelectedRoom(null);
-                fetchUserLocations();
-            } else {
-                const errorData = await response.json();
-                console.error('❌ Failed to create room:', errorData);
-                alert(`Failed to create room: ${errorData.message || 'Unknown error'}`);
+                sensorTopics: sensorTopics,
+                actuatorTopics: actuatorTopics
             }
-        } catch (error) {
-            console.error('❌ Error creating room:', error);
-            alert(`Error creating room: ${error.message}`);
-        }
+            : {
+                roomName: selectedRoom.location,
+                sensorTopics: sensorTopics,
+                actuatorTopics: actuatorTopics
+            };
+
+        const createOrUpdatePromise = fetch(endpoint, {
+            method: method,
+            headers: {
+                'Authorization': `Bearer ${user.token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        }).then(async (response) => {
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `Failed to ${isNewRoom ? 'create' : 'update'} room`);
+            }
+            return response.json();
+        });
+
+        toast.promise(
+            createOrUpdatePromise,
+            {
+                loading: isNewRoom
+                    ? 'Creating room and configuring MQTT topics...'
+                    : 'Updating room and MQTT topics...',
+                success: (result) => {
+                    console.log(`✅ Room ${isNewRoom ? 'created' : 'updated'} successfully:`, result);
+
+                    if (socket) {
+                        socket.emit('locationAdded', {
+                            userId: user.id,
+                            location: selectedRoom.location,
+                            roomId: result.roomId || selectedRoom.room_id
+                        });
+                    }
+
+                    onLocationChange(selectedRoom.location);
+                    setNewLocationName('');
+                    setShowConfig(false);
+                    setSelectedRoom(null);
+                    fetchUserLocations();
+
+                    return isNewRoom
+                        ? `Room "${selectedRoom.location}" created with ${Object.keys(sensorTopics).length} sensors & ${Object.keys(actuatorTopics).length} actuators!`
+                        : `Room "${selectedRoom.location}" updated successfully!`;
+                },
+                error: (err) => `Error: ${err.message}`,
+            },
+            {
+                success: {
+                    duration: 5000,
+                    icon: isNewRoom ? '🎉' : '✅',
+                    style: {
+                        borderRadius: '10px',
+                        background: '#10b981',
+                        color: '#fff',
+                    },
+                },
+                error: {
+                    duration: 5000,
+                    icon: '❌',
+                    style: {
+                        borderRadius: '10px',
+                        background: '#ef4444',
+                        color: '#fff',
+                    },
+                },
+                loading: {
+                    icon: '⏳',
+                },
+            }
+        );
     };
 
 
-    const handleConfigureRoom = (room) => {
-        setSelectedRoom({ ...room, isNew: false });
-        setShowConfig(true);
-    };
-
-
-    const handleDeleteRoom = async (roomId, locationName) => {
-        if (!confirm(`Delete "${locationName}"? This will remove all sensors.`)) return;
-
+    const handleConfigureRoom = async (room) => {
         try {
             const response = await fetch(
-                `${API_BASE_URL}/api/locations/${roomId}`,
+                `${API_BASE_URL}/api/locations/${room.room_id}/devices`,
                 {
-                    method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${user.token}` }
                 }
             );
 
             if (response.ok) {
-                setLocations(prev => prev.filter(loc => loc.room_id !== roomId));
-                if (selectedLocation === locationName) {
-                    onLocationChange(locations[0]?.location || null);
-                }
+                const data = await response.json();
+
+                const existingSensorTopics = {};
+                const existingActuatorTopics = {};
+
+                data.sensors.forEach(sensor => {
+                    existingSensorTopics[sensor.type_code] = sensor.mqtt_topic;
+                });
+
+                data.actuators.forEach(actuator => {
+                    existingActuatorTopics[actuator.type_code] = actuator.mqtt_topic;
+                });
+
+                setSelectedRoom({
+                    ...room,
+                    isNew: false,
+                    existingSensorTopics,
+                    existingActuatorTopics
+                });
+                setShowConfig(true);
             }
         } catch (error) {
-            console.error('Error deleting room:', error);
+            console.error('Error fetching room devices:', error);
+            toast.error('Failed to load room configuration');
         }
+    };
+
+
+    // ✅ FIXED: Delete handler with modal
+    const handleDeleteRoom = (roomId, locationName) => {
+        console.log('🔵 Opening delete modal for:', roomId, locationName);
+        setRoomToDelete({ room_id: roomId, location: locationName });
+        setShowDeleteModal(true);
+    };
+
+    // ✅ FIXED: Actual delete execution
+    const executeDeleteRoom = async () => {
+        if (!roomToDelete) return;
+
+        const { room_id, location } = roomToDelete;
+
+        console.log('🔵 Executing delete for room ID:', room_id);
+
+        const deletePromise = fetch(
+            `${API_BASE_URL}/api/locations/${room_id}`,
+            {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${user.token}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        ).then(async (response) => {
+            console.log('Delete response status:', response.status);
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to delete room');
+            }
+            return response.json();
+        });
+
+        toast.promise(
+            deletePromise,
+            {
+                loading: `Deleting room "${location}"...`,
+                success: (result) => {
+                    console.log('✅ Delete successful:', result);
+
+                    // ✅ FIX: Properly compare room_id (convert both to numbers)
+                    setLocations(prev => prev.filter(loc => {
+                        const locRoomId = typeof loc.room_id === 'string' ? parseInt(loc.room_id, 10) : loc.room_id;
+                        const deleteRoomId = typeof room_id === 'string' ? parseInt(room_id, 10) : room_id;
+                        return locRoomId !== deleteRoomId;
+                    }));
+
+                    // Change selected location if needed
+                    if (selectedLocation === location) {
+                        const remainingLocations = locations.filter(loc => {
+                            const locRoomId = typeof loc.room_id === 'string' ? parseInt(loc.room_id, 10) : loc.room_id;
+                            const deleteRoomId = typeof room_id === 'string' ? parseInt(room_id, 10) : room_id;
+                            return locRoomId !== deleteRoomId;
+                        });
+                        onLocationChange(remainingLocations[0]?.location || null);
+                    }
+
+                    // Close modal
+                    setShowDeleteModal(false);
+                    setRoomToDelete(null);
+
+                    return `Room "${location}" deleted successfully`;
+                },
+                error: (err) => {
+                    console.error('❌ Delete error:', err);
+                    setShowDeleteModal(false);
+                    setRoomToDelete(null);
+                    return `Failed to delete room: ${err.message}`;
+                },
+            },
+            {
+                success: {
+                    duration: 3000,
+                    icon: '🗑️',
+                    style: {
+                        borderRadius: '10px',
+                        background: '#10b981',
+                        color: '#fff',
+                    },
+                },
+                error: {
+                    duration: 5000,
+                    icon: '❌',
+                    style: {
+                        borderRadius: '10px',
+                        background: '#ef4444',
+                        color: '#fff',
+                    },
+                },
+                loading: {
+                    icon: '⏳',
+                },
+            }
+        );
     };
 
 
@@ -701,6 +983,7 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                 )}
             </div>
 
+            {/* MQTT Configuration Modal */}
             {showConfig && selectedRoom && (
                 <MQTTTopicConfigurator
                     room={selectedRoom}
@@ -713,6 +996,18 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                     }}
                     onSave={handleSaveRoomWithSensors}
                     isNew={selectedRoom.isNew}
+                />
+            )}
+
+            {/* ✅ NEW: Delete Confirmation Modal */}
+            {showDeleteModal && roomToDelete && (
+                <DeleteConfirmModal
+                    room={roomToDelete}
+                    onConfirm={executeDeleteRoom}
+                    onCancel={() => {
+                        setShowDeleteModal(false);
+                        setRoomToDelete(null);
+                    }}
                 />
             )}
         </div>
