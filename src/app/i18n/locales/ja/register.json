@@ -1,0 +1,15 @@
+{
+    "Create Account": "アカウントを作成",
+    "Join us today": "今すぐ参加",
+    "Username": "ユーザー名",
+    "Password": "パスワード",
+    "Confirm Password": "パスワードの確認",
+    "Enter your username": "ユーザー名を入力してください",
+    "Create a password": "パスワードを作成してください",
+    "Re-enter your password": "パスワードを再入力してください",
+    "Already have an account?": "すでにアカウントをお持ちですか？",
+    "Sign in": "サインイン",
+    "Passwords don't match": "パスワードが一致しません",
+    "Registration failed": "登録に失敗しました",
+    "Registration successful! Please login with your new account.": "登録が成功しました！新しいアカウントでログインしてください。"
+}

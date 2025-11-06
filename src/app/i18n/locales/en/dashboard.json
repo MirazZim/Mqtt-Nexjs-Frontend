@@ -1,3 +1,10 @@
 {
-    "Current Environment": "Current Environment"
+    "Current Environment": "Current Environment",
+    "signIn": "Sign in to your account",
+    "username": "Username",
+    "password": "Password",
+    "signInButton": "Sign in",
+    "loginError": "Login failed. Please check your credentials.",
+    "Welcome back": "Welcome back",
+    "enterCredentials": "Enter your credentials to access your account"
 }

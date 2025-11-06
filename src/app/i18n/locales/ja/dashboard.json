@@ -1,3 +1,10 @@
 {
-    "Current Environment": "現在の環境"
+    "Current Environment": "現在の環境",
+    "signIn": "アカウントにサインイン",
+    "username": "ユーザー名",
+    "password": "パスワード",
+    "signInButton": "サインイン",
+    "loginError": "ログインに失敗しました。認証情報を確認してください。",
+    "Welcome back": "おかえりなさい",
+    "enterCredentials": "アカウントにアクセスするには認証情報を入力してください"
 }
