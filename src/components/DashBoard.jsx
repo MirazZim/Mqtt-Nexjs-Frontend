@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useContext, lazy, Suspense } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import CurrentEnvironment from '../components/current-Environment/CurrentEnvironment.jsx';
 import DeviceStatus from '../components/device-status/DeviceStatus.jsx';
 import EnvironmentControl from '../components/environment-control/EnvironmentControl.jsx';
@@ -9,6 +10,7 @@ import AuthContext from '../context/AuthContext.jsx';
 import BowlFanStatus from '../components/Third-Column/Bowl-Fan-Status/BowlFanStatus.jsx';
 import SonarPumpStatus from '../components/Third-Column/Sonar-pump-status/SonarPumpStatus.jsx';
 import IPCamera from '../components/Third-Column/Ip-camera/ip-camera.jsx';
+import { useTranslation } from '../app/i18n/client.js';
 
 // Lazy load heavy components
 const EnvironmentChart = lazy(() => import('../components/environment-chart/EnvironmentChart.jsx'));
@@ -44,8 +46,12 @@ const ChartLoader = () => (
     </div>
 );
 
-
 const Dashboard = () => {
+    const pathname = usePathname();
+    const router = useRouter();
+    const lng = pathname.split("/")[1];
+    const { t } = useTranslation(lng, "dashboard");
+
     const [selectedLocation, setSelectedLocation] = useState(() => {
         const savedLocation = localStorage.getItem('selectedLocation');
         return savedLocation || 'main-room';
@@ -68,6 +74,12 @@ const Dashboard = () => {
     const [showHeavyComponents, setShowHeavyComponents] = useState(false);
     const [locationsData, setLocationsData] = useState(null);
     const [isLoadingLocations, setIsLoadingLocations] = useState(false);
+
+    // Language switching function
+    const changeLanguage = (newLang) => {
+        const currentPath = pathname.split('/').slice(2).join('/'); // Remove language prefix
+        router.push(`/${newLang}/${currentPath}`);
+    };
 
     // Save to localStorage
     useEffect(() => {
@@ -150,28 +162,53 @@ const Dashboard = () => {
             {/* Compact Top Header */}
             <div className="bg-gradient-to-r from-teal-700 via-teal-600 to-blue-600 px-4 py-2 flex items-center justify-between shadow-lg">
                 <h1 className="text-white text-xl font-bold tracking-wide">
-                    Sake Brewing Monitoring System
+                    {t('Sake Brewing Monitoring System')}
                 </h1>
-                {/* Device Status Hover Dropdown */}
-                <div className="relative group">
-                    <button className="flex items-center gap-2 px-3 py-1.5 text-white text-sm font-medium rounded hover:bg-teal-700 transition-colors">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Device Status
-                        <svg className="w-3 h-3 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
 
-                    {/* Invisible bridge to maintain hover */}
-                    <div className="absolute right-0 top-full h-2 w-80 invisible group-hover:visible" />
+                <div className="flex items-center gap-3">
+                    {/* Eye-catching Language Switcher */}
+                    <div className="flex items-center gap-0.5 bg-white/10 backdrop-blur-lg rounded-2xl p-1.5 border border-white/20 shadow-2xl">
+                        <button
+                            onClick={() => changeLanguage('en')}
+                            className={`px-4 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 transform hover:scale-105 ${lng === 'en'
+                                    ? 'bg-white text-cyan-600 shadow-lg shadow-cyan-500/40 ring-2 ring-white'
+                                    : 'text-white hover:bg-cyan-500/30 hover:text-cyan-100 border border-transparent hover:border-cyan-400/50'
+                                }`}
+                        >
+                            EN
+                        </button>
+                        <div className="w-px h-4 bg-gradient-to-b from-transparent via-white/40 to-transparent"></div>
+                        <button
+                            onClick={() => changeLanguage('ja')}
+                            className={`px-4 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 transform hover:scale-105 ${lng === 'ja'
+                                    ? 'bg-white text-pink-600 shadow-lg shadow-pink-500/40 ring-2 ring-white'
+                                    : 'text-white hover:bg-pink-500/30 hover:text-pink-100 border border-transparent hover:border-pink-400/50'
+                                }`}
+                        >
+                            日本語
+                        </button>
+                    </div>
+                    {/* Device Status Hover Dropdown */}
+                    <div className="relative group">
+                        <button className="flex items-center gap-2 px-3 py-1.5 text-white text-sm font-medium rounded hover:bg-teal-700 transition-colors">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            {t('Device Status')}
+                            <svg className="w-3 h-3 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
 
-                    {/* Dropdown Content - Shows on Hover */}
-                    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-2xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-                        <div className="p-3">
-                            <h3 className="text-sm font-semibold text-gray-800 mb-2 pb-2 border-b border-gray-200">Device Status</h3>
-                            <DeviceStatus selectedLocation={selectedLocation} />
+                        {/* Invisible bridge to maintain hover */}
+                        <div className="absolute right-0 top-full h-2 w-80 invisible group-hover:visible" />
+
+                        {/* Dropdown Content - Shows on Hover */}
+                        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-2xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                            <div className="p-3">
+                                <h3 className="text-sm font-semibold text-gray-800 mb-2 pb-2 border-b border-gray-200">{t('Device Status')}</h3>
+                                <DeviceStatus selectedLocation={selectedLocation} />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -201,7 +238,7 @@ const Dashboard = () => {
 
                         {/* Environment Control */}
                         <div className="bg-white rounded-lg shadow-md p-3">
-                            <h3 className="text-sm font-semibold text-gray-800 mb-2">Environment Control</h3>
+                            <h3 className="text-sm font-semibold text-gray-800 mb-2">{t('Environment Control')}</h3>
                             <EnvironmentControl
                                 selectedLocation={selectedLocation}
                                 targetTemperature={targetTemperature}
@@ -215,11 +252,10 @@ const Dashboard = () => {
 
                         <div className="col-span-9 space-y-6">
 
-
                             {/* Temperature Chart */}
                             <div className="bg-white rounded-lg shadow-md p-3 text-black">
                                 <div className="flex items-center justify-between">
-                                    <h2 className="text-base font-semibold text-gray-800">Temperature</h2>
+                                    <h2 className="text-base font-semibold text-gray-800">{t('Temperature')}</h2>
                                 </div>
                                 <Suspense fallback={<ChartLoader />}>
                                     <EnvironmentChart
@@ -236,7 +272,7 @@ const Dashboard = () => {
                                     {isLoadingLocations ? (
                                         <div className="flex justify-center items-center h-[400px] text-base text-gray-600 bg-gray-50 rounded-lg">
                                             <i className="fas fa-spinner fa-spin mr-2"></i>
-                                            Loading temperature data...
+                                            {t('Loading temperature data...')}
                                         </div>
                                     ) : (
                                         <ComponentLoader height={700}>
@@ -252,13 +288,12 @@ const Dashboard = () => {
                                 <div className="bg-gray-50 rounded-lg shadow-md h-[400px] flex justify-center items-center">
                                     <div className="text-center text-gray-600">
                                         <i className="fas fa-hourglass-half fa-2x mb-2"></i>
-                                        <div>Loading advanced features...</div>
+                                        <div>{t('Loading advanced features...')}</div>
                                     </div>
                                 </div>
                             )}
                         </div>
                     </div>
-
 
                     {/* RIGHT COLUMN - New Sensors Section */}
                     <div className="col-span-3 space-y-2 overflow-y-auto">
@@ -267,7 +302,7 @@ const Dashboard = () => {
                         <div className="bg-white rounded-lg shadow-md p-3">
                             <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
                                 <span className="text-base">📊</span>
-                                Additional Sensors
+                                {t('Additional Sensors')}
                             </h3>
 
                             <IPCamera selectedLocation={selectedLocation} />
@@ -282,8 +317,6 @@ const Dashboard = () => {
                                         {/* Sonar Pump Status Component */}
                                         <SonarPumpStatus selectedLocation={selectedLocation} />
                                     </div>
-
-
                                 </div>
                             </div>
                         </div>
@@ -292,25 +325,25 @@ const Dashboard = () => {
                         <div className="bg-white rounded-lg shadow-md p-3">
                             <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
                                 <span className="text-base">⚡</span>
-                                Power Monitoring
+                                {t('Power Monitoring')}
                             </h3>
                             <div className="space-y-2">
                                 <div className="bg-gray-50 rounded-md p-2 border border-gray-200">
                                     <div className="flex items-center justify-between mb-1">
-                                        <span className="text-xs font-medium text-gray-700">Voltage</span>
+                                        <span className="text-xs font-medium text-gray-700">{t('Voltage')}</span>
                                         <span className="inline-flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
                                     </div>
                                     <div className="text-lg font-bold text-purple-600">220V</div>
-                                    <div className="text-xs text-gray-500 mt-1">Stable</div>
+                                    <div className="text-xs text-gray-500 mt-1">{t('Stable')}</div>
                                 </div>
 
                                 <div className="bg-gray-50 rounded-md p-2 border border-gray-200">
                                     <div className="flex items-center justify-between mb-1">
-                                        <span className="text-xs font-medium text-gray-700">Current</span>
+                                        <span className="text-xs font-medium text-gray-700">{t('Current')}</span>
                                         <span className="inline-flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
                                     </div>
                                     <div className="text-lg font-bold text-orange-600">2.4A</div>
-                                    <div className="text-xs text-gray-500 mt-1">Normal</div>
+                                    <div className="text-xs text-gray-500 mt-1">{t('Normal')}</div>
                                 </div>
                             </div>
                         </div>
@@ -319,15 +352,15 @@ const Dashboard = () => {
                         <div className="bg-white rounded-lg shadow-md p-3">
                             <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
                                 <span className="text-base">🔔</span>
-                                System Alerts
+                                {t('System Alerts')}
                             </h3>
                             <div className="space-y-1.5">
                                 <div className="bg-green-50 border border-green-200 rounded-md p-2">
                                     <div className="flex items-center gap-1.5">
                                         <span className="text-green-600 text-xs">✓</span>
-                                        <span className="text-xs text-gray-700">All systems operational</span>
+                                        <span className="text-xs text-gray-700">{t('All systems operational')}</span>
                                     </div>
-                                    <div className="text-xs text-gray-500 mt-0.5">Updated 2 min ago</div>
+                                    <div className="text-xs text-gray-500 mt-0.5">{t('Updated 2 min ago')}</div>
                                 </div>
                             </div>
                         </div>
@@ -335,9 +368,6 @@ const Dashboard = () => {
                 </div>
             </div>
         </div>
-
-
-
     );
 };
 

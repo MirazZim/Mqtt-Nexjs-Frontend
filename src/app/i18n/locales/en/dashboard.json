@@ -1,10 +1,17 @@
 {
-    "Current Environment": "Current Environment",
-    "signIn": "Sign in to your account",
-    "username": "Username",
-    "password": "Password",
-    "signInButton": "Sign in",
-    "loginError": "Login failed. Please check your credentials.",
-    "Welcome back": "Welcome back",
-    "enterCredentials": "Enter your credentials to access your account"
+    "Sake Brewing Monitoring System": "Sake Brewing Monitoring System",
+    "Device Status": "Device Status",
+    "Temperature": "Temperature",
+    "Loading temperature data...": "Loading temperature data...",
+    "Loading advanced features...": "Loading advanced features...",
+    "Additional Sensors": "Additional Sensors",
+    "Power Monitoring": "Power Monitoring",
+    "Voltage": "Voltage",
+    "Stable": "Stable",
+    "Current": "Current",
+    "Normal": "Normal",
+    "System Alerts": "System Alerts",
+    "All systems operational": "All systems operational",
+    "Updated 2 min ago": "Updated 2 min ago",
+    "Environment Control": "Environment Control"
 }

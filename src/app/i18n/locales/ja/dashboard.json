@@ -1,10 +1,17 @@
 {
-    "Current Environment": "現在の環境",
-    "signIn": "アカウントにサインイン",
-    "username": "ユーザー名",
-    "password": "パスワード",
-    "signInButton": "サインイン",
-    "loginError": "ログインに失敗しました。認証情報を確認してください。",
-    "Welcome back": "おかえりなさい",
-    "enterCredentials": "アカウントにアクセスするには認証情報を入力してください"
+    "Sake Brewing Monitoring System": "日本酒醸造監視システム",
+    "Device Status": "デバイスステータス",
+    "Temperature": "温度",
+    "Loading temperature data...": "温度データを読み込み中...",
+    "Loading advanced features...": "高度な機能を読み込み中...",
+    "Additional Sensors": "追加センサー",
+    "Power Monitoring": "電力監視",
+    "Voltage": "電圧",
+    "Stable": "安定",
+    "Current": "電流",
+    "Normal": "正常",
+    "System Alerts": "システムアラート",
+    "All systems operational": "すべてのシステムが稼働中",
+    "Updated 2 min ago": "2分前に更新",
+    "Environment Control": "環境制御"
 }
