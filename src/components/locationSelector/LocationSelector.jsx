@@ -4,17 +4,19 @@ import { FaMapMarkerAlt, FaPlus, FaTimes, FaCog, FaTrash, FaSave, FaCopy, FaChec
 import { createSocket } from '../../lib/socket';
 import AuthContext from '../../context/AuthContext';
 import API_BASE_URL from '../../config/api.js';
-import toast from 'react-hot-toast';  // ✅ Import toast
+import toast from 'react-hot-toast';
+import { usePathname, useRouter } from 'next/navigation';
+import { useTranslation } from '../../app/i18n/client.js';
 
 
-// ✅ NEW: Delete Confirmation Modal
-const DeleteConfirmModal = ({ room, onConfirm, onCancel }) => {
+// ✅ Delete Confirmation Modal with i18n
+const DeleteConfirmModal = ({ room, onConfirm, onCancel, t }) => {
     const [confirmText, setConfirmText] = useState('');
     const [isDeleting, setIsDeleting] = useState(false);
 
     const handleConfirm = async () => {
         if (confirmText !== room.location) {
-            toast.error('Room name does not match!');
+            toast.error(t('Room name does not match!'));
             return;
         }
 
@@ -34,8 +36,8 @@ const DeleteConfirmModal = ({ room, onConfirm, onCancel }) => {
                             <FaExclamation className="text-2xl" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold">Delete Room</h2>
-                            <p className="text-red-100 text-sm">This action cannot be undone</p>
+                            <h2 className="text-xl font-bold">{t('Delete Room')}</h2>
+                            <p className="text-red-100 text-sm">{t('This action cannot be undone')}</p>
                         </div>
                     </div>
                 </div>
@@ -44,29 +46,29 @@ const DeleteConfirmModal = ({ room, onConfirm, onCancel }) => {
                 <div className="p-6">
                     <div className="mb-4">
                         <p className="text-gray-700 mb-2">
-                            You are about to delete <span className="font-bold text-red-600">"{room.location}"</span>
+                            {t('You are about to delete')} <span className="font-bold text-red-600">"{room.location}"</span>
                         </p>
                         <div className="bg-red-50 border-l-4 border-red-500 p-3 mt-3">
-                            <p className="text-sm text-red-800 font-semibold mb-2">This will permanently:</p>
+                            <p className="text-sm text-red-800 font-semibold mb-2">{t('This will permanently:')}</p>
                             <ul className="text-sm text-red-700 space-y-1">
-                                <li>• Deactivate all sensors and actuators</li>
-                                <li>• Unsubscribe from all MQTT topics</li>
-                                <li>• Remove all room configurations</li>
-                                <li>• Delete all measurement history</li>
+                                <li>{t('Deactivate all sensors and actuators')}</li>
+                                <li>{t('Unsubscribe from all MQTT topics')}</li>
+                                <li>{t('Remove all room configurations')}</li>
+                                <li>{t('Delete all measurement history')}</li>
                             </ul>
                         </div>
                     </div>
 
                     <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Type <span className="font-mono bg-gray-100 px-2 py-1 rounded text-red-600">{room.location}</span> to confirm:
+                            {t('Type')} <span className="font-mono bg-gray-100 px-2 py-1 rounded text-red-600">{room.location}</span> {t('to confirm:')}
                         </label>
                         <input
                             type="text"
                             value={confirmText}
                             onChange={(e) => setConfirmText(e.target.value)}
                             className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none"
-                            placeholder="Enter room name"
+                            placeholder={t('Enter room name')}
                             autoFocus
                         />
                     </div>
@@ -82,12 +84,12 @@ const DeleteConfirmModal = ({ room, onConfirm, onCancel }) => {
                         {isDeleting ? (
                             <>
                                 <span className="animate-spin">⏳</span>
-                                Deleting...
+                                {t('Deleting...')}
                             </>
                         ) : (
                             <>
                                 <FaTrash />
-                                Delete Permanently
+                                {t('Delete Permanently')}
                             </>
                         )}
                     </button>
@@ -96,7 +98,7 @@ const DeleteConfirmModal = ({ room, onConfirm, onCancel }) => {
                         disabled={isDeleting}
                         className="px-6 py-3 bg-gray-200 hover:bg-gray-300 disabled:opacity-50 text-gray-700 rounded-lg font-semibold transition-colors"
                     >
-                        Cancel
+                        {t('Cancel')}
                     </button>
                 </div>
             </div>
@@ -105,14 +107,13 @@ const DeleteConfirmModal = ({ room, onConfirm, onCancel }) => {
 };
 
 
-const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSave, onClose, isNew }) => {
+const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSave, onClose, isNew, t }) => {
     const [sensorTopics, setSensorTopics] = useState({});
     const [actuatorTopics, setActuatorTopics] = useState({});
     const [copiedTopic, setCopiedTopic] = useState(null);
     const [testingTopics, setTestingTopics] = useState({});
     const [topicStatus, setTopicStatus] = useState({});
     const [validationErrors, setValidationErrors] = useState({});
-
 
     useEffect(() => {
         const defaultSensorTopics = {};
@@ -135,16 +136,16 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
         const errors = [];
 
         if (!topic || topic.trim() === '') {
-            errors.push('Topic cannot be empty');
+            errors.push(t('Topic cannot be empty'));
         } else {
             if (topic.includes('#') && topic.indexOf('#') !== topic.length - 1) {
-                errors.push('Wildcard # must be at the end');
+                errors.push(t('Wildcard # must be at the end'));
             }
             if (topic.includes(' ')) {
-                errors.push('Topic cannot contain spaces');
+                errors.push(t('Topic cannot contain spaces'));
             }
             if (topic.length > 100) {
-                errors.push('Topic too long (max 100 characters)');
+                errors.push(t('Topic too long (max 100 characters)'));
             }
         }
 
@@ -171,8 +172,7 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
     const handleCopyTopic = (topic) => {
         navigator.clipboard.writeText(topic);
         setCopiedTopic(topic);
-        // ✅ Toast notification with custom styling
-        toast.success('Topic copied to clipboard!', {
+        toast.success(t('Topic copied to clipboard!'), {
             duration: 2000,
             icon: '📋',
             style: {
@@ -197,9 +197,8 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                 [`${type}_${code}`]: isValid ? 'success' : 'error'
             }));
 
-            // ✅ Toast notification for test result
             if (isValid) {
-                toast.success(`Topic "${topic}" is valid!`, {
+                toast.success(t('Topic is valid!').replace('{{topic}}', topic), {
                     icon: '✅',
                     style: {
                         borderRadius: '10px',
@@ -208,7 +207,7 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                     },
                 });
             } else {
-                toast.error(`Topic "${topic}" validation failed!`, {
+                toast.error(t('Topic validation failed!').replace('{{topic}}', topic), {
                     icon: '❌',
                     style: {
                         borderRadius: '10px',
@@ -222,14 +221,13 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                 ...prev,
                 [`${type}_${code}`]: 'error'
             }));
-            toast.error('Connection test failed!', {
+            toast.error(t('Connection test failed!'), {
                 icon: '❌',
             });
         } finally {
             setTestingTopics(prev => ({ ...prev, [`${type}_${code}`]: false }));
         }
     };
-
 
     const handleSave = () => {
         let hasErrors = false;
@@ -253,8 +251,7 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
 
         if (hasErrors) {
             setValidationErrors(allValidations);
-            // ✅ Error toast
-            toast.error('Please fix validation errors before saving!', {
+            toast.error(t('Please fix validation errors before saving!'), {
                 icon: '⚠️',
                 duration: 3000,
             });
@@ -282,17 +279,15 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
         return null;
     };
 
-
     return (
-        // ✅ Blurred backdrop
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
 
                 <div className="sticky top-0 bg-gradient-to-r from-teal-600 to-teal-700 text-white p-6 z-10 rounded-t-lg">
-                    <h2 className="text-2xl font-bold mb-2">Configure MQTT Topics</h2>
-                    <p className="text-teal-100 text-sm">Enter MQTT topics for {room.location}</p>
+                    <h2 className="text-2xl font-bold mb-2">{t('Configure MQTT Topics Modal')}</h2>
+                    <p className="text-teal-100 text-sm">{t('Enter MQTT topics for')} {room.location}</p>
                     <div className="mt-3 bg-teal-800 bg-opacity-50 rounded px-3 py-2">
-                        <p className="text-xs text-teal-100">Room ID: <code className="font-mono bg-teal-900 px-2 py-1 rounded">{room.room_id}</code></p>
+                        <p className="text-xs text-teal-100">{t('Room ID')}: <code className="font-mono bg-teal-900 px-2 py-1 rounded">{room.room_id}</code></p>
                     </div>
                 </div>
 
@@ -302,12 +297,12 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                         <div className="flex items-start gap-3">
                             <div className="text-blue-600 text-xl">💡</div>
                             <div>
-                                <h4 className="font-semibold text-blue-800 mb-1">Quick Setup Guide</h4>
+                                <h4 className="font-semibold text-blue-800 mb-1">{t('Quick Setup Guide')}</h4>
                                 <ul className="text-sm text-blue-700 space-y-1">
-                                    <li>• Enter the MQTT topic that your sensor publishes to</li>
-                                    <li>• Topics are case-sensitive and unique identifiers</li>
-                                    <li>• Use simple names like: <code className="bg-blue-100 px-1 rounded">ESP</code>, <code className="bg-blue-100 px-1 rounded">ESP2</code>, <code className="bg-blue-100 px-1 rounded">bowl</code></li>
-                                    <li>• System will automatically subscribe and start receiving data</li>
+                                    <li>{t('Enter the MQTT topic that your sensor publishes to')}</li>
+                                    <li>{t('Topics are case-sensitive and unique identifiers')}</li>
+                                    <li>{t('Use simple names like:')} <code className="bg-blue-100 px-1 rounded">ESP</code>, <code className="bg-blue-100 px-1 rounded">ESP2</code>, <code className="bg-blue-100 px-1 rounded">bowl</code></li>
+                                    <li>{t('System will automatically subscribe and start receiving data')}</li>
                                 </ul>
                             </div>
                         </div>
@@ -315,8 +310,8 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
 
                     <div>
                         <div className="flex items-center gap-2 mb-4">
-                            <h3 className="text-lg font-semibold text-gray-800">📊 Sensor Topics</h3>
-                            <span className="text-sm text-gray-500">({sensorTypes.length} sensors)</span>
+                            <h3 className="text-lg font-semibold text-gray-800">{t('Sensor Topics')}</h3>
+                            <span className="text-sm text-gray-500">({sensorTypes.length} {t('sensors')})</span>
                         </div>
 
                         <div className="space-y-3">
@@ -333,11 +328,11 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                                                     {sensor.name}
                                                     {getTopicStatusIcon('sensor', sensor.code)}
                                                 </div>
-                                                <div className="text-xs text-gray-500">Unit: {sensor.unit} • Type: {sensor.code}</div>
+                                                <div className="text-xs text-gray-500">{t('Unit:')} {sensor.unit} • {t('Type:')} {sensor.code}</div>
                                             </div>
                                             {copiedTopic === currentTopic && (
                                                 <span className="text-xs text-green-600 font-medium flex items-center gap-1">
-                                                    <FaCheck /> Copied!
+                                                    <FaCheck /> {t('Copied!')}
                                                 </span>
                                             )}
                                         </div>
@@ -345,7 +340,7 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                                         <div className="flex gap-2">
                                             <div className="flex-1">
                                                 <label className="block text-xs text-gray-600 mb-1 font-medium">
-                                                    MQTT Topic <span className="text-red-500">*</span>
+                                                    {t('MQTT Topic')} <span className="text-red-500">*</span>
                                                 </label>
                                                 <input
                                                     type="text"
@@ -369,7 +364,7 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                                                 <button
                                                     onClick={() => handleCopyTopic(currentTopic)}
                                                     className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-                                                    title="Copy topic"
+                                                    title={t('Copy topic')}
                                                 >
                                                     <FaCopy className="text-gray-600" />
                                                 </button>
@@ -377,7 +372,7 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                                                     onClick={() => testMQTTConnection(currentTopic, 'sensor', sensor.code)}
                                                     disabled={testingTopics[`sensor_${sensor.code}`] || hasError}
                                                     className="p-2 hover:bg-teal-100 rounded-lg transition-colors disabled:opacity-50"
-                                                    title="Test connection"
+                                                    title={t('Test connection')}
                                                 >
                                                     <FaPlug className="text-teal-600" />
                                                 </button>
@@ -385,7 +380,7 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                                         </div>
 
                                         <div className="mt-2 text-xs text-gray-500">
-                                            Example: <code className="bg-gray-200 px-2 py-0.5 rounded">{sensor.code}</code> or <code className="bg-gray-200 px-2 py-0.5 rounded">ESP2</code>
+                                            {t('Example:')} <code className="bg-gray-200 px-2 py-0.5 rounded">{sensor.code}</code> or <code className="bg-gray-200 px-2 py-0.5 rounded">ESP2</code>
                                         </div>
                                     </div>
                                 );
@@ -395,8 +390,8 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
 
                     <div>
                         <div className="flex items-center gap-2 mb-4">
-                            <h3 className="text-lg font-semibold text-gray-800">🎛️ Actuator Topics</h3>
-                            <span className="text-sm text-gray-500">({actuatorTypes.length} actuators)</span>
+                            <h3 className="text-lg font-semibold text-gray-800">{t('Actuator Topics')}</h3>
+                            <span className="text-sm text-gray-500">({actuatorTypes.length} {t('actuators')})</span>
                         </div>
 
                         <div className="space-y-3">
@@ -415,12 +410,12 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                                                         {actuator.name}
                                                         {getTopicStatusIcon('actuator', actuator.code)}
                                                     </div>
-                                                    <div className="text-xs text-gray-500">Control device • Type: {actuator.code}</div>
+                                                    <div className="text-xs text-gray-500">{t('Control device')} • {t('Type:')} {actuator.code}</div>
                                                 </div>
                                             </div>
                                             {copiedTopic === currentTopic && (
                                                 <span className="text-xs text-green-600 font-medium flex items-center gap-1">
-                                                    <FaCheck /> Copied!
+                                                    <FaCheck /> {t('Copied!')}
                                                 </span>
                                             )}
                                         </div>
@@ -428,7 +423,7 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                                         <div className="flex gap-2">
                                             <div className="flex-1">
                                                 <label className="block text-xs text-gray-600 mb-1 font-medium">
-                                                    MQTT Topic <span className="text-red-500">*</span>
+                                                    {t('MQTT Topic')} <span className="text-red-500">*</span>
                                                 </label>
                                                 <input
                                                     type="text"
@@ -452,7 +447,7 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                                                 <button
                                                     onClick={() => handleCopyTopic(currentTopic)}
                                                     className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-                                                    title="Copy topic"
+                                                    title={t('Copy topic')}
                                                 >
                                                     <FaCopy className="text-gray-600" />
                                                 </button>
@@ -460,7 +455,7 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                                                     onClick={() => testMQTTConnection(currentTopic, 'actuator', actuator.code)}
                                                     disabled={testingTopics[`actuator_${actuator.code}`] || hasError}
                                                     className="p-2 hover:bg-teal-100 rounded-lg transition-colors disabled:opacity-50"
-                                                    title="Test connection"
+                                                    title={t('Test connection')}
                                                 >
                                                     <FaPlug className="text-teal-600" />
                                                 </button>
@@ -468,7 +463,7 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                                         </div>
 
                                         <div className="mt-2 text-xs text-gray-500">
-                                            Example: <code className="bg-gray-200 px-2 py-0.5 rounded">{actuator.code}</code> or <code className="bg-gray-200 px-2 py-0.5 rounded">control/{actuator.code}</code>
+                                            {t('Example:')} <code className="bg-gray-200 px-2 py-0.5 rounded">{actuator.code}</code> or <code className="bg-gray-200 px-2 py-0.5 rounded">control/{actuator.code}</code>
                                         </div>
                                     </div>
                                 );
@@ -477,12 +472,12 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                     </div>
 
                     <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4">
-                        <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Important Notes</h4>
+                        <h4 className="font-semibold text-yellow-800 mb-2">{t('Important Notes')}</h4>
                         <ul className="text-sm text-yellow-700 space-y-1">
-                            <li>• Topics must match exactly what your sensors publish to</li>
-                            <li>• System will automatically subscribe to these topics</li>
-                            <li>• Data will start flowing immediately after saving</li>
-                            <li>• You can change topics later by editing the room configuration</li>
+                            <li>{t('Topics must match exactly what your sensors publish to')}</li>
+                            <li>{t('System will automatically subscribe to these topics')}</li>
+                            <li>{t('Data will start flowing immediately after saving')}</li>
+                            <li>{t('You can change topics later by editing the room configuration')}</li>
                         </ul>
                     </div>
                 </div>
@@ -493,13 +488,13 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
                         className="flex-1 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 shadow-lg"
                     >
                         <FaSave />
-                        {isNew ? 'Create Room & Subscribe' : 'Save & Update Subscriptions'}
+                        {isNew ? t('Create Room & Subscribe') : t('Save & Update Subscriptions')}
                     </button>
                     <button
                         onClick={onClose}
                         className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition-colors"
                     >
-                        Cancel
+                        {t('Cancel')}
                     </button>
                 </div>
             </div>
@@ -509,6 +504,11 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, userId, onSav
 
 const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
     const { user } = useContext(AuthContext);
+    const pathname = usePathname();
+    const router = useRouter();
+    const lng = pathname.split("/")[1];
+    const { t } = useTranslation(lng, "location-selector");
+
     const [locations, setLocations] = useState([]);
     const [newLocationName, setNewLocationName] = useState('');
     const [isAdding, setIsAdding] = useState(false);
@@ -516,8 +516,8 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
     const [socket, setSocket] = useState(null);
     const [showConfig, setShowConfig] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState(null);
-    const [showDeleteModal, setShowDeleteModal] = useState(false); // ✅ NEW
-    const [roomToDelete, setRoomToDelete] = useState(null); // ✅ NEW
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [roomToDelete, setRoomToDelete] = useState(null);
 
     const [sensorTypes] = useState([
         { code: 'temperature', name: 'Temperature', unit: '°C', category: 'environmental' },
@@ -542,7 +542,6 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
         { code: 'bowl_fan', name: 'Bowl Fan', icon: '🫧', category: 'process' },
         { code: 'water_pump', name: 'Water Pump', icon: '⚡', category: 'process' }
     ]);
-
 
     useEffect(() => {
         if (!user) return;
@@ -600,7 +599,7 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
             }
         } catch (error) {
             console.error('Error fetching locations:', error);
-            toast.error('Failed to fetch locations');
+            toast.error(t('Failed to fetch locations'));
         } finally {
             setLoading(false);
         }
@@ -625,7 +624,6 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
         setShowConfig(true);
         setIsAdding(false);
     };
-
 
     const handleSaveRoomWithSensors = async (sensorTopics, actuatorTopics) => {
         if (!selectedRoom) return;
@@ -669,8 +667,8 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
             createOrUpdatePromise,
             {
                 loading: isNewRoom
-                    ? 'Creating room and configuring MQTT topics...'
-                    : 'Updating room and MQTT topics...',
+                    ? t('Creating room and configuring MQTT topics...')
+                    : t('Updating room and MQTT topics...'),
                 success: (result) => {
                     console.log(`✅ Room ${isNewRoom ? 'created' : 'updated'} successfully:`, result);
 
@@ -689,8 +687,11 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                     fetchUserLocations();
 
                     return isNewRoom
-                        ? `Room "${selectedRoom.location}" created with ${Object.keys(sensorTopics).length} sensors & ${Object.keys(actuatorTopics).length} actuators!`
-                        : `Room "${selectedRoom.location}" updated successfully!`;
+                        ? t('Room created successfully')
+                            .replace('{{room}}', selectedRoom.location)
+                            .replace('{{sensors}}', Object.keys(sensorTopics).length)
+                            .replace('{{actuators}}', Object.keys(actuatorTopics).length)
+                        : t('Room updated successfully').replace('{{room}}', selectedRoom.location);
                 },
                 error: (err) => `Error: ${err.message}`,
             },
@@ -754,19 +755,17 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
             }
         } catch (error) {
             console.error('Error fetching room devices:', error);
-            toast.error('Failed to load room configuration');
+            toast.error(t('Failed to load room configuration'));
         }
     };
 
 
-    // ✅ FIXED: Delete handler with modal
     const handleDeleteRoom = (roomId, locationName) => {
         console.log('🔵 Opening delete modal for:', roomId, locationName);
         setRoomToDelete({ room_id: roomId, location: locationName });
         setShowDeleteModal(true);
     };
 
-    // ✅ FIXED: Actual delete execution
     const executeDeleteRoom = async () => {
         if (!roomToDelete) return;
 
@@ -796,18 +795,16 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
         toast.promise(
             deletePromise,
             {
-                loading: `Deleting room "${location}"...`,
+                loading: t('Deleting room...').replace('{{room}}', location),
                 success: (result) => {
                     console.log('✅ Delete successful:', result);
 
-                    // ✅ FIX: Properly compare room_id (convert both to numbers)
                     setLocations(prev => prev.filter(loc => {
                         const locRoomId = typeof loc.room_id === 'string' ? parseInt(loc.room_id, 10) : loc.room_id;
                         const deleteRoomId = typeof room_id === 'string' ? parseInt(room_id, 10) : room_id;
                         return locRoomId !== deleteRoomId;
                     }));
 
-                    // Change selected location if needed
                     if (selectedLocation === location) {
                         const remainingLocations = locations.filter(loc => {
                             const locRoomId = typeof loc.room_id === 'string' ? parseInt(loc.room_id, 10) : loc.room_id;
@@ -817,17 +814,16 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                         onLocationChange(remainingLocations[0]?.location || null);
                     }
 
-                    // Close modal
                     setShowDeleteModal(false);
                     setRoomToDelete(null);
 
-                    return `Room "${location}" deleted successfully`;
+                    return t('Room deleted successfully').replace('{{room}}', location);
                 },
                 error: (err) => {
                     console.error('❌ Delete error:', err);
                     setShowDeleteModal(false);
                     setRoomToDelete(null);
-                    return `Failed to delete room: ${err.message}`;
+                    return t('Failed to delete room').replace('{{error}}', err.message);
                 },
             },
             {
@@ -856,15 +852,13 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
         );
     };
 
-
     if (loading) {
         return (
             <div className="bg-white rounded-lg shadow-lg p-4">
-                <p className="text-gray-600">Loading locations...</p>
+                <p className="text-gray-600">{t('Loading locations...')}</p>
             </div>
         );
     }
-
 
     return (
         <div className="relative group">
@@ -872,10 +866,10 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                 <FaMapMarkerAlt className="text-teal-200 text-xl" />
                 <div className="flex-1">
                     <div className="text-sm font-semibold">
-                        {locations.find(loc => loc.location === selectedLocation)?.location || 'Select Location'}
+                        {locations.find(loc => loc.location === selectedLocation)?.location || t('Select Location')}
                     </div>
                     <div className="text-xs text-teal-200">
-                        {locations.find(loc => loc.location === selectedLocation)?.room_id || 'No room selected'}
+                        {locations.find(loc => loc.location === selectedLocation)?.room_id || t('No room selected')}
                     </div>
                 </div>
                 <svg className="w-5 h-5 text-teal-200 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -909,7 +903,7 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                                         </span>
                                     </div>
                                     <div className="text-xs text-gray-500 mt-1">
-                                        Room ID: {loc.room_id}
+                                        {t('Room ID')}: {loc.room_id}
                                     </div>
                                 </div>
 
@@ -920,7 +914,7 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                                             handleConfigureRoom(loc);
                                         }}
                                         className="p-2 hover:bg-teal-100 rounded-lg transition-colors"
-                                        title="Configure MQTT Topics"
+                                        title={t('Configure MQTT Topics')}
                                     >
                                         <FaCog className="text-teal-600 text-sm" />
                                     </button>
@@ -930,7 +924,7 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                                             handleDeleteRoom(loc.room_id, loc.location);
                                         }}
                                         className="p-2 hover:bg-red-100 rounded-lg transition-colors"
-                                        title="Delete Room"
+                                        title={t('Delete Room')}
                                     >
                                         <FaTrash className="text-red-600 text-sm" />
                                     </button>
@@ -948,7 +942,7 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                             type="text"
                             value={newLocationName}
                             onChange={(e) => setNewLocationName(e.target.value)}
-                            placeholder="Enter room name (e.g., Fermentation Tank 1)"
+                            placeholder={t('Enter room name (e.g., Fermentation Tank 1)')}
                             maxLength={50}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-sm"
                             onKeyPress={(e) => e.key === 'Enter' && handleCreateRoomClick()}
@@ -959,7 +953,7 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                                 className="flex-1 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                                 onClick={handleCreateRoomClick}
                             >
-                                Next: Configure MQTT →
+                                {t('Next: Configure MQTT →')}
                             </button>
                             <button
                                 className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-colors"
@@ -968,7 +962,7 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                                     setNewLocationName('');
                                 }}
                             >
-                                Cancel
+                                {t('Cancel')}
                             </button>
                         </div>
                     </div>
@@ -978,7 +972,7 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                         onClick={() => setIsAdding(true)}
                     >
                         <FaPlus className="text-sm" />
-                        <span>Add New Room</span>
+                        <span>{t('Add New Room')}</span>
                     </button>
                 )}
             </div>
@@ -996,10 +990,11 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                     }}
                     onSave={handleSaveRoomWithSensors}
                     isNew={selectedRoom.isNew}
+                    t={t}
                 />
             )}
 
-            {/* ✅ NEW: Delete Confirmation Modal */}
+            {/* Delete Confirmation Modal */}
             {showDeleteModal && roomToDelete && (
                 <DeleteConfirmModal
                     room={roomToDelete}
@@ -1008,6 +1003,7 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                         setShowDeleteModal(false);
                         setRoomToDelete(null);
                     }}
+                    t={t}
                 />
             )}
         </div>
