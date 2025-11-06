@@ -1,7 +1,7 @@
 
 import { Suspense, lazy } from 'react';
 
-const DashboardComponent = lazy(() => import('../../../components/DashBoard.jsx'));
+const DashboardComponent = lazy(() => import('../../../../components/DashBoard.jsx'));
 
 const LoadingFallback = () => (
     <div style={{

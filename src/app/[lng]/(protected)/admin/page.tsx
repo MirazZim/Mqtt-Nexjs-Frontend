@@ -4,8 +4,8 @@ import { useState, useContext, lazy, Suspense } from 'react';
 import AuthContext from '@/context/AuthContext';
 
 // Lazy load tab content
-const SystemHealthDashboard = lazy(() => import('../../../components/admin/system-Health-Dashboard/system-health-dashboard.jsx'));
-const UserManagement = lazy(() => import('../../../components/admin/user-management/user-management.jsx'));
+const SystemHealthDashboard = lazy(() => import('../../../../components/admin/system-Health-Dashboard/system-health-dashboard.jsx'));
+const UserManagement = lazy(() => import('../../../../components/admin/user-management/user-management.jsx'));
 
 const TabLoader = () => (
     <div className="flex items-center justify-center h-64">

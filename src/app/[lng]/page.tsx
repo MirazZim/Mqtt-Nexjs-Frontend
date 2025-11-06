@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 
 const Homepage = () => {
-  redirect('/login');
+  redirect('/en/login');
 }
 
 export default Homepage;

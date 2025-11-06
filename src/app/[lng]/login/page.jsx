@@ -1,10 +1,10 @@
 "use client";
 import { useState, useContext } from 'react';
-import AuthContext from '../../context/AuthContext';
-import API_BASE_URL from '../../config/api.js';
-import { useRouter } from 'next/navigation';
+import AuthContext from '../../../context/AuthContext';
+import API_BASE_URL from '../../../config/api.js';
+import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import loginImage from '../../images/login.png'
+import loginImage from '../../../images/login.png'
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -12,6 +12,8 @@ const Login = () => {
     const [error, setError] = useState('');
     const { login } = useContext(AuthContext);
     const router = useRouter();
+    const pathname = usePathname()
+    const lng = pathname.split("/")[1]
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -29,7 +31,7 @@ const Login = () => {
 
             const { token, user: userData } = await response.json();
             login(userData, token);
-            router.push('/dashboard');
+            router.push(`/${lng}/dashboard`);
         } catch (err) {
             setError(err.message);
         }
