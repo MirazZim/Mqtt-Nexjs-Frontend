@@ -15,98 +15,19 @@ import {
 import AuthContext from '../../context/AuthContext';
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { usePathname } from 'next/navigation';  // ✅ ADD THIS
+import { useTranslation } from '../../app/i18n/client.js';  // ✅ ADD THIS
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-const sensorTypeConfigs = {
-    temperature: { label: "Temperature (°C)", color: "#ef4444", icon: "🌡️" },
-    humidity: { label: "Humidity (%)", color: "#3b82f6", icon: "💧" },
-    airflow: { label: "Airflow (m/s)", color: "#8b5cf6", icon: "💨" },
-    co2_level: { label: "CO2 (ppm)", color: "#f59e0b", icon: "🫧" },
-    sugar_level: { label: "Sugar (Brix)", color: "#ec4899", icon: "🍬" },
-    bowl_temp: { label: "Bowl Temp (°C)", color: "#14b8a6", icon: "🍲" },
-    sonar_distance: { label: "Distance (cm)", color: "#06b6d4", icon: "📏" }
-};
-
-const CustomTooltip = ({ active, payload, label }) => {
-    if (!active || !payload || payload.length === 0) return null;
-    const date = new Date(label);
-    return (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-            <p className="text-xs font-semibold text-gray-700 mb-2">
-                {date.toLocaleString()}
-            </p>
-            {payload.map((entry, index) => (
-                entry.value != null && (
-                    <div key={index} className="flex items-center justify-between gap-3 text-xs">
-                        <span className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                            <span className="text-gray-600">{entry.name}:</span>
-                        </span>
-                        <span className="font-semibold text-gray-800">
-                            {typeof entry.value === 'number' ? entry.value.toFixed(2) : 'N/A'}
-                        </span>
-                    </div>
-                )
-            ))}
-        </div>
-    );
-};
-
-const MemoizedChart = React.memo(({ data, chartType, sensorConfig, yAxisDomain, formatXAxisTick }) => {
-    const ChartComponent = chartType === 'area' ? AreaChart : LineChart;
-
-    return (
-        <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-                <ChartComponent data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis
-                        dataKey="timestamp"
-                        tickFormatter={formatXAxisTick}
-                        stroke="#888888"
-                        fontSize={10}
-                        tickLine={false}
-                        axisLine={false}
-                    />
-                    <YAxis domain={yAxisDomain} tickLine={false} axisLine={false} fontSize={10} width={50} />
-                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#888', strokeWidth: 1, strokeDasharray: '5 5' }} />
-                    <Legend />
-                    {chartType === 'area' ? (
-                        <Area
-                            type="monotone"
-                            dataKey="value"
-                            stroke={sensorConfig.color}
-                            fill={sensorConfig.color}
-                            fillOpacity={0.3}
-                            strokeWidth={2}
-                            name={sensorConfig.label}
-                            connectNulls={true}
-                            dot={false}
-                            isAnimationActive={false}
-                        />
-                    ) : (
-                        <Line
-                            type="monotone"
-                            dataKey="value"
-                            stroke={sensorConfig.color}
-                            strokeWidth={2}
-                            name={sensorConfig.label}
-                            connectNulls={true}
-                            dot={false}
-                            isAnimationActive={false}
-                        />
-                    )}
-                </ChartComponent>
-            </ResponsiveContainer>
-        </div>
-    );
-});
-
-MemoizedChart.displayName = 'MemoizedChart';
-
 const EnvironmentChart = () => {
     const { user, socket } = useContext(AuthContext);
+
+    // ✅ ADD THESE LINES
+    const pathname = usePathname();
+    const lng = pathname.split("/")[1];
+    const { t } = useTranslation(lng, "chart");
+
     const isMountedRef = useRef(true);
     const [availableSensors, setAvailableSensors] = useState([]);
     const [selectedSensorType, setSelectedSensorType] = useState('temperature');
@@ -118,6 +39,17 @@ const EnvironmentChart = () => {
     const [measurements, setMeasurements] = useState([]);
     const [lastUpdate, setLastUpdate] = useState(null);
 
+    // ✅ UPDATE: sensorTypeConfigs with translation function
+    const sensorTypeConfigs = useMemo(() => ({
+        temperature: { label: t("Temperature (°C)"), color: "#ef4444", icon: "🌡️" },
+        humidity: { label: t("Humidity (%)"), color: "#3b82f6", icon: "💧" },
+        airflow: { label: t("Airflow (m/s)"), color: "#8b5cf6", icon: "💨" },
+        co2_level: { label: t("CO2 (ppm)"), color: "#f59e0b", icon: "🫧" },
+        sugar_level: { label: t("Sugar (Brix)"), color: "#ec4899", icon: "🍬" },
+        bowl_temp: { label: t("Bowl Temp (°C)"), color: "#14b8a6", icon: "🍲" },
+        sonar_distance: { label: t("Distance (cm)"), color: "#06b6d4", icon: "📏" }
+    }), [t]);
+
     // Mount tracking
     useEffect(() => {
         isMountedRef.current = true;
@@ -128,7 +60,7 @@ const EnvironmentChart = () => {
     useEffect(() => {
         const fetchSensors = async () => {
             if (!user?.token) {
-                setError('Please log in');
+                setError(t('Please log in'));
                 setLoading(false);
                 return;
             }
@@ -146,12 +78,12 @@ const EnvironmentChart = () => {
                     setAvailableSensors(result.sensors);
                 }
             } catch (err) {
-                if (isMountedRef.current) setError(`Failed: ${err.message}`);
+                if (isMountedRef.current) setError(`${t('Failed')}: ${err.message}`);
             }
         };
 
         fetchSensors();
-    }, [user]);
+    }, [user, t]);
 
     // Available sensor types
     const availableSensorTypes = useMemo(() => {
@@ -237,12 +169,12 @@ const EnvironmentChart = () => {
                     setMeasurements(result.data || []);
                     setLastUpdate(new Date());
                 } else if (isMountedRef.current) {
-                    setError(result.message || 'No data available');
+                    setError(result.message || t('No data for this period'));
                     setMeasurements([]);
                 }
             } catch (err) {
                 if (isMountedRef.current) {
-                    setError(`Failed: ${err.message}`);
+                    setError(`${t('Failed')}: ${err.message}`);
                     setMeasurements([]);
                 }
             } finally {
@@ -251,9 +183,9 @@ const EnvironmentChart = () => {
         };
 
         fetchData();
-    }, [currentSensor, selectedPeriod, user]);
+    }, [currentSensor, selectedPeriod, user, t]);
 
-    // ✅ OPTIMAL: Real-time Socket.IO updates (event-driven, no polling)
+    // Real-time Socket.IO updates
     useEffect(() => {
         if (!socket || !currentSensor) return;
 
@@ -272,16 +204,14 @@ const EnvironmentChart = () => {
                         quality: data.quality || 'good'
                     };
 
-                    // Add new point and keep last 5000 for performance
                     const updated = [...prev, newPoint];
 
-                    // Apply period-based limits
                     const limits = {
-                        '1h': 360,    // 1 hour = 360 points (1 per 10 sec)
-                        '6h': 720,    // 6 hours
-                        '24h': 1440,  // 24 hours
-                        '7d': 2016,   // 7 days
-                        '30d': 4320   // 30 days
+                        '1h': 360,
+                        '6h': 720,
+                        '24h': 1440,
+                        '7d': 2016,
+                        '30d': 4320
                     };
 
                     const limit = limits[selectedPeriod] || 1000;
@@ -306,8 +236,7 @@ const EnvironmentChart = () => {
             return { chartData: [], yAxisDomain: [0, 100] };
         }
 
-        // Adaptive sampling based on data volume
-        const maxPoints = 150; // Optimal for smooth performance
+        const maxPoints = 150;
         const sampledMeasurements = measurements.length > maxPoints
             ? measurements.filter((_, index) => index % Math.ceil(measurements.length / maxPoints) === 0)
             : measurements;
@@ -322,7 +251,6 @@ const EnvironmentChart = () => {
             .filter(Boolean)
             .sort((a, b) => a.timestamp - b.timestamp);
 
-        // Calculate Y-axis domain
         const values = processedData.map(d => d.value);
         let domain = [0, 100];
         if (values.length > 0) {
@@ -346,7 +274,7 @@ const EnvironmentChart = () => {
 
     // Download CSV
     const downloadCSV = useCallback(() => {
-        if (measurements.length === 0) return alert('No data to download');
+        if (measurements.length === 0) return alert(t('No data to download'));
 
         const headers = ['Timestamp', 'Date', 'Time', 'Sensor', 'Value', 'Unit'];
         const csvData = [
@@ -370,7 +298,7 @@ const EnvironmentChart = () => {
         link.download = `${currentSensor?.sensor_name || selectedSensorType}-${selectedPeriod}-${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
         URL.revokeObjectURL(link.href);
-    }, [measurements, selectedSensorType, currentSensor, selectedPeriod]);
+    }, [measurements, selectedSensorType, currentSensor, selectedPeriod, t]);
 
     const handleRefresh = useCallback(() => {
         if (currentSensor && user) {
@@ -382,9 +310,88 @@ const EnvironmentChart = () => {
 
     const sensorConfig = useMemo(() => {
         return sensorTypeConfigs[selectedSensorType] || sensorTypeConfigs.temperature;
-    }, [selectedSensorType]);
+    }, [selectedSensorType, sensorTypeConfigs]);
 
     const shouldRenderChart = chartData.length > 0 && !loading && !error;
+
+    // ✅ Custom Tooltip Component (moved inside to access t())
+    const CustomTooltip = ({ active, payload, label }) => {
+        if (!active || !payload || payload.length === 0) return null;
+        const date = new Date(label);
+        return (
+            <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                <p className="text-xs font-semibold text-gray-700 mb-2">
+                    {date.toLocaleString()}
+                </p>
+                {payload.map((entry, index) => (
+                    entry.value != null && (
+                        <div key={index} className="flex items-center justify-between gap-3 text-xs">
+                            <span className="flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                <span className="text-gray-600">{entry.name}:</span>
+                            </span>
+                            <span className="font-semibold text-gray-800">
+                                {typeof entry.value === 'number' ? entry.value.toFixed(2) : 'N/A'}
+                            </span>
+                        </div>
+                    )
+                ))}
+            </div>
+        );
+    };
+
+    // ✅ Memoized Chart Component
+    const MemoizedChart = React.memo(({ data, chartType, sensorConfig, yAxisDomain, formatXAxisTick }) => {
+        const ChartComponent = chartType === 'area' ? AreaChart : LineChart;
+
+        return (
+            <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                    <ChartComponent data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                        <XAxis
+                            dataKey="timestamp"
+                            tickFormatter={formatXAxisTick}
+                            stroke="#888888"
+                            fontSize={10}
+                            tickLine={false}
+                            axisLine={false}
+                        />
+                        <YAxis domain={yAxisDomain} tickLine={false} axisLine={false} fontSize={10} width={50} />
+                        <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#888', strokeWidth: 1, strokeDasharray: '5 5' }} />
+                        <Legend />
+                        {chartType === 'area' ? (
+                            <Area
+                                type="monotone"
+                                dataKey="value"
+                                stroke={sensorConfig.color}
+                                fill={sensorConfig.color}
+                                fillOpacity={0.3}
+                                strokeWidth={2}
+                                name={sensorConfig.label}
+                                connectNulls={true}
+                                dot={false}
+                                isAnimationActive={false}
+                            />
+                        ) : (
+                            <Line
+                                type="monotone"
+                                dataKey="value"
+                                stroke={sensorConfig.color}
+                                strokeWidth={2}
+                                name={sensorConfig.label}
+                                connectNulls={true}
+                                dot={false}
+                                isAnimationActive={false}
+                            />
+                        )}
+                    </ChartComponent>
+                </ResponsiveContainer>
+            </div>
+        );
+    });
+
+    MemoizedChart.displayName = 'MemoizedChart';
 
     return (
         <Card className="w-full">
@@ -418,11 +425,11 @@ const EnvironmentChart = () => {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="1h" className="text-xs">⚡ 1 Hour</SelectItem>
-                                <SelectItem value="6h" className="text-xs">6 Hours</SelectItem>
-                                <SelectItem value="24h" className="text-xs">24 Hours</SelectItem>
-                                <SelectItem value="7d" className="text-xs">7 Days</SelectItem>
-                                <SelectItem value="30d" className="text-xs">30 Days</SelectItem>
+                                <SelectItem value="1h" className="text-xs">⚡ {t('1 Hour')}</SelectItem>
+                                <SelectItem value="6h" className="text-xs">{t('6 Hours')}</SelectItem>
+                                <SelectItem value="24h" className="text-xs">{t('24 Hours')}</SelectItem>
+                                <SelectItem value="7d" className="text-xs">{t('7 Days')}</SelectItem>
+                                <SelectItem value="30d" className="text-xs">{t('30 Days')}</SelectItem>
                             </SelectContent>
                         </Select>
 
@@ -431,8 +438,8 @@ const EnvironmentChart = () => {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="line" className="text-xs">Line</SelectItem>
-                                <SelectItem value="area" className="text-xs">Area</SelectItem>
+                                <SelectItem value="line" className="text-xs">{t('Line')}</SelectItem>
+                                <SelectItem value="area" className="text-xs">{t('Area')}</SelectItem>
                             </SelectContent>
                         </Select>
 
@@ -440,7 +447,7 @@ const EnvironmentChart = () => {
                             onClick={handleRefresh}
                             disabled={loading}
                             className="px-2 py-1 text-xs rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-                            title="Refresh"
+                            title={t('Refresh')}
                         >
                             🔄
                         </button>
@@ -449,7 +456,7 @@ const EnvironmentChart = () => {
                             onClick={downloadCSV}
                             disabled={loading || measurements.length === 0}
                             className="px-2 py-1 text-xs rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-                            title="Download CSV"
+                            title={t('Download CSV')}
                         >
                             📥
                         </button>
@@ -462,23 +469,23 @@ const EnvironmentChart = () => {
                     <div className="flex items-center justify-center h-[300px]">
                         <div className="text-center">
                             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mb-2"></div>
-                            <p className="text-sm text-gray-600">Loading data...</p>
+                            <p className="text-sm text-gray-600">{t('Loading data...')}</p>
                         </div>
                     </div>
                 ) : error ? (
                     <div className="flex flex-col items-center justify-center h-[300px] gap-4">
                         <p className="text-red-600 text-sm">{error}</p>
                         <button onClick={handleRefresh} className="px-4 py-2 text-sm rounded-md bg-teal-600 text-white hover:bg-teal-700">
-                            Retry
+                            {t('Retry')}
                         </button>
                     </div>
                 ) : !currentSensor ? (
                     <div className="flex items-center justify-center h-[300px]">
-                        <p className="text-gray-600 text-sm">No {selectedSensorType} sensor found</p>
+                        <p className="text-gray-600 text-sm">{t('No sensor found')} {selectedSensorType}</p>
                     </div>
                 ) : measurements.length === 0 ? (
                     <div className="flex items-center justify-center h-[300px]">
-                        <p className="text-gray-600 text-sm">No data for this period</p>
+                        <p className="text-gray-600 text-sm">{t('No data for this period')}</p>
                     </div>
                 ) : shouldRenderChart ? (
                     <MemoizedChart
@@ -493,17 +500,17 @@ const EnvironmentChart = () => {
                 {measurements.length > 0 && (
                     <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                         <div>
-                            <p className="text-gray-500">Points</p>
+                            <p className="text-gray-500">{t('Points')}</p>
                             <p className="font-semibold">{measurements.length}</p>
                         </div>
                         <div>
-                            <p className="text-gray-500">Average</p>
+                            <p className="text-gray-500">{t('Average')}</p>
                             <p className="font-semibold">
                                 {(measurements.reduce((sum, m) => sum + m.value, 0) / measurements.length).toFixed(2)}
                             </p>
                         </div>
                         <div>
-                            <p className="text-gray-500">Latest</p>
+                            <p className="text-gray-500">{t('Latest')}</p>
                             <p className="font-semibold">
                                 {measurements[measurements.length - 1]?.value.toFixed(2)}
                             </p>
@@ -513,7 +520,7 @@ const EnvironmentChart = () => {
 
                 {lastUpdate && (
                     <div className="mt-2 text-xs text-gray-500 text-center">
-                        Last updated: {lastUpdate.toLocaleTimeString()}
+                        {t('Last updated')}: {lastUpdate.toLocaleTimeString()}
                     </div>
                 )}
             </CardContent>
