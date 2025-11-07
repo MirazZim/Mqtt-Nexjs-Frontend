@@ -1,9 +1,17 @@
 import { useState, useEffect, useContext } from 'react';
 import AuthContext from '../../../context/AuthContext';
 import API_BASE_URL from '../../../config/api.js';
+import { usePathname } from 'next/navigation';
+import { useTranslation } from '../../../app/i18n/client.js';
 
 const SystemHealthDashboard = ({ socket }) => {
     const { user } = useContext(AuthContext);
+
+    // i18n setup
+    const pathname = usePathname();
+    const lng = pathname.split("/")[1];
+    const { t } = useTranslation(lng, "health");
+
     const [healthData, setHealthData] = useState(null);
     const [auditData, setAuditData] = useState([]);
     const [auditStats, setAuditStats] = useState(null);
@@ -12,8 +20,6 @@ const SystemHealthDashboard = ({ socket }) => {
     const [auditTimeframe, setAuditTimeframe] = useState('today');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(5);
-
-
 
     useEffect(() => {
         const fetchSystemHealth = async () => {
@@ -53,6 +59,7 @@ const SystemHealthDashboard = ({ socket }) => {
                 console.error('❌ Error fetching audit trail:', error);
             }
         };
+
         const fetchAuditStatistics = async () => {
             try {
                 const response = await fetch(`${API_BASE_URL}/api/admin/audit-statistics?timeframe=${auditTimeframe}`, {
@@ -71,23 +78,19 @@ const SystemHealthDashboard = ({ socket }) => {
             fetchSystemHealth();
             fetchAuditTrail();
             fetchAuditStatistics();
-        }, 5000); // Update every 5 seconds
+        }, 5000);
 
-        // Initial fetch
         fetchSystemHealth();
         fetchAuditTrail();
         fetchAuditStatistics();
 
-        // Socket listeners for real-time updates
         if (socket) {
             socket.on('systemHealthUpdate', setHealthData);
 
-            // Real-time audit updates
             socket.on('userActionAudit', (newAction) => {
                 setAuditData(prev => [newAction, ...prev.slice(0, 49)]);
             });
 
-            // Join admin dashboard room for audit updates
             socket.emit('join', 'admin_dashboard');
         }
 
@@ -123,13 +126,11 @@ const SystemHealthDashboard = ({ socket }) => {
         }
     };
 
-    // Calculate pagination
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = auditData.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(auditData.length / itemsPerPage);
 
-    // Page numbers to show
     const getPageNumbers = () => {
         const pages = [];
         const maxVisible = 5;
@@ -164,7 +165,7 @@ const SystemHealthDashboard = ({ socket }) => {
         return (
             <div className="loading-container">
                 <div className="loading-spinner"></div>
-                <p>Loading system health...</p>
+                <p>{t('Loading system health...')}</p>
             </div>
         );
     }
@@ -174,11 +175,11 @@ const SystemHealthDashboard = ({ socket }) => {
             {/* Dashboard Header */}
             <div className="bg-gradient-to-r from-teal-600 to-blue-600 rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold text-white">System Health Monitor</h2>
+                    <h2 className="text-2xl font-bold text-white">{t('System Health Monitor')}</h2>
                     <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
                         <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                         <span className="text-white text-sm">
-                            Last updated: {healthData?.timestamp ? new Date(healthData.timestamp).toLocaleTimeString() : 'Never'}
+                            {t('Last updated')}: {healthData?.timestamp ? new Date(healthData.timestamp).toLocaleTimeString() : t('Never')}
                         </span>
                     </div>
                 </div>
@@ -194,8 +195,8 @@ const SystemHealthDashboard = ({ socket }) => {
                                 📱
                             </div>
                             <div>
-                                <h3 className="text-white font-bold text-lg">Device Status</h3>
-                                <p className="text-blue-100 text-sm">IoT Sensors</p>
+                                <h3 className="text-white font-bold text-lg">{t('Device Status')}</h3>
+                                <p className="text-blue-100 text-sm">{t('IoT Sensors')}</p>
                             </div>
                         </div>
                         <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
@@ -204,15 +205,15 @@ const SystemHealthDashboard = ({ socket }) => {
                         <div className="grid grid-cols-3 gap-4 text-center">
                             <div>
                                 <div className="text-2xl font-bold text-green-600">{healthData?.devices.active || 0}</div>
-                                <div className="text-xs text-gray-500">Active</div>
+                                <div className="text-xs text-gray-500">{t('Active')}</div>
                             </div>
                             <div>
                                 <div className="text-2xl font-bold text-red-600">{healthData?.devices.offline || 0}</div>
-                                <div className="text-xs text-gray-500">Offline</div>
+                                <div className="text-xs text-gray-500">{t('Offline')}</div>
                             </div>
                             <div>
                                 <div className="text-2xl font-bold text-gray-600">{healthData?.devices.total || 0}</div>
-                                <div className="text-xs text-gray-500">Total</div>
+                                <div className="text-xs text-gray-500">{t('Total')}</div>
                             </div>
                         </div>
                     </div>
@@ -226,8 +227,8 @@ const SystemHealthDashboard = ({ socket }) => {
                                 👥
                             </div>
                             <div>
-                                <h3 className="text-white font-bold text-lg">User Activity</h3>
-                                <p className="text-purple-100 text-sm">Connected Users</p>
+                                <h3 className="text-white font-bold text-lg">{t('User Activity')}</h3>
+                                <p className="text-purple-100 text-sm">{t('Connected Users')}</p>
                             </div>
                         </div>
                         <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
@@ -236,11 +237,11 @@ const SystemHealthDashboard = ({ socket }) => {
                         <div className="grid grid-cols-2 gap-4 text-center">
                             <div>
                                 <div className="text-2xl font-bold text-green-600">{healthData?.users.active || 0}</div>
-                                <div className="text-xs text-gray-500">Online</div>
+                                <div className="text-xs text-gray-500">{t('Online')}</div>
                             </div>
                             <div>
                                 <div className="text-2xl font-bold text-gray-600">{healthData?.users.total || 0}</div>
-                                <div className="text-xs text-gray-500">Total</div>
+                                <div className="text-xs text-gray-500">{t('Total')}</div>
                             </div>
                         </div>
                     </div>
@@ -254,8 +255,8 @@ const SystemHealthDashboard = ({ socket }) => {
                                 📋
                             </div>
                             <div>
-                                <h3 className="text-white font-bold text-lg">Audit Trail</h3>
-                                <p className="text-orange-100 text-sm">User Actions</p>
+                                <h3 className="text-white font-bold text-lg">{t('Audit Trail')}</h3>
+                                <p className="text-orange-100 text-sm">{t('User Actions')}</p>
                             </div>
                         </div>
                         <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
@@ -263,7 +264,7 @@ const SystemHealthDashboard = ({ socket }) => {
                     <div className="p-4">
                         <div className="text-center mb-3">
                             <div className="text-3xl font-bold text-orange-600">{healthData?.audit?.recent_actions || 0}</div>
-                            <div className="text-xs text-gray-500">Recent Actions</div>
+                            <div className="text-xs text-gray-500">{t('Recent Actions')}</div>
                         </div>
                         <div className="flex justify-center gap-2">
                             {auditStats?.byActionType?.slice(0, 3).map((stat, index) => (
@@ -284,56 +285,54 @@ const SystemHealthDashboard = ({ socket }) => {
                                 ⚠️
                             </div>
                             <div>
-                                <h3 className="text-white font-bold text-lg">System Status</h3>
-                                <p className="text-green-100 text-sm">Monitoring</p>
+                                <h3 className="text-white font-bold text-lg">{t('System Status')}</h3>
+                                <p className="text-green-100 text-sm">{t('Monitoring')}</p>
                             </div>
                         </div>
-                        <div className={`w-3 h-3 rounded-full animate-pulse ${healthData?.anomalies > 0 ? 'bg-yellow-400' : 'bg-green-400'
-                            }`}></div>
+                        <div className={`w-3 h-3 rounded-full animate-pulse ${healthData?.anomalies > 0 ? 'bg-yellow-400' : 'bg-green-400'}`}></div>
                     </div>
                     <div className="p-4 flex items-center justify-center">
                         <div className="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg">
                             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                            <span className="text-green-700 font-medium">System Healthy</span>
+                            <span className="text-green-700 font-medium">{t('System Healthy')}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* User Action Audit Trail Section */}
-            {/* User Action Audit Trail Section */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-6">
                     <div className="flex items-center justify-between flex-wrap gap-4">
                         <div>
-                            <h3 className="text-2xl font-bold text-white mb-1">🔍 User Action Audit Trail</h3>
-                            <p className="text-indigo-100 text-sm">Real-time monitoring of user temperature changes</p>
+                            <h3 className="text-2xl font-bold text-white mb-1">{t('User Action Audit Trail')}</h3>
+                            <p className="text-indigo-100 text-sm">{t('Real-time monitoring of user temperature changes')}</p>
                         </div>
                         <div className="flex gap-2">
                             <select
                                 value={auditFilter}
                                 onChange={(e) => {
                                     setAuditFilter(e.target.value);
-                                    setCurrentPage(1); // Reset to first page on filter change
+                                    setCurrentPage(1);
                                 }}
                                 className="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50"
                             >
-                                <option value="ALL" className="text-gray-800">All Actions</option>
-                                <option value="TEMPERATURE_SET" className="text-gray-800">Temperature Changes</option>
-                                <option value="HUMIDITY_SET" className="text-gray-800">Humidity Changes</option>
-                                <option value="AIRFLOW_SET" className="text-gray-800">Airflow Changes</option>
+                                <option value="ALL" className="text-gray-800">{t('All Actions')}</option>
+                                <option value="TEMPERATURE_SET" className="text-gray-800">{t('Temperature Changes')}</option>
+                                <option value="HUMIDITY_SET" className="text-gray-800">{t('Humidity Changes')}</option>
+                                <option value="AIRFLOW_SET" className="text-gray-800">{t('Airflow Changes')}</option>
                             </select>
                             <select
                                 value={auditTimeframe}
                                 onChange={(e) => {
                                     setAuditTimeframe(e.target.value);
-                                    setCurrentPage(1); // Reset to first page on timeframe change
+                                    setCurrentPage(1);
                                 }}
                                 className="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50"
                             >
-                                <option value="today" className="text-gray-800">Today</option>
-                                <option value="week" className="text-gray-800">This Week</option>
-                                <option value="month" className="text-gray-800">This Month</option>
+                                <option value="today" className="text-gray-800">{t('Today')}</option>
+                                <option value="week" className="text-gray-800">{t('This Week')}</option>
+                                <option value="month" className="text-gray-800">{t('This Month')}</option>
                             </select>
                         </div>
                     </div>
@@ -342,12 +341,11 @@ const SystemHealthDashboard = ({ socket }) => {
                 <div className="p-6">
                     {auditData.length > 0 ? (
                         <>
-                            {/* Showing X of Y results + Items per page */}
                             <div className="flex items-center justify-between mb-4">
                                 <div className="text-sm text-gray-600">
-                                    Showing <span className="font-semibold text-gray-800">{indexOfFirstItem + 1}</span> to{' '}
-                                    <span className="font-semibold text-gray-800">{Math.min(indexOfLastItem, auditData.length)}</span> of{' '}
-                                    <span className="font-semibold text-gray-800">{auditData.length}</span> results
+                                    {t('Showing')} <span className="font-semibold text-gray-800">{indexOfFirstItem + 1}</span> {t('to')}{' '}
+                                    <span className="font-semibold text-gray-800">{Math.min(indexOfLastItem, auditData.length)}</span> {t('of')}{' '}
+                                    <span className="font-semibold text-gray-800">{auditData.length}</span> {t('results')}
                                 </div>
                                 <select
                                     value={itemsPerPage}
@@ -357,14 +355,13 @@ const SystemHealthDashboard = ({ socket }) => {
                                     }}
                                     className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                                 >
-                                    <option value={5}>5 per page</option>
-                                    <option value={10}>10 per page</option>
-                                    <option value={20}>20 per page</option>
-                                    <option value={50}>50 per page</option>
+                                    <option value={5}>5 {t('per page')}</option>
+                                    <option value={10}>10 {t('per page')}</option>
+                                    <option value={20}>20 {t('per page')}</option>
+                                    <option value={50}>50 {t('per page')}</option>
                                 </select>
                             </div>
 
-                            {/* Audit Items */}
                             <div className="space-y-3 mb-6">
                                 {currentItems.map((action, index) => (
                                     <div
@@ -413,19 +410,16 @@ const SystemHealthDashboard = ({ socket }) => {
                                 ))}
                             </div>
 
-                            {/* Pagination Controls */}
                             {totalPages > 1 && (
                                 <div className="flex items-center justify-center gap-2">
-                                    {/* Previous Button */}
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                         disabled={currentPage === 1}
                                         className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
-                                        ← Previous
+                                        {t('Previous')}
                                     </button>
 
-                                    {/* Page Numbers */}
                                     <div className="flex items-center gap-1">
                                         {getPageNumbers().map((page, index) => (
                                             page === '...' ? (
@@ -447,13 +441,12 @@ const SystemHealthDashboard = ({ socket }) => {
                                         ))}
                                     </div>
 
-                                    {/* Next Button */}
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                         disabled={currentPage === totalPages}
                                         className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
-                                        Next →
+                                        {t('Next')}
                                     </button>
                                 </div>
                             )}
@@ -463,21 +456,20 @@ const SystemHealthDashboard = ({ socket }) => {
                             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-4xl mb-4">
                                 📋
                             </div>
-                            <h4 className="text-xl font-bold text-gray-800 mb-2">No user actions recorded</h4>
+                            <h4 className="text-xl font-bold text-gray-800 mb-2">{t('No user actions recorded')}</h4>
                             <p className="text-gray-600 max-w-md">
-                                Temperature changes will appear here in real-time when users make adjustments.
+                                {t('Temperature changes will appear here')}
                             </p>
                         </div>
                     )}
                 </div>
             </div>
 
-
             {/* MQTT Activity Summary */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <div className="bg-gradient-to-r from-cyan-500 to-blue-500 p-6">
-                    <h3 className="text-2xl font-bold text-white mb-1">📡 MQTT Activity Summary</h3>
-                    <p className="text-cyan-100 text-sm">Real-time message statistics</p>
+                    <h3 className="text-2xl font-bold text-white mb-1">{t('MQTT Activity Summary')}</h3>
+                    <p className="text-cyan-100 text-sm">{t('Real-time message statistics')}</p>
                 </div>
 
                 <div className="p-6">
@@ -489,7 +481,7 @@ const SystemHealthDashboard = ({ socket }) => {
                             </div>
                             <div>
                                 <div className="text-3xl font-bold text-green-700">{healthData?.mqtt.connect || 0}</div>
-                                <div className="text-sm text-green-600">Connections</div>
+                                <div className="text-sm text-green-600">{t('Connections')}</div>
                             </div>
                         </div>
 
@@ -500,7 +492,7 @@ const SystemHealthDashboard = ({ socket }) => {
                             </div>
                             <div>
                                 <div className="text-3xl font-bold text-blue-700">{healthData?.mqtt.publish || 0}</div>
-                                <div className="text-sm text-blue-600">Publications</div>
+                                <div className="text-sm text-blue-600">{t('Publications')}</div>
                             </div>
                         </div>
 
@@ -511,7 +503,7 @@ const SystemHealthDashboard = ({ socket }) => {
                             </div>
                             <div>
                                 <div className="text-3xl font-bold text-purple-700">{healthData?.mqtt.subscribe || 0}</div>
-                                <div className="text-sm text-purple-600">Subscriptions</div>
+                                <div className="text-sm text-purple-600">{t('Subscriptions')}</div>
                             </div>
                         </div>
 
@@ -522,7 +514,7 @@ const SystemHealthDashboard = ({ socket }) => {
                             </div>
                             <div>
                                 <div className="text-3xl font-bold text-orange-700">{healthData?.mqtt.disconnect || 0}</div>
-                                <div className="text-sm text-orange-600">Disconnections</div>
+                                <div className="text-sm text-orange-600">{t('Disconnections')}</div>
                             </div>
                         </div>
                     </div>

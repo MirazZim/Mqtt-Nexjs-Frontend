@@ -1,0 +1,13 @@
+{
+    "Water Level Control": "水位制御",
+    "Bowl": "ボウル",
+    "Fermentation Tank 01": "発酵タンク01",
+    "OFFLINE": "オフライン",
+    "ON": "オン",
+    "OFF": "オフ",
+    "Water level low, Pump is ON": "💧 水位低下、ポンプオン",
+    "Water level normal, Pump is Off": "✅ 水位正常、ポンプオフ",
+    "Waiting for status...": "ステータス待機中...",
+    "Awaiting data...": "データ待機中...",
+    "Offline": "⚠️ オフライン"
+}

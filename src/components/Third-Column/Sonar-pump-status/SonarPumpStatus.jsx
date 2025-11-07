@@ -3,12 +3,20 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { createSocket } from '../../../lib/socket';
 import AuthContext from '../../../context/AuthContext';
+import { usePathname } from 'next/navigation';  // ✅ ADD THIS
+import { useTranslation } from '../../../app/i18n/client.js';  // ✅ ADD THIS
 
 const SonarPumpStatus = ({ selectedLocation }) => {
     const { user } = useContext(AuthContext);
+
+    // ✅ ADD THESE LINES
+    const pathname = usePathname();
+    const lng = pathname.split("/")[1];
+    const { t } = useTranslation(lng, "pump");
+
     const [pumpStatus, setPumpStatus] = useState({
         status: null,
-        message: 'Waiting for status...',
+        message: t('Waiting for status...'),
         active: false,
         lastUpdate: null
     });
@@ -45,8 +53,8 @@ const SonarPumpStatus = ({ selectedLocation }) => {
             const isPumpOn = data.state === 'PO' || parseInt(data.state) === 1;
 
             setPumpStatus({
-                status: isPumpOn ? 'ON' : 'OFF',
-                message: isPumpOn ? '💧 Water level low, Pump is ON' : '✅ Water level normal, Pump is Off',
+                status: isPumpOn ? t('ON') : t('OFF'),
+                message: isPumpOn ? t('Water level low, Pump is ON') : t('Water level normal, Pump is Off'),
                 active: isPumpOn,
                 lastUpdate: new Date()
             });
@@ -55,28 +63,28 @@ const SonarPumpStatus = ({ selectedLocation }) => {
         return () => {
             socketConnection.disconnect();
         };
-    }, [user, selectedLocation]);
+    }, [user, selectedLocation, t]);
 
     return (
         <div className={`p-4 rounded-lg border transition-all ${pumpStatus.active
-            ? 'bg-orange-50 border-orange-300 shadow-md'
-            : 'bg-green-50 border-green-300 shadow-sm'
+                ? 'bg-orange-50 border-orange-300 shadow-md'
+                : 'bg-green-50 border-green-300 shadow-sm'
             }`}>
             {/* Title with Bowl Name */}
             <div className="flex items-center justify-between mb-3">
                 <div>
                     <h3 className="text-sm font-bold text-gray-800">
-                        💧Water Level Control
+                        💧{t('Water Level Control')}
                     </h3>
                     <p className="text-xs text-gray-500 mt-0.5">
-                        Bowl: Fermentation Tank 01
+                        {t('Bowl')}: {t('Fermentation Tank 01')}
                     </p>
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-semibold ${pumpStatus.active
-                    ? 'bg-orange-200 text-orange-700'
-                    : 'bg-green-200 text-green-700'
+                        ? 'bg-orange-200 text-orange-700'
+                        : 'bg-green-200 text-green-700'
                     }`}>
-                    {pumpStatus.status || 'OFFLINE'}
+                    {pumpStatus.status || t('OFFLINE')}
                 </div>
             </div>
 
@@ -91,10 +99,12 @@ const SonarPumpStatus = ({ selectedLocation }) => {
                 <span>
                     {pumpStatus.lastUpdate
                         ? pumpStatus.lastUpdate.toLocaleTimeString()
-                        : 'Awaiting data...'
+                        : t('Awaiting data...')
                     }
                 </span>
-                {!connected && <span className="text-red-600 font-medium">⚠️ Offline</span>}
+                {!connected && (
+                    <span className="text-red-600 font-medium">{t('Offline')}</span>
+                )}
             </div>
         </div>
     );

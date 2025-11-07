@@ -1,0 +1,13 @@
+{
+    "IP Camera Feed": "IPカメラフィード",
+    "Capturing...": "キャプチャ中...",
+    "Capture Now": "今すぐキャプチャ",
+    "Stop Auto": "自動停止",
+    "Auto Save": "自動保存",
+    "Auto-saving every 5s": "5秒ごとに自動保存",
+    "Manual mode": "手動モード",
+    "Last": "最後",
+    "Failed to capture image": "画像のキャプチャに失敗しました",
+    "Error capturing image": "画像キャプチャエラー",
+    "Image captured": "画像をキャプチャしました"
+}

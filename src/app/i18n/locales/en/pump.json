@@ -1,0 +1,13 @@
+{
+    "Water Level Control": "Water Level Control",
+    "Bowl": "Bowl",
+    "Fermentation Tank 01": "Fermentation Tank 01",
+    "OFFLINE": "OFFLINE",
+    "ON": "ON",
+    "OFF": "OFF",
+    "Water level low, Pump is ON": "💧 Water level low, Pump is ON",
+    "Water level normal, Pump is Off": "✅ Water level normal, Pump is Off",
+    "Waiting for status...": "Waiting for status...",
+    "Awaiting data...": "Awaiting data...",
+    "Offline": "⚠️ Offline"
+}

@@ -1,0 +1,13 @@
+{
+    "Bowl Cooling System": "ボウル冷却システム",
+    "Bowl Name": "ボウル名",
+    "Fermentation Tank 01": "発酵タンク01",
+    "OFFLINE": "オフライン",
+    "ON": "オン",
+    "OFF": "オフ",
+    "Temp High, Fan is ON": "🌡️ 温度高、ファンオン",
+    "Temp normal, Fan off": "✅ 温度正常、ファンオフ",
+    "Waiting for status...": "ステータス待機中...",
+    "Awaiting data...": "データ待機中...",
+    "Offline": "⚠️ オフライン"
+}
