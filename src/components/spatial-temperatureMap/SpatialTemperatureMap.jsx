@@ -9,8 +9,19 @@ import { createSocket } from '../../lib/socket';
 import AuthContext from '../../context/AuthContext';
 import API_BASE_URL from '../../config/api.js';
 
+import { usePathname } from 'next/navigation';  // ✅ ADD THIS
+import { useTranslation } from '../../app/i18n/client.js';  // ✅ ADD THIS
+
+
+
+
 const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTemperature = 22 }) => {
     const { user } = useContext(AuthContext);
+
+    // ✅ ADD THESE LINES
+    const pathname = usePathname();
+    const lng = pathname.split("/")[1];
+    const { t } = useTranslation(lng, "spatial");
 
     // State management (unchanged)
     const [data, setData] = useState({
@@ -56,23 +67,23 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
         },
         getTemperatureStatus: (temp) => {
             const diff = Math.abs(temp - targetTemperature);
-            if (diff <= 0.5) return { status: 'optimal', color: '#10b981', label: 'Optimal' };
-            if (temp < targetTemperature - 2) return { status: 'cold', color: '#3b82f6', label: 'Too Cold' };
-            if (temp < targetTemperature) return { status: 'cool', color: '#06b6d4', label: 'Cool' };
-            if (temp > targetTemperature + 2) return { status: 'hot', color: '#dc2626', label: 'Too Hot' };
-            return { status: 'warm', color: '#f59e0b', label: 'Warm' };
+            if (diff <= 0.5) return { status: 'optimal', color: '#10b981', label: t('Optimal') };
+            if (temp < targetTemperature - 2) return { status: 'cold', color: '#3b82f6', label: t('Too Cold') };
+            if (temp < targetTemperature) return { status: 'cool', color: '#06b6d4', label: t('Cool') };
+            if (temp > targetTemperature + 2) return { status: 'hot', color: '#dc2626', label: t('Too Hot') };
+            return { status: 'warm', color: '#f59e0b', label: t('Warm') };
         },
         isOnline: (lastUpdate) => {
             if (!lastUpdate) return false;
             const updateTime = new Date(lastUpdate);
             return Date.now() - updateTime.getTime() < 3000;
         }
-    }), [targetTemperature]);
+    }), [targetTemperature, t]);
 
     // All data fetching, socket, and calculation logic remains EXACTLY the same
     const fetchData = useCallback(async () => {
         if (!user?.token || !selectedLocation) {
-            setUI(prev => ({ ...prev, loading: false, error: 'Missing authentication or location' }));
+            setUI(prev => ({ ...prev, loading: false, error: t('Missing authentication or location') }));
             return;
         }
 
@@ -134,10 +145,10 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
             setUI(prev => ({
                 ...prev,
                 loading: false,
-                error: 'Failed to load spatial data. Please check your connection.'
+                error: t('Failed to load spatial data')
             }));
         }
-    }, [user?.token, selectedLocation]);
+    }, [user?.token, selectedLocation, t]);
 
     const flushUpdates = useCallback(() => {
         if (updateBuffer.current.size === 0) return;
@@ -332,8 +343,8 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                     <div className="flex items-center gap-2 text-white">
                         <FaThermometerHalf className="text-base md:text-lg" />
                         <div>
-                            <h2 className="text-sm md:text-base font-bold">Spatial Temperature Control</h2>
-                            <p className="text-xs text-teal-100 hidden sm:block">Location: {selectedLocation}</p>
+                            <h2 className="text-sm md:text-base font-bold">{t('Spatial Temperature Control')}</h2>
+                            <p className="text-xs text-teal-100 hidden sm:block">{t('Location')}: {selectedLocation}</p>
                         </div>
                     </div>
                 </div>
@@ -347,7 +358,7 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                             }`}
                     >
                         {ui.realTimeUpdates ? <FaPause className="w-3 h-3" /> : <FaPlay className="w-3 h-3" />}
-                        <span className="hidden sm:inline">{ui.realTimeUpdates ? 'Live' : 'Paused'}</span>
+                        <span className="hidden sm:inline">{ui.realTimeUpdates ? t('Live') : t('Paused')}</span>
                     </button>
 
                     <button
@@ -355,7 +366,7 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                         className="flex items-center gap-1 px-2 py-1 md:px-3 md:py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-md text-xs md:text-sm font-medium transition-colors"
                     >
                         {ui.isFullscreen ? <FaCompress className="w-3 h-3" /> : <FaExpand className="w-3 h-3" />}
-                        <span className="hidden md:inline">{ui.isFullscreen ? 'Exit' : 'Fullscreen'}</span>
+                        <span className="hidden md:inline">{ui.isFullscreen ? t('Exit') : t('Fullscreen')}</span>
                     </button>
 
                     <button
@@ -363,12 +374,13 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                         className="flex items-center gap-1 px-2 py-1 md:px-3 md:py-1.5 bg-white hover:bg-gray-100 text-teal-700 rounded-md text-xs md:text-sm font-medium transition-colors"
                     >
                         <FaSync className="w-3 h-3" />
-                        <span className="hidden md:inline">Refresh</span>
+                        <span className="hidden md:inline">{t('Refresh')}</span>
                     </button>
                 </div>
             </div>
         </div>
     );
+
 
     // TAILWIND VERSION - Real Sensor Status (already provided earlier, keeping same)
     const RealSensorStatus = () => {
@@ -380,18 +392,18 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                 <div className="mx-6 mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <div className="flex items-center gap-3 mb-2">
                         <FaExclamationTriangle className="text-yellow-600 text-xl" />
-                        <span className="font-semibold text-yellow-800">No real sensors detected</span>
+                        <span className="font-semibold text-yellow-800">{t('No real sensors detected')}</span>
                     </div>
                     <p className="text-sm text-yellow-700">
-                        Check if your sensors (ESPX, ESPX2, ESPX3) are sending data to the MQTT broker.
+                        {t('Check if your sensors are sending data')}
                     </p>
                 </div>
             );
         }
 
+
         return (
             <div className="mx-1 mt-1 md:mx-2 md:mt-2 bg-card rounded-md border border-border shadow-sm group relative">
-                {/* Compact Header - Always Visible */}
                 <div className="flex items-center justify-between px-2 py-1.5 md:px-3 md:py-2 cursor-pointer hover:bg-accent/50 transition-colors rounded-md">
                     <div className="flex items-center gap-1.5">
                         <div className={`w-6 h-6 md:w-7 md:h-7 rounded flex items-center justify-center ${onlineCount > 0
@@ -402,13 +414,14 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                         </div>
                         <div>
                             <h3 className="text-xs md:text-sm font-semibold text-foreground">
-                                Real Sensor Status
+                                {t('Real Sensor Status')}
                             </h3>
                             <p className="text-[9px] md:text-[10px] text-muted-foreground hidden sm:block">
-                                Hover to view details
+                                {t('Hover to view details')}
                             </p>
                         </div>
                     </div>
+
 
                     <div className="flex items-center gap-1.5">
                         <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 md:px-2 md:py-1 rounded-full text-[10px] md:text-xs font-medium ${onlineCount === realSensors.length
@@ -426,7 +439,7 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                         <button
                             onClick={handlers.refresh}
                             className="p-1 md:p-1.5 rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-                            title="Refresh data"
+                            title={t('Refresh data')}
                         >
                             <FaSync className="w-2.5 h-2.5 md:w-3 md:h-3" />
                         </button>
@@ -546,10 +559,10 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
         return (
             <div className="mx-2 my-2 md:mx-4 md:my-3 bg-card rounded-lg border border-border shadow-sm overflow-hidden">
                 <div className="px-3 py-2 md:px-4 md:py-2.5 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                    <h3 className="text-sm md:text-base font-semibold text-foreground">Temperature Map</h3>
+                    <h3 className="text-sm md:text-base font-semibold text-foreground">{t('Temperature Map')}</h3>
                     {stats && (
                         <div className="text-xs text-muted-foreground">
-                            Avg: {utils.formatTemp(stats.avg)} | Range: {utils.formatTemp(stats.min)} - {utils.formatTemp(stats.max)}
+                            {t('Avg')}: {utils.formatTemp(stats.avg)} | {t('Range')}: {utils.formatTemp(stats.min)} - {utils.formatTemp(stats.max)}
                         </div>
                     )}
                 </div>
@@ -569,6 +582,7 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                         </defs>
                         <rect width="100%" height="100%" fill="url(#grid)" />
 
+                        {/* Actuator influence zones */}
                         {data.actuators.map((actuator, idx) => {
                             const x = scaleX(utils.safeNumber(actuator.x_coordinate));
                             const y = scaleY(utils.safeNumber(actuator.y_coordinate));
@@ -588,6 +602,7 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                             );
                         })}
 
+                        {/* Sensors */}
                         {data.sensors.map((sensor, idx) => {
                             const x = scaleX(utils.safeNumber(sensor.x_coordinate));
                             const y = scaleY(utils.safeNumber(sensor.y_coordinate));
@@ -608,7 +623,7 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                                         className="cursor-pointer hover:opacity-80 transition-opacity"
                                         onClick={() => handlers.selectSensor(sensor)}
                                         onMouseEnter={(e) => handlers.showTooltip(e,
-                                            `${sensor.sensor_id}\n${utils.formatTemp(temp)}\nPosition: (${sensor.x_coordinate}, ${sensor.y_coordinate})\nStatus: ${isOnline ? 'Online' : 'Offline'}`
+                                            `${sensor.sensor_id}\n${utils.formatTemp(temp)}\n${t('Position')}: (${sensor.x_coordinate}, ${sensor.y_coordinate})\n${t('Status')}: ${isOnline ? t('Online') : t('Offline')}`
                                         )}
                                         onMouseLeave={handlers.hideTooltip}
                                     />
@@ -626,6 +641,7 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                             );
                         })}
 
+                        {/* Actuators */}
                         {data.actuators.map((actuator, idx) => {
                             const x = scaleX(utils.safeNumber(actuator.x_coordinate));
                             const y = scaleY(utils.safeNumber(actuator.y_coordinate));
@@ -655,7 +671,7 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                                         className="cursor-pointer hover:opacity-80 transition-opacity"
                                         onClick={() => handlers.selectActuator(actuator)}
                                         onMouseEnter={(e) => handlers.showTooltip(e,
-                                            `${actuator.actuator_id}\nType: ${actuator.actuator_type}\nOutput: ${output.toFixed(1)}%\nPosition: (${actuator.x_coordinate}, ${actuator.y_coordinate})`
+                                            `${actuator.actuator_id}\n${t('Type')}: ${actuator.actuator_type}\n${t('Output')}: ${output.toFixed(1)}%\n${t('Position')}: (${actuator.x_coordinate}, ${actuator.y_coordinate})`
                                         )}
                                         onMouseLeave={handlers.hideTooltip}
                                     />
@@ -672,20 +688,21 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                         })}
                     </svg>
 
+                    {/* Legend */}
                     <div className="absolute bottom-0.5 right-0.5 md:bottom-1 md:right-1 bg-white/90 backdrop-blur-sm rounded border border-border p-1 md:p-1.5 shadow-md">
-                        <div className="text-[9px] md:text-[10px] font-semibold text-foreground mb-0.5">Legend</div>
+                        <div className="text-[9px] md:text-[10px] font-semibold text-foreground mb-0.5">{t('Legend')}</div>
                         <div className="space-y-0.5">
                             <div className="flex items-center gap-1">
                                 <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-gray-700 border border-white"></div>
-                                <span className="text-[8px] md:text-[9px] text-muted-foreground">Real</span>
+                                <span className="text-[8px] md:text-[9px] text-muted-foreground">{t('Real')}</span>
                             </div>
                             <div className="flex items-center gap-1">
                                 <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-blue-500"></div>
-                                <span className="text-[8px] md:text-[9px] text-muted-foreground">Simulated</span>
+                                <span className="text-[8px] md:text-[9px] text-muted-foreground">{t('Simulated')}</span>
                             </div>
                             <div className="flex items-center gap-1">
                                 <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-amber-500 border border-gray-700 rounded-sm"></div>
-                                <span className="text-[8px] md:text-[9px] text-muted-foreground">Actuator</span>
+                                <span className="text-[8px] md:text-[9px] text-muted-foreground">{t('Actuator')}</span>
                             </div>
                         </div>
                     </div>
@@ -699,25 +716,24 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] p-12">
                 <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mb-4"></div>
-                <p className="text-muted-foreground">Loading spatial data...</p>
+                <p className="text-muted-foreground">{t('Loading spatial data...')}</p>
             </div>
         );
     }
-
     // Error state
     if (ui.error) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] p-12">
                 <div className="flex items-center gap-3 text-red-600 mb-4">
                     <FaExclamationTriangle className="text-2xl" />
-                    <span className="text-lg font-semibold">Error Loading Data</span>
+                    <span className="text-lg font-semibold">{t('Error Loading Data')}</span>
                 </div>
                 <p className="text-muted-foreground mb-6">{ui.error}</p>
                 <button
                     onClick={handlers.refresh}
                     className="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors"
                 >
-                    Try Again
+                    {t('Try Again')}
                 </button>
             </div>
         );
@@ -738,10 +754,10 @@ const SpatialTemperatureMap = ({ selectedLocation = "sensor-room", targetTempera
                         <FaInfoCircle className="w-8 h-8" />
                     </div>
                     <h3 className="text-xl font-semibold text-foreground mb-2">
-                        No Sensors Found
+                        {t('No Sensors Found')}
                     </h3>
                     <p className="text-sm text-muted-foreground max-w-md">
-                        Configure sensors with coordinates to view the temperature map.
+                        {t('Configure sensors with coordinates')}
                     </p>
                 </div>
             ) : (
