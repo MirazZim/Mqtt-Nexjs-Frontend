@@ -4,9 +4,15 @@ import { FaThermometerHalf, FaTint, FaWind, FaCog } from 'react-icons/fa';
 import { createSocket } from '../../lib/socket';
 import AuthContext from '../../context/AuthContext';
 import API_BASE_URL from '../../config/api.js';
+import { usePathname } from 'next/navigation';  // ✅ ADD THIS
+import { useTranslation } from '../../app/i18n/client.js';
 
 const EnvironmentControl = ({ selectedLocation }) => {
     const { user } = useContext(AuthContext);
+
+    const pathname = usePathname();
+    const lng = pathname.split("/")[1];
+    const { t } = useTranslation(lng, "environment");
 
     // Safe number formatting function
     const safeToFixed = (value, digits = 1) => {
@@ -554,11 +560,11 @@ const EnvironmentControl = ({ selectedLocation }) => {
                         // Determine if it's temperature or humidity based on value range
                         const value = parseInt(result.message);
                         if (value >= TEMP_MIN_VALUE && value <= TEMP_MAX_VALUE) {
-                            setTempPublishStatus(`✅ Temperature set: ${result.message}°C`);
-                            setMessage(`Temperature setpoint updated to ${result.message}°C`);
+                            setTempPublishStatus(`✅ ${t('Temperature set')}: ${result.message}°C`);
+                            setMessage(`${t('Temperature setpoint updated to')} ${result.message}°C`);
                         } else if (value >= HUMIDITY_MIN_VALUE && value <= HUMIDITY_MAX_VALUE) {
-                            setHumidityPublishStatus(`✅ Humidity set: ${result.message}%`);
-                            setMessage(`Humidity setpoint updated to ${result.message}%`);
+                            setHumidityPublishStatus(`✅  ${t('Humidity set')}: ${result.message}%`);
+                            setMessage(`${t('Humidity setpoint updated to')} ${result.message}%`);
                         }
                     } else {
                         setTempPublishStatus(`❌ Failed: ${result.error}`);
@@ -727,19 +733,19 @@ const EnvironmentControl = ({ selectedLocation }) => {
     // Updated function to send temperature via MQTT
     const updateTemperatureSetpoint = async (value) => {
         if (!socket || !realTimeStatus.connected) {
-            setTempPublishStatus('❌ Not connected to server');
+            setTempPublishStatus(`❌ ${t('Not connected to server')}`);
             setTimeout(() => setTempPublishStatus(''), 3000);
             return;
         }
 
         if (!realTimeStatus.sensorActive) {
-            setTempPublishStatus('❌ Sensors not active');
+            setTempPublishStatus(`❌ ${t('Sensors not active')}`);
             setTimeout(() => setTempPublishStatus(''), 3000);
             return;
         }
 
         setLoading(true);
-        setTempPublishStatus(`📤 Setting temperature: ${value}°C`);
+        setTempPublishStatus(`📤 ${t('Setting temperature')}: ${value}°C`);
 
         // Send via MQTT
         socket.emit('publishTextToMQTT', {
@@ -912,7 +918,7 @@ const EnvironmentControl = ({ selectedLocation }) => {
         <div className="space-y-3 md:space-y-4">
             {/* Minimalist Header */}
             <div className="flex items-center justify-between">
-                <h2 className="text-base md:text-lg font-medium text-gray-900">Environment Control</h2>
+                <h2 className="text-base md:text-lg font-medium text-gray-900">{t('Environment Control')}</h2>
                 <div className="flex items-center gap-1.5 text-xs">
                     <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
@@ -925,11 +931,11 @@ const EnvironmentControl = ({ selectedLocation }) => {
             <div className="flex items-center gap-3 pb-2 md:pb-3 border-b border-gray-100">
                 <div className="flex items-center gap-1.5">
                     <div className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${realTimeStatus.connected ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
-                    <span className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wider">Broker</span>
+                    <span className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wider">{t('Broker')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                     <div className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${realTimeStatus.sensorActive ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
-                    <span className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wider">Sensors</span>
+                    <span className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wider">{t('Sensors')}</span>
                 </div>
             </div>
 
@@ -943,7 +949,7 @@ const EnvironmentControl = ({ selectedLocation }) => {
                                 <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center">
                                     <FaThermometerHalf className="text-white text-sm md:text-base" />
                                 </div>
-                                <h3 className="text-sm md:text-base font-medium text-gray-900">Temperature</h3>
+                                <h3 className="text-sm md:text-base font-medium text-gray-900">{t('Temperature')}</h3>
                             </div>
                             {/* <div className="flex items-baseline gap-1.5">
                                 <span className="text-2xl md:text-3xl font-light tracking-tight"
@@ -959,14 +965,14 @@ const EnvironmentControl = ({ selectedLocation }) => {
                             ? 'bg-emerald-50 text-emerald-700'
                             : 'bg-gray-100 text-gray-500'
                             }`}>
-                            {realTimeStatus.sensorActive ? 'Live' : 'Off'}
+                            {realTimeStatus.sensorActive ? t('Live') : t('Off')}
                         </div>
                     </div>
 
                     {/* Target Display */}
                     <div className="mb-3 md:mb-4 pb-3 md:pb-4 border-b border-gray-50">
                         <div className="flex items-center justify-between text-xs md:text-sm">
-                            <span className="text-gray-500">Target</span>
+                            <span className="text-gray-500">{t('Target')}</span>
                             <span className="font-medium text-gray-900">{setpoints.temperature}°C</span>
                         </div>
                         {currentData.temperature !== null && (

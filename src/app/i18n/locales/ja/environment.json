@@ -1,0 +1,23 @@
+{
+    "Environment Control": "環境制御",
+    "Broker": "ブローカー",
+    "Sensors": "センサー",
+    "Temperature": "温度",
+    "Humidity": "湿度",
+    "Airflow": "気流",
+    "Live": "ライブ",
+    "Off": "オフ",
+    "Target": "目標",
+    "Connected to Broker": "ブローカーに接続済み",
+    "Disconnected": "切断",
+    "Not connected to server": "サーバーに未接続",
+    "Sensors not active": "センサーが非アクティブ",
+    "Setting temperature": "温度を設定中",
+    "Setting humidity": "湿度を設定中",
+    "Temperature set": "温度設定完了",
+    "Humidity set": "湿度設定完了",
+    "Failed": "失敗",
+    "Temperature setpoint updated to": "温度設定値を更新",
+    "Humidity setpoint updated to": "湿度設定値を更新",
+    "Failed to update setpoint": "設定値の更新に失敗"
+}

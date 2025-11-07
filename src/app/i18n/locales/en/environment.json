@@ -1,0 +1,23 @@
+{
+    "Environment Control": "Environment Control",
+    "Broker": "Broker",
+    "Sensors": "Sensors",
+    "Temperature": "Temperature",
+    "Humidity": "Humidity",
+    "Airflow": "Airflow",
+    "Live": "Live",
+    "Off": "Off",
+    "Target": "Target",
+    "Connected to Broker": "Connected to Broker",
+    "Disconnected": "Disconnected",
+    "Not connected to server": "Not connected to server",
+    "Sensors not active": "Sensors not active",
+    "Setting temperature": "Setting temperature",
+    "Setting humidity": "Setting humidity",
+    "Temperature set": "Temperature set",
+    "Humidity set": "Humidity set",
+    "Failed": "Failed",
+    "Temperature setpoint updated to": "Temperature setpoint updated to",
+    "Humidity setpoint updated to": "Humidity setpoint updated to",
+    "Failed to update setpoint": "Failed to update setpoint"
+}
