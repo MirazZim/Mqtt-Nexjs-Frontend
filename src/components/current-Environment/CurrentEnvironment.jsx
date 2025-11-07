@@ -11,7 +11,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
     const { user } = useContext(AuthContext);
     const pathname = usePathname()
     const lng = pathname.split("/")[1]
-    const { t } = useTranslation(lng, "dashboard");
+    const { t } = useTranslation(lng, "current-environment");
 
 
     // State declarations MUST come before hooks usage
@@ -48,22 +48,22 @@ const CurrentEnvironment = ({ selectedLocation }) => {
     const [actuatorStatus, setActuatorStatus] = useState({
         bowlFan: {
             status: null,
-            message: 'Waiting for status...',
+            message: t('Waiting for status...'),
             active: false
         },
         sonarPump: {
             status: null,
-            message: 'Waiting for status...',
+            message: t('Waiting for status...'),
             active: false
         },
         co2Fermentation: {
             status: null,
-            message: 'Waiting for status...',
+            message: t('Waiting for status...'),
             active: false
         },
         sugarFermentation: {
             status: null,
-            message: 'Waiting for status...',
+            message: t('Waiting for status...'),
             complete: false
         }
     });
@@ -522,7 +522,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                     ...prev,
                     bowlFan: {
                         status: data.state === 1 ? 'ON' : 'OFF',
-                        message: data.state === 1 ? 'Bowl Fan is ON' : 'Bowl Fan is OFF',
+                        message: data.state === 1 ? t('Bowl Fan is ON') : t('Bowl Fan is OFF'),
                         active: data.state === 1
                     }
                 }));
@@ -535,7 +535,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                     ...prev,
                     sonarPump: {
                         status: data.state === 1 ? 'ON' : 'OFF',
-                        message: data.state === 1 ? 'Pump is ON' : 'Pump is OFF',
+                        message: data.state === 1 ? t('Pump is ON') : t('Pump is OFF'),
                         active: data.state === 1
                     }
                 }));
@@ -549,7 +549,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                     ...prev,
                     co2Fermentation: {
                         active: isFermentationGoing,
-                        message: isFermentationGoing ? 'Fermentation going' : 'Fermentation is Off'
+                        message: isFermentationGoing ? t('Fermentation going') : t('Fermentation is Off')
                     }
                 }));
             });
@@ -562,7 +562,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                     ...prev,
                     sugarFermentation: {
                         complete: isFermentationComplete,
-                        message: isFermentationComplete ? 'Fermentation complete' : 'Fermentation closed'
+                        message: isFermentationComplete ? t('Fermentation complete') : t('Fermentation closed')
                     }
                 }));
             });
@@ -616,6 +616,40 @@ const CurrentEnvironment = ({ selectedLocation }) => {
             setTimeout(attemptReconnect, 3000);
         }
     };
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleCO2Fermentation = (data) => {
+            console.log('🔵 [CurrentEnvironment] Received co2FermentationUpdate:', data);
+            setActuatorStatus(prev => ({
+                ...prev,
+                co2Fermentation: {
+                    active: data.value === 'AF',
+                    message: data.value === 'AF' ? t('Fermentation going') : t('Fermentation is Off')
+                }
+            }));
+        };
+
+        const handleSugarFermentation = (data) => {
+            console.log('🔵 [CurrentEnvironment] Received sugarFermentationUpdate:', data);
+            setActuatorStatus(prev => ({
+                ...prev,
+                sugarFermentation: {
+                    complete: data.value === 'FFC',
+                    message: data.value === 'FFC' ? t('Fermentation complete') : t('Fermentation closed')
+                }
+            }));
+        };
+
+        socket.on('co2FermentationUpdate', handleCO2Fermentation);
+        socket.on('sugarFermentationUpdate', handleSugarFermentation);
+
+        return () => {
+            socket.off('co2FermentationUpdate', handleCO2Fermentation);
+            socket.off('sugarFermentationUpdate', handleSugarFermentation);
+        };
+    }, [socket, t]);
 
 
     const fetchLatestEnvironment = async () => {
@@ -730,25 +764,25 @@ const CurrentEnvironment = ({ selectedLocation }) => {
     };
 
     const formatTimestamp = (timestamp) => {
-        if (!timestamp) return 'Never';
+        if (!timestamp) return t('Never');
         return timestamp.toLocaleTimeString();
     };
 
     const getConnectionStatusText = () => {
-        if (realTimeStatus.connected) return '🟢 Connected to Broker';
-        return '🔴 Disconnected';
+        if (realTimeStatus.connected) return `🟢 ${t('Connected to Broker')}`;
+        return `🔴 ${t('Disconnected')}`;
     };
 
     const getConnectionStatusClass = () => {
-        if (realTimeStatus.connected) return 'connected';
-        return 'disconnected';
+        if (realTimeStatus.connected) return t('connected');
+        return t('disconnected');
     };
 
     if (loading) {
         return (
             <div className="current-environment">
-                <h2>Environment - {selectedLocation}</h2>
-                <p>Loading...</p>
+                <h2>{t('Environment')} - {selectedLocation}</h2>
+                <p>{t('Loading...')}</p>
             </div>
         );
     }
@@ -777,7 +811,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Connecting...
+                        {t('Connecting...')}
                     </span>
                 )}
             </div>
@@ -795,7 +829,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                 <svg className="w-4 h-4 text-teal-600" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                 </svg>
-                <span className="text-xs">Location:</span>
+                <span className="text-xs">{t('Location:')}</span>
                 <strong className="text-xs text-gray-800">{selectedLocation}</strong>
             </div>
 
@@ -805,10 +839,9 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Last updated: {formatTimestamp(lastUpdate)}
+                    {t('Last updated:')} {formatTimestamp(lastUpdate)}
                 </div>
             )}
-
 
             {realTimeStatus.connected && realTimeStatus.sensorActive ? (
                 <div className="space-y-3 pt-1">
@@ -821,8 +854,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 <div className="flex items-center justify-between mb-1">
                                     <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
                                         <span className="text-sm">🌡️</span>
-                                        <span className="hidden sm:inline">Temperature</span>
-                                        <span className="sm:hidden">Temp</span>
+                                        <span className="hidden sm:inline">{t('Temperature')}</span>
+                                        <span className="sm:hidden">{t('Temp')}</span>
                                     </h3>
                                     {realTimeStatus.temperature && (
                                         <span className="inline-flex h-1 w-1 md:h-1.5 md:w-1.5 rounded-full bg-red-500 animate-pulse"></span>
@@ -833,7 +866,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     {safeToFixed(smoothTemp, 1)}°C
                                 </div>
                                 <div className="mt-1 text-9px md:text-10px text-gray-500">
-                                    Target: {setpoints.temperature}°C
+                                    {t('Target:')} {setpoints.temperature}°C
                                 </div>
                             </div>
                         )}
@@ -844,8 +877,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 <div className="flex items-center justify-between mb-1">
                                     <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
                                         <span className="text-sm">💧</span>
-                                        <span className="hidden sm:inline">Humidity</span>
-                                        <span className="sm:hidden">Humid</span>
+                                        <span className="hidden sm:inline">{t('Humidity')}</span>
+                                        <span className="sm:hidden">{t('Humid')}</span>
                                     </h3>
                                     {realTimeStatus.humidity && (
                                         <span className="inline-flex h-1 w-1 md:h-1.5 md:w-1.5 rounded-full bg-blue-500 animate-pulse"></span>
@@ -856,7 +889,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     {safeToFixed(smoothHumidity, 1)}%
                                 </div>
                                 <div className="mt-1 text-9px md:text-10px text-gray-500">
-                                    Target: {setpoints.humidity}%
+                                    {t('Target:')} {setpoints.humidity}%
                                 </div>
                             </div>
                         )}
@@ -867,8 +900,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 <div className="flex items-center justify-between mb-1">
                                     <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
                                         <span className="text-sm">🔥</span>
-                                        <span className="hidden sm:inline">Bowl Temperature</span>
-                                        <span className="sm:hidden">Bowl</span>
+                                        <span className="hidden sm:inline">{t('Bowl Temperature')}</span>
+                                        <span className="sm:hidden">{t('Bowl')}</span>
                                     </h3>
                                     {realTimeStatus.bowl_temp && (
                                         <span className="inline-flex h-1 w-1 md:h-1.5 md:w-1.5 rounded-full bg-amber-500 animate-pulse"></span>
@@ -879,7 +912,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     {safeToFixed(smoothBowlTemp, 1)}°C
                                 </div>
                                 <div className="mt-1 text-9px md:text-10px text-gray-500">
-                                    Target: {setpoints.bowl_temp}°C
+                                    {t('Target:')} {setpoints.bowl_temp}°C
                                 </div>
                             </div>
                         )}
@@ -890,8 +923,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 <div className="flex items-center justify-between mb-1">
                                     <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
                                         <span className="text-sm">📏</span>
-                                        <span className="hidden sm:inline">Liquid Level</span>
-                                        <span className="sm:hidden">Liquid</span>
+                                        <span className="hidden sm:inline">{t('Liquid Level')}</span>
+                                        <span className="sm:hidden">{t('Liquid')}</span>
                                     </h3>
                                     {realTimeStatus.sonar_distance && (
                                         <span className="inline-flex h-1 w-1 md:h-1.5 md:w-1.5 rounded-full bg-purple-500 animate-pulse"></span>
@@ -902,7 +935,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     {safeToFixed(smoothSonarDistance, 1)} cm
                                 </div>
                                 <div className="mt-1 text-9px md:text-10px text-gray-500">
-                                    Target: {setpoints.sonar_distance} cm
+                                    {t('Target:')} {setpoints.sonar_distance} cm
                                 </div>
                             </div>
                         )}
@@ -913,8 +946,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 <div className="flex items-center justify-between mb-1">
                                     <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
                                         <span className="text-sm">💨</span>
-                                        <span className="hidden sm:inline">CO2 Level</span>
-                                        <span className="sm:hidden">CO2</span>
+                                        <span className="hidden sm:inline">{t('CO2 Level')}</span>
+                                        <span className="sm:hidden">{t('CO2')}</span>
                                     </h3>
                                     {realTimeStatus.co2_level && (
                                         <span className="inline-flex h-1 w-1 md:h-1.5 md:w-1.5 rounded-full bg-green-500 animate-pulse"></span>
@@ -925,7 +958,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     {safeToFixed(smoothCO2, 0)} ppm
                                 </div>
                                 <div className="mt-1 text-9px md:text-10px text-gray-500">
-                                    Target: {setpoints.co2_level} ppm
+                                    {t('Target:')} {setpoints.co2_level} ppm
                                 </div>
                             </div>
                         )}
@@ -936,8 +969,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 <div className="flex items-center justify-between mb-1">
                                     <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
                                         <span className="text-sm">🍬</span>
-                                        <span className="hidden sm:inline">Sugar Level</span>
-                                        <span className="sm:hidden">Sugar</span>
+                                        <span className="hidden sm:inline">{t('Sugar Level')}</span>
+                                        <span className="sm:hidden">{t('Sugar')}</span>
                                     </h3>
                                     {realTimeStatus.sugar_level && (
                                         <span className="inline-flex h-1 w-1 md:h-1.5 md:w-1.5 rounded-full bg-pink-500 animate-pulse"></span>
@@ -948,7 +981,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     {safeToFixed(smoothSugar, 1)} g/L
                                 </div>
                                 <div className="mt-1 text-9px md:text-10px text-gray-500">
-                                    Target: {setpoints.sugar_level} g/L
+                                    {t('Target:')} {setpoints.sugar_level} g/L
                                 </div>
                             </div>
                         )}
@@ -959,8 +992,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 <div className="flex items-center justify-between mb-1">
                                     <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
                                         <span className="text-sm">🌀</span>
-                                        <span className="hidden sm:inline">Airflow</span>
-                                        <span className="sm:hidden">Air</span>
+                                        <span className="hidden sm:inline">{t('Airflow')}</span>
+                                        <span className="sm:hidden">{t('Air')}</span>
                                     </h3>
                                     {realTimeStatus.airflow && (
                                         <span className="inline-flex h-1 w-1 md:h-1.5 md:w-1.5 rounded-full bg-sky-500 animate-pulse"></span>
@@ -971,7 +1004,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     {safeToFixed(smoothAirflow, 1)} m/s
                                 </div>
                                 <div className="mt-1 text-9px md:text-10px text-gray-500">
-                                    Target: {setpoints.airflow} m/s
+                                    {t('Target:')} {setpoints.airflow} m/s
                                 </div>
                             </div>
                         )}
@@ -990,7 +1023,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 <div className="flex items-center gap-2">
                                     <span className="text-lg">{actuatorStatus.co2Fermentation.active ? '✅' : '❌'}</span>
                                     <div className="flex-1">
-                                        <p className="font-semibold text-gray-700 mb-0.5">CO2 Monitor</p>
+                                        <p className="font-semibold text-gray-700 mb-0.5">{t('CO2 Monitor')}</p>
                                         <p className="text-10px text-gray-600 leading-tight">{actuatorStatus.co2Fermentation.message}</p>
                                     </div>
                                 </div>
@@ -1006,7 +1039,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 <div className="flex items-center gap-2">
                                     <span className="text-lg">{actuatorStatus.sugarFermentation.complete ? '✅' : '⏳'}</span>
                                     <div className="flex-1">
-                                        <p className="font-semibold text-gray-700 mb-0.5">Sugar Monitor</p>
+                                        <p className="font-semibold text-gray-700 mb-0.5">{t('Sugar Monitor')}</p>
                                         <p className="text-10px text-gray-600 leading-tight">{actuatorStatus.sugarFermentation.message}</p>
                                     </div>
                                 </div>
@@ -1015,7 +1048,6 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
                     </div>
                 </div>
-
 
             ) : (
                 /* Connection Message */
@@ -1027,28 +1059,28 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                     </div>
 
                     <h3 className="text-sm font-semibold text-gray-800 mb-1.5">
-                        Sensor Connection Required 📡
+                        {t('Sensor Connection Required')} 📡
                     </h3>
 
                     <p className="text-xs text-gray-600 mb-4">
                         {realTimeStatus.connected
-                            ? 'Connected to server. Waiting for sensor data...'
+                            ? t('Connected to server. Waiting for sensor data...')
                             : isConnecting
-                                ? 'Connecting to server...'
-                                : 'Please check your connection and ensure sensors are active.'
+                                ? t('Connecting to server...')
+                                : t('Please check your connection and ensure sensors are active.')
                         }
                     </p>
 
                     {/* Connection Activity Indicators */}
                     <div className="space-y-2 bg-white rounded-md p-3 shadow-sm">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-600">Broker Status</span>
+                            <span className="text-xs text-gray-600">{t('Broker Status')}</span>
                             <div className="flex items-center gap-1.5">
                                 <span className={`inline-block w-1.5 h-1.5 rounded-full ${realTimeStatus.connected ? 'bg-green-500 animate-pulse' : 'bg-gray-300'
                                     }`}></span>
                                 <span className={`text-xs font-medium ${realTimeStatus.connected ? 'text-green-600' : 'text-gray-500'
                                     }`}>
-                                    {realTimeStatus.connected ? 'Connected' : 'Disconnected'}
+                                    {realTimeStatus.connected ? t('Connected') : t('Disconnected')}
                                 </span>
                             </div>
                         </div>
@@ -1056,13 +1088,13 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                         <div className="h-px bg-gray-200"></div>
 
                         <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-600">Sensor Status</span>
+                            <span className="text-xs text-gray-600">{t('Sensor Status')}</span>
                             <div className="flex items-center gap-1.5">
                                 <span className={`inline-block w-1.5 h-1.5 rounded-full ${realTimeStatus.sensorActive ? 'bg-green-500 animate-pulse' : 'bg-gray-300'
                                     }`}></span>
                                 <span className={`text-xs font-medium ${realTimeStatus.sensorActive ? 'text-green-600' : 'text-gray-500'
                                     }`}>
-                                    {realTimeStatus.sensorActive ? 'Active' : 'Inactive'}
+                                    {realTimeStatus.sensorActive ? t('Active') : t('Inactive')}
                                 </span>
                             </div>
                         </div>
