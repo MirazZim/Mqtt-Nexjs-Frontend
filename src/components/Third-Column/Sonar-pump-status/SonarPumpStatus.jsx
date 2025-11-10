@@ -3,20 +3,20 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { createSocket } from '../../../lib/socket';
 import AuthContext from '../../../context/AuthContext';
-import { usePathname } from 'next/navigation';  // ✅ ADD THIS
-import { useTranslation } from '../../../app/i18n/client.js';  // ✅ ADD THIS
+import { usePathname } from 'next/navigation';
+import { useTranslation } from '../../../app/i18n/client.js';
 
 const SonarPumpStatus = ({ selectedLocation }) => {
     const { user } = useContext(AuthContext);
 
-    // ✅ ADD THESE LINES
     const pathname = usePathname();
     const lng = pathname.split("/")[1];
     const { t } = useTranslation(lng, "pump");
 
+    // ✅ FIX: Store keys, not translated text
     const [pumpStatus, setPumpStatus] = useState({
-        status: null,
-        message: t('Waiting for status...'),
+        statusKey: null,                      // Changed from 'status'
+        messageKey: 'Waiting for status...',  // Changed from 'message'
         active: false,
         lastUpdate: null
     });
@@ -33,7 +33,6 @@ const SonarPumpStatus = ({ selectedLocation }) => {
             console.log('💦 Sonar Pump Status connected');
             setConnected(true);
 
-            // ✅ FIXED: Use registerUser instead of joinLocation
             socketConnection.emit('registerUser', {
                 userId: user.id,
                 room: selectedLocation
@@ -46,15 +45,15 @@ const SonarPumpStatus = ({ selectedLocation }) => {
             setConnected(false);
         });
 
-        // ✅ FIXED: Listen to pumpUpdate (not sonarPumpStatus)
         socketConnection.on('pumpUpdate', (data) => {
             console.log('💦 Pump status update:', data);
 
             const isPumpOn = data.state === 'PO' || parseInt(data.state) === 1;
 
+            // ✅ FIX: Store keys instead of translated text
             setPumpStatus({
-                status: isPumpOn ? t('ON') : t('OFF'),
-                message: isPumpOn ? t('Water level low, Pump is ON') : t('Water level normal, Pump is Off'),
+                statusKey: isPumpOn ? 'ON' : 'OFF',  // Store key
+                messageKey: isPumpOn ? 'Water level low, Pump is ON' : 'Water level normal, Pump is Off',  // Store key
                 active: isPumpOn,
                 lastUpdate: new Date()
             });
@@ -63,7 +62,7 @@ const SonarPumpStatus = ({ selectedLocation }) => {
         return () => {
             socketConnection.disconnect();
         };
-    }, [user, selectedLocation, t]);
+    }, [user, selectedLocation]); // ✅ FIX: Removed 't' from dependencies
 
     return (
         <div className={`p-4 rounded-lg border transition-all ${pumpStatus.active
@@ -84,14 +83,16 @@ const SonarPumpStatus = ({ selectedLocation }) => {
                         ? 'bg-orange-200 text-orange-700'
                         : 'bg-green-200 text-green-700'
                     }`}>
-                    {pumpStatus.status || t('OFFLINE')}
+                    {/* ✅ FIX: Translate key at render time */}
+                    {pumpStatus.statusKey ? t(pumpStatus.statusKey) : t('OFFLINE')}
                 </div>
             </div>
 
             {/* Message */}
             <p className={`text-sm font-medium mb-3 ${pumpStatus.active ? 'text-orange-700' : 'text-green-700'
                 }`}>
-                {pumpStatus.message}
+                {/* ✅ FIX: Translate key at render time */}
+                {t(pumpStatus.messageKey)}
             </p>
 
             {/* Footer */}

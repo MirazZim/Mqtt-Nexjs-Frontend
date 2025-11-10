@@ -47,23 +47,23 @@ const CurrentEnvironment = ({ selectedLocation }) => {
     // Actuator status states
     const [actuatorStatus, setActuatorStatus] = useState({
         bowlFan: {
-            status: null,
-            message: t('Waiting for status...'),
+            statusKey: null,        // ✅ Changed from 'status'
+            messageKey: 'Waiting for status...',  // ✅ Store key, not translated text
             active: false
         },
         sonarPump: {
-            status: null,
-            message: t('Waiting for status...'),
+            statusKey: null,
+            messageKey: 'Waiting for status...',
             active: false
         },
         co2Fermentation: {
-            status: null,
-            message: t('Waiting for status...'),
+            statusKey: null,
+            messageKey: 'Waiting for status...',
             active: false
         },
         sugarFermentation: {
-            status: null,
-            message: t('Waiting for status...'),
+            statusKey: null,
+            messageKey: 'Waiting for status...',
             complete: false
         }
     });
@@ -517,12 +517,12 @@ const CurrentEnvironment = ({ selectedLocation }) => {
             // ✅ FIX 4: Filter actuator status updates
             socketConnection.on('bowlFanUpdate', (data) => {
                 if (data.location !== selectedLocation) return;
-                console.log('[CurrentEnvironment] bowlFanUpdate:', data);
+                console.log('CurrentEnvironment bowlFanUpdate:', data);
                 setActuatorStatus(prev => ({
                     ...prev,
                     bowlFan: {
-                        status: data.state === 1 ? 'ON' : 'OFF',
-                        message: data.state === 1 ? t('Bowl Fan is ON') : t('Bowl Fan is OFF'),
+                        statusKey: data.state === 1 ? 'ON' : 'OFF',  // ✅ Store key
+                        messageKey: data.state === 1 ? 'Bowl Fan is ON' : 'Bowl Fan is OFF',  // ✅ Store key
                         active: data.state === 1
                     }
                 }));
@@ -530,12 +530,12 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
             socketConnection.on('pumpUpdate', (data) => {
                 if (data.location !== selectedLocation) return;
-                console.log('[CurrentEnvironment] pumpUpdate:', data);
+                console.log('CurrentEnvironment pumpUpdate:', data);
                 setActuatorStatus(prev => ({
                     ...prev,
                     sonarPump: {
-                        status: data.state === 1 ? 'ON' : 'OFF',
-                        message: data.state === 1 ? t('Pump is ON') : t('Pump is OFF'),
+                        statusKey: data.state === 1 ? 'ON' : 'OFF',  // ✅ Store key
+                        messageKey: data.state === 1 ? 'Pump is ON' : 'Pump is OFF',  // ✅ Store key
                         active: data.state === 1
                     }
                 }));
@@ -543,26 +543,26 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
             socketConnection.on('co2FermentationUpdate', (data) => {
                 if (data.location !== selectedLocation) return;
-                console.log('[CurrentEnvironment] co2FermentationUpdate:', data);
+                console.log('CurrentEnvironment co2FermentationUpdate:', data);
                 const isFermentationGoing = data.value === 'AF';
                 setActuatorStatus(prev => ({
                     ...prev,
                     co2Fermentation: {
                         active: isFermentationGoing,
-                        message: isFermentationGoing ? t('Fermentation going') : t('Fermentation is Off')
+                        messageKey: isFermentationGoing ? 'Fermentation going' : 'Fermentation is Off'  // ✅ Store key
                     }
                 }));
             });
 
             socketConnection.on('sugarFermentationUpdate', (data) => {
                 if (data.location !== selectedLocation) return;
-                console.log('[CurrentEnvironment] sugarFermentationUpdate:', data);
+                console.log('CurrentEnvironment sugarFermentationUpdate:', data);
                 const isFermentationComplete = data.value === 'FFC';
                 setActuatorStatus(prev => ({
                     ...prev,
                     sugarFermentation: {
                         complete: isFermentationComplete,
-                        message: isFermentationComplete ? t('Fermentation complete') : t('Fermentation closed')
+                        messageKey: isFermentationComplete ? 'Fermentation complete' : 'Fermentation closed'  // ✅ Store key
                     }
                 }));
             });
@@ -621,26 +621,27 @@ const CurrentEnvironment = ({ selectedLocation }) => {
         if (!socket) return;
 
         const handleCO2Fermentation = (data) => {
-            console.log('🔵 [CurrentEnvironment] Received co2FermentationUpdate:', data);
+            console.log('CurrentEnvironment Received co2FermentationUpdate:', data);
             setActuatorStatus(prev => ({
                 ...prev,
                 co2Fermentation: {
                     active: data.value === 'AF',
-                    message: data.value === 'AF' ? t('Fermentation going') : t('Fermentation is Off')
+                    messageKey: data.value === 'AF' ? 'Fermentation going' : 'Fermentation is Off'  // ✅ Store key
                 }
             }));
         };
 
         const handleSugarFermentation = (data) => {
-            console.log('🔵 [CurrentEnvironment] Received sugarFermentationUpdate:', data);
+            console.log('CurrentEnvironment Received sugarFermentationUpdate:', data);
             setActuatorStatus(prev => ({
                 ...prev,
                 sugarFermentation: {
                     complete: data.value === 'FFC',
-                    message: data.value === 'FFC' ? t('Fermentation complete') : t('Fermentation closed')
+                    messageKey: data.value === 'FFC' ? 'Fermentation complete' : 'Fermentation closed'  // ✅ Store key
                 }
             }));
         };
+
 
         socket.on('co2FermentationUpdate', handleCO2Fermentation);
         socket.on('sugarFermentationUpdate', handleSugarFermentation);
@@ -649,7 +650,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
             socket.off('co2FermentationUpdate', handleCO2Fermentation);
             socket.off('sugarFermentationUpdate', handleSugarFermentation);
         };
-    }, [socket, t]);
+    }, [socket]);
 
 
     const fetchLatestEnvironment = async () => {
@@ -1024,7 +1025,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     <span className="text-lg">{actuatorStatus.co2Fermentation.active ? '✅' : '❌'}</span>
                                     <div className="flex-1">
                                         <p className="font-semibold text-gray-700 mb-0.5">{t('CO2 Monitor')}</p>
-                                        <p className="text-10px text-gray-600 leading-tight">{actuatorStatus.co2Fermentation.message}</p>
+                                        <p className="text-10px text-gray-600 leading-tight"> {t(actuatorStatus.co2Fermentation.messageKey)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -1040,7 +1041,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     <span className="text-lg">{actuatorStatus.sugarFermentation.complete ? '✅' : '⏳'}</span>
                                     <div className="flex-1">
                                         <p className="font-semibold text-gray-700 mb-0.5">{t('Sugar Monitor')}</p>
-                                        <p className="text-10px text-gray-600 leading-tight">{actuatorStatus.sugarFermentation.message}</p>
+                                        <p className="text-10px text-gray-600 leading-tight">{t(actuatorStatus.sugarFermentation.messageKey)}</p>
                                     </div>
                                 </div>
                             </div>

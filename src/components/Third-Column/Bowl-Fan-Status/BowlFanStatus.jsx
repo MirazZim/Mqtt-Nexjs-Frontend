@@ -3,20 +3,20 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { createSocket } from '../../../lib/socket';
 import AuthContext from '../../../context/AuthContext';
-import { usePathname } from 'next/navigation';  // ✅ ADD THIS
-import { useTranslation } from '../../../app/i18n/client.js';  // ✅ ADD THIS
+import { usePathname } from 'next/navigation';
+import { useTranslation } from '../../../app/i18n/client.js';
 
 const BowlFanStatus = ({ selectedLocation }) => {
     const { user } = useContext(AuthContext);
 
-    // ✅ ADD THESE LINES
     const pathname = usePathname();
     const lng = pathname.split("/")[1];
     const { t } = useTranslation(lng, "bowlfan");
 
+    // ✅ FIX: Store keys, not translated text
     const [fanStatus, setFanStatus] = useState({
-        status: null,
-        message: t('Waiting for status...'),
+        statusKey: null,           // Changed from 'status'
+        messageKey: 'Waiting for status...',  // Changed from 'message'
         active: false,
         lastUpdate: null
     });
@@ -33,7 +33,6 @@ const BowlFanStatus = ({ selectedLocation }) => {
             console.log('🌀 Bowl Fan Status connected');
             setConnected(true);
 
-            // ✅ FIXED: Use registerUser instead of joinLocation
             socketConnection.emit('registerUser', {
                 userId: user.id,
                 room: selectedLocation
@@ -46,15 +45,15 @@ const BowlFanStatus = ({ selectedLocation }) => {
             setConnected(false);
         });
 
-        // ✅ FIXED: Listen to bowlFanUpdate (not bowlFanStatus)
         socketConnection.on('bowlFanUpdate', (data) => {
             console.log('🌀 Fan status update:', data);
 
             const isFanOn = data.state === 'FO' || parseInt(data.state) === 1;
 
+            // ✅ FIX: Store keys instead of translated text
             setFanStatus({
-                status: isFanOn ? t('ON') : t('OFF'),
-                message: isFanOn ? t('Temp High, Fan is ON') : t('Temp normal, Fan off'),
+                statusKey: isFanOn ? 'ON' : 'OFF',  // Store key
+                messageKey: isFanOn ? 'Temp High, Fan is ON' : 'Temp normal, Fan off',  // Store key
                 active: isFanOn,
                 lastUpdate: new Date()
             });
@@ -63,12 +62,12 @@ const BowlFanStatus = ({ selectedLocation }) => {
         return () => {
             socketConnection.disconnect();
         };
-    }, [user, selectedLocation, t]);
+    }, [user, selectedLocation]); // ✅ FIX: Removed 't' from dependencies
 
     return (
         <div className={`p-4 rounded-lg border transition-all ${fanStatus.active
-                ? 'bg-red-50 border-red-300 shadow-md'
-                : 'bg-green-50 border-green-300 shadow-sm'
+            ? 'bg-red-50 border-red-300 shadow-md'
+            : 'bg-green-50 border-green-300 shadow-sm'
             }`}>
             {/* Title with Bowl Name */}
             <div className="flex items-center justify-between mb-3">
@@ -81,17 +80,19 @@ const BowlFanStatus = ({ selectedLocation }) => {
                     </p>
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-semibold ${fanStatus.active
-                        ? 'bg-red-200 text-red-700'
-                        : 'bg-green-200 text-green-700'
+                    ? 'bg-red-200 text-red-700'
+                    : 'bg-green-200 text-green-700'
                     }`}>
-                    {fanStatus.status || t('OFFLINE')}
+                    {/* ✅ FIX: Translate key at render time */}
+                    {fanStatus.statusKey ? t(fanStatus.statusKey) : t('OFFLINE')}
                 </div>
             </div>
 
             {/* Message */}
             <p className={`text-sm font-medium mb-3 ${fanStatus.active ? 'text-red-700' : 'text-green-700'
                 }`}>
-                {fanStatus.message}
+                {/* ✅ FIX: Translate key at render time */}
+                {t(fanStatus.messageKey)}
             </p>
 
             {/* Footer */}

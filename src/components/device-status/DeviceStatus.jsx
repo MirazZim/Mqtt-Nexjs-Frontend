@@ -14,48 +14,39 @@ const DeviceStatus = ({ selectedLocation }) => {
 
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-    // Separate broker and sensor status
+    // ✅ FIX: Remove t() from initial state - use plain strings or null
     const [brokerStatus, setBrokerStatus] = useState({
         connected: false,
         lastSeen: null,
-        status: t('Connecting...'),
+        statusKey: 'Connecting..', // Store key, not translated text
         lastHeartbeat: null
     });
 
     const [sensorStatus, setSensorStatus] = useState({
         active: false,
         lastDataReceived: null,
-        status: t('No Data')
+        statusKey: 'No Data' // Store key, not translated text
     });
 
-    const [connectionStatus, setConnectionStatus] = useState(t('Connecting...'));
-
-    const [controlState, setControlState] = useState({
-        heaterState: false,
-        coolerState: false,
-        humidifierState: false,
-        dehumidifierState: false,
-        fanLevel: 0,
-        controlMode: 'auto'
-    });
-
-    // Add sensor timeout ref for zero-delay detection
+    const [connectionStatusKey, setConnectionStatusKey] = useState('Connecting...');
     const sensorTimeoutRef = useRef(null);
 
-    // Set sensor timeout when data is received - ZERO DELAY LOGIC
+    // Set sensor timeout when data is received
     const setSensorTimeout = () => {
         if (sensorTimeoutRef.current) {
             clearTimeout(sensorTimeoutRef.current);
         }
 
-        // 5 SECOND TIMEOUT for instant detection
         sensorTimeoutRef.current = setTimeout(() => {
-            //console.log('⚡ DeviceStatus sensor timeout - no data for 5 seconds');
-            setSensorStatus(prev => ({ ...prev, active: false, status: t('No Recent Data') }));
+            setSensorStatus(prev => ({
+                ...prev,
+                active: false,
+                statusKey: 'No Recent Data' // ✅ Store key
+            }));
             if (brokerStatus.connected) {
-                setConnectionStatus(t('Broker Connected - Sensor Timeout'));
+                setConnectionStatusKey('Broker Connected - Sensor Timeout');
             }
-        }, 5000); // 5 second timeout
+        }, 5000);
     };
 
     // Socket connection and broker status
@@ -64,50 +55,40 @@ const DeviceStatus = ({ selectedLocation }) => {
 
         const socket = createSocket(user.token);
 
-        // Add broker health check interval
         const brokerHealthCheck = setInterval(() => {
             if (socket.connected) {
-                // Update broker status with current timestamp
                 setBrokerStatus(prev => ({
                     ...prev,
                     lastHeartbeat: new Date(),
-                    status: t('Connected')
+                    statusKey: 'Connected' // ✅ Store key
                 }));
-
-                // Optional: Send a ping to verify broker responsiveness
                 socket.emit('ping');
-
-                //console.log('💓 Broker health check - Connected');
             } else {
-                // Broker is disconnected
                 setBrokerStatus(prev => ({
                     ...prev,
                     connected: false,
-                    status: t('Disconnected'),
+                    statusKey: 'Disconnected', // ✅ Store key
                     lastHeartbeat: null
                 }));
 
                 setSensorStatus({
                     active: false,
                     lastDataReceived: null,
-                    status: t('No Data')
+                    statusKey: 'No Data' // ✅ Store key
                 });
 
-                setConnectionStatus(t('Broker Disconnected'));
-                //console.log('💔 Broker health check - Disconnected');
+                setConnectionStatusKey('Broker Disconnected');
             }
-        }, 1000); // Check every 1 second
+        }, 1000);
 
-        // Broker connection events
         socket.on('connect', () => {
-            // console.log('🔗 Broker connected');
             setBrokerStatus({
                 connected: true,
                 lastSeen: new Date(),
-                status: t('Connected'),
-                lastHeartbeat: new Date() // Add heartbeat timestamp
+                statusKey: 'Connected', // ✅ Store key
+                lastHeartbeat: new Date()
             });
-            setConnectionStatus(t('Broker Connected - Waiting for Sensor Data'));
+            setConnectionStatusKey('Broker Connected - Waiting for Sensor Data');
             socket.emit('joinLocation', selectedLocation);
         });
 
@@ -119,115 +100,79 @@ const DeviceStatus = ({ selectedLocation }) => {
         });
 
         socket.on('disconnect', () => {
-            //console.log('🔗 Broker disconnected');
             setBrokerStatus({
                 connected: false,
                 lastSeen: null,
-                status: t('Disconnected')
+                statusKey: 'Disconnected' // ✅ Store key
             });
             setSensorStatus({
                 active: false,
                 lastDataReceived: null,
-                status: t('No Data')
+                statusKey: 'No Data' // ✅ Store key
             });
-            setConnectionStatus(t('Disconnected'));
+            setConnectionStatusKey('Disconnected');
 
-            // Clear sensor timeout when disconnected
             if (sensorTimeoutRef.current) {
                 clearTimeout(sensorTimeoutRef.current);
                 sensorTimeoutRef.current = null;
             }
         });
 
-        // Sensor data events - ZERO DELAY updates
         socket.on('environmentUpdate', (data) => {
             if (data.location === selectedLocation && data.userId === user.id) {
-                // console.log('📡 DeviceStatus sensor data received');
-
-                // IMMEDIATE state update - ZERO DELAY
                 setSensorStatus({
                     active: true,
                     lastDataReceived: new Date(),
-                    status: t('Receiving Data')
+                    statusKey: 'Receiving Data' // ✅ Store key
                 });
-                setConnectionStatus(t('Broker & Sensors Connected'));
-
-                // Reset sensor timeout
+                setConnectionStatusKey('Broker & Sensors Connected');
                 setSensorTimeout();
             }
         });
 
         socket.on('environmentControlUpdate', (data) => {
             if (data.location === selectedLocation && data.userId === user.id) {
-                //console.log('DeviceStatus control data received');
-
-                // IMMEDIATE state updates - ZERO DELAY
-                setControlState({
-                    heaterState: data.heaterState || false,
-                    coolerState: data.coolerState || false,
-                    humidifierState: data.humidifierState || false,
-                    dehumidifierState: data.dehumidifierState || false,
-                    fanLevel: data.fanLevel || 0,
-                    controlMode: data.controlMode || 'auto'
-                });
-
                 setSensorStatus(prev => ({
                     ...prev,
                     active: true,
                     lastDataReceived: new Date(),
-                    status: t('Receiving Data')
+                    statusKey: 'Receiving Data' // ✅ Store key
                 }));
 
                 if (brokerStatus.connected) {
-                    setConnectionStatus(t('Broker & Sensors Connected'));
+                    setConnectionStatusKey('Broker & Sensors Connected');
                 }
-
-                // Reset sensor timeout
                 setSensorTimeout();
             }
         });
 
-        // Legacy support for temperature-only control updates
         socket.on('controlUpdate', (data) => {
             if (data.location === selectedLocation && data.userId === user.id) {
-                // console.log('🌡️ DeviceStatus legacy control data received');
-
-                setControlState(prev => ({
-                    ...prev,
-                    heaterState: data.heaterState || false,
-                    coolerState: data.coolerState || false,
-                    controlMode: data.controlMode || 'auto'
-                }));
-
                 setSensorStatus(prev => ({
                     ...prev,
                     active: true,
                     lastDataReceived: new Date(),
-                    status: t('Receiving Data')
+                    statusKey: 'Receiving Data' // ✅ Store key
                 }));
 
                 if (brokerStatus.connected) {
-                    setConnectionStatus(t('Broker & Sensors Connected'));
+                    setConnectionStatusKey('Broker & Sensors Connected');
                 }
-
                 setSensorTimeout();
             }
         });
 
         socket.on('connect_error', (error) => {
-            //  console.log('❌ DeviceStatus broker connection error:', error);
             setBrokerStatus({
                 connected: false,
                 lastSeen: null,
-                status: t('Connection Error')
+                statusKey: 'Connection Error' // ✅ Store key
             });
-            setConnectionStatus(t('Connection Error'));
+            setConnectionStatusKey('Connection Error');
         });
 
         return () => {
-            // Clear broker health check interval
             clearInterval(brokerHealthCheck);
-            // Cleanup sensor timeout
             if (sensorTimeoutRef.current) {
                 clearTimeout(sensorTimeoutRef.current);
                 sensorTimeoutRef.current = null;
@@ -235,19 +180,12 @@ const DeviceStatus = ({ selectedLocation }) => {
             socket.emit('leaveLocation', selectedLocation);
             socket.disconnect();
         };
-    }, [user, selectedLocation, t]);
+    }, [user, selectedLocation]); // ✅ Remove 't' from dependencies
 
     useEffect(() => {
-        // Delay initial load flag to prevent flash
         const timer = setTimeout(() => setIsInitialLoad(false), 3500);
         return () => clearTimeout(timer);
     }, []);
-
-    const getOverallStatus = () => {
-        if (brokerStatus.connected && sensorStatus.active) return 'online';
-        if (brokerStatus.connected) return 'warning';
-        return 'offline';
-    };
 
     const formatTimestamp = (timestamp) => {
         if (!timestamp) return t('Never');
@@ -256,7 +194,6 @@ const DeviceStatus = ({ selectedLocation }) => {
 
     return (
         <div className="space-y-2">
-            {/* Header */}
             <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
                 <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-md flex items-center justify-center text-white text-sm">
                     📡
@@ -264,7 +201,6 @@ const DeviceStatus = ({ selectedLocation }) => {
                 <h2 className="text-base font-bold text-gray-800">{t('Device Status')}</h2>
             </div>
 
-            {/* Location Info */}
             <div className="flex items-center gap-1.5 text-gray-600 bg-gray-50 px-2 py-1.5 rounded-md">
                 <svg className="w-4 h-4 text-teal-600" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
@@ -273,22 +209,16 @@ const DeviceStatus = ({ selectedLocation }) => {
                 <strong className="text-xs text-gray-800">{selectedLocation}</strong>
             </div>
 
-            {/* Status Details */}
             <div className="space-y-2">
-
                 {/* Broker Status Card */}
                 <div className={`rounded-lg p-2 border transition-all duration-300 ${brokerStatus.connected
-                    ? 'bg-green-50 border-green-200'
-                    : 'bg-red-50 border-red-200'
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-red-50 border-red-200'
                     }`}>
                     <div className="flex items-start gap-2">
-                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${brokerStatus.connected
-                            ? 'bg-green-100'
-                            : 'bg-red-100'
+                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${brokerStatus.connected ? 'bg-green-100' : 'bg-red-100'
                             }`}>
-                            <FaWifi className={`text-sm ${brokerStatus.connected
-                                ? 'text-green-600'
-                                : 'text-red-600'
+                            <FaWifi className={`text-sm ${brokerStatus.connected ? 'text-green-600' : 'text-red-600'
                                 }`} />
                         </div>
 
@@ -296,16 +226,15 @@ const DeviceStatus = ({ selectedLocation }) => {
                             <div className="flex items-center gap-1.5 mb-0.5">
                                 <h4 className="text-xs font-semibold text-gray-800">{t('MQTT Broker')}</h4>
                                 <span className={`inline-block w-1.5 h-1.5 rounded-full ${brokerStatus.connected
-                                    ? 'bg-green-500 animate-pulse'
-                                    : 'bg-red-500'
+                                        ? 'bg-green-500 animate-pulse'
+                                        : 'bg-red-500'
                                     }`}></span>
                             </div>
 
-                            <p className={`text-xs font-medium mb-1 ${brokerStatus.connected
-                                ? 'text-green-700'
-                                : 'text-red-700'
+                            {/* ✅ FIX: Translate the key at render time */}
+                            <p className={`text-xs font-medium mb-1 ${brokerStatus.connected ? 'text-green-700' : 'text-red-700'
                                 }`}>
-                                {brokerStatus.status}
+                                {t(brokerStatus.statusKey)}
                             </p>
 
                             <div className="space-y-0.5 text-[10px] text-gray-600">
@@ -332,23 +261,23 @@ const DeviceStatus = ({ selectedLocation }) => {
 
                 {/* Sensor Status Card */}
                 <div className={`rounded-lg p-2 border transition-all duration-300 ${sensorStatus.active
-                    ? 'bg-blue-50 border-blue-200'
-                    : brokerStatus.connected
-                        ? 'bg-yellow-50 border-yellow-200'
-                        : 'bg-gray-50 border-gray-200'
+                        ? 'bg-blue-50 border-blue-200'
+                        : brokerStatus.connected
+                            ? 'bg-yellow-50 border-yellow-200'
+                            : 'bg-gray-50 border-gray-200'
                     }`}>
                     <div className="flex items-start gap-2">
                         <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${sensorStatus.active
-                            ? 'bg-blue-100'
-                            : brokerStatus.connected
-                                ? 'bg-yellow-100'
-                                : 'bg-gray-100'
+                                ? 'bg-blue-100'
+                                : brokerStatus.connected
+                                    ? 'bg-yellow-100'
+                                    : 'bg-gray-100'
                             }`}>
                             <FaSignal className={`text-sm ${sensorStatus.active
-                                ? 'text-blue-600'
-                                : brokerStatus.connected
-                                    ? 'text-yellow-600'
-                                    : 'text-gray-600'
+                                    ? 'text-blue-600'
+                                    : brokerStatus.connected
+                                        ? 'text-yellow-600'
+                                        : 'text-gray-600'
                                 }`} />
                         </div>
 
@@ -356,20 +285,21 @@ const DeviceStatus = ({ selectedLocation }) => {
                             <div className="flex items-center gap-1.5 mb-0.5">
                                 <h4 className="text-xs font-semibold text-gray-800">{t('Sensor Data Stream')}</h4>
                                 <span className={`inline-block w-1.5 h-1.5 rounded-full ${sensorStatus.active
-                                    ? 'bg-blue-500 animate-pulse'
-                                    : brokerStatus.connected
-                                        ? 'bg-yellow-500 animate-pulse'
-                                        : 'bg-gray-400'
+                                        ? 'bg-blue-500 animate-pulse'
+                                        : brokerStatus.connected
+                                            ? 'bg-yellow-500 animate-pulse'
+                                            : 'bg-gray-400'
                                     }`}></span>
                             </div>
 
+                            {/* ✅ FIX: Translate the key at render time */}
                             <p className={`text-xs font-medium mb-1 ${sensorStatus.active
-                                ? 'text-blue-700'
-                                : brokerStatus.connected
-                                    ? 'text-yellow-700'
-                                    : 'text-gray-700'
+                                    ? 'text-blue-700'
+                                    : brokerStatus.connected
+                                        ? 'text-yellow-700'
+                                        : 'text-gray-700'
                                 }`}>
-                                {sensorStatus.status}
+                                {t(sensorStatus.statusKey)}
                             </p>
 
                             {sensorStatus.lastDataReceived && (
