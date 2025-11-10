@@ -65,5 +65,10 @@
     "Room updated successfully": "Room \"{{room}}\" updated successfully!",
     "Deleting room...": "Deleting room \"{{room}}\"...",
     "Room deleted successfully": "Room \"{{room}}\" deleted successfully",
-    "Failed to delete room": "Failed to delete room: {{error}}"
+    "Failed to delete room": "Failed to delete room: {{error}}",
+    "Testing connection to topic": "🔍 Testing connection to: {topic}",
+    "Topic valid received data": "✅ Topic valid! Received {dataType} data",
+    "Sample data": "📊 Sample: {sample}",
+    "No data received timeout": "⚠️ No data received from this topic within 10 seconds",
+    "Connection test failed": "❌ Connection test failed: {error}"
 }

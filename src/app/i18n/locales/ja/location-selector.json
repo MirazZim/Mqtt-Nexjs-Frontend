@@ -65,5 +65,10 @@
     "Room updated successfully": "部屋「{{room}}」が正常に更新されました！",
     "Deleting room...": "部屋「{{room}}」を削除中...",
     "Room deleted successfully": "部屋「{{room}}」が正常に削除されました",
-    "Failed to delete room": "部屋の削除に失敗しました：{{error}}"
+    "Failed to delete room": "部屋の削除に失敗しました：{{error}}",
+    "Testing connection to topic": "🔍 トピックへの接続をテスト中: {topic}",
+    "Topic valid received data": "✅ トピックは有効です！{dataType}データを受信しました",
+    "Sample data": "📊 サンプル: {sample}",
+    "No data received timeout": "⚠️ 10秒以内にこのトピックからデータを受信できませんでした",
+    "Connection test failed": "❌ 接続テストに失敗しました: {error}"
 }

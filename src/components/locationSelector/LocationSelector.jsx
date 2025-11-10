@@ -107,13 +107,14 @@ const DeleteConfirmModal = ({ room, onConfirm, onCancel, t }) => {
 };
 
 
-const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActuators, userId, onSave, onClose, isNew, t }) => {
+const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActuators, userId, user, onSave, onClose, isNew, t }) => {
     const [sensorTopics, setSensorTopics] = useState({});
     const [actuatorTopics, setActuatorTopics] = useState({});
     const [copiedTopic, setCopiedTopic] = useState(null);
     const [testingTopics, setTestingTopics] = useState({});
     const [topicStatus, setTopicStatus] = useState({});
     const [validationErrors, setValidationErrors] = useState({});
+    const [lastTestedData, setLastTestedData] = useState({});
 
     useEffect(() => {
         const defaultSensorTopics = {};
@@ -195,48 +196,116 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
 
 
     const testMQTTConnection = async (topic, type, code) => {
-        setTestingTopics(prev => ({ ...prev, [`${type}_${code}`]: true }));
+        setTestingTopics(prev => ({ ...prev, [`${type}${code}`]: true }));
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            const isValid = !topic.includes(' ') && topic.length > 0;
-
-            setTopicStatus(prev => ({
-                ...prev,
-                [`${type}_${code}`]: isValid ? 'success' : 'error'
-            }));
-
-            if (isValid) {
-                toast.success(t('Topic is valid!').replace('{{topic}}', topic), {
-                    icon: '✅',
+            const testToast = toast.loading(
+                `🔍 Testing connection to: ${topic}`,
+                {
                     style: {
                         borderRadius: '10px',
-                        background: '#10b981',
+                        background: '#3b82f6',
                         color: '#fff',
-                    },
-                });
+                    }
+                }
+            );
+
+            const response = await fetch(`${API_BASE_URL}/api/locations/test-mqtt-topic`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${user.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    topic: topic,
+                    roomId: room?.roomid || null,  // ✅ FIXED: Changed from selectedRoom to room
+                    userId: user.id
+                })
+            });
+
+            const result = await response.json();
+            console.log('Test result:', result);
+
+            if (result.success && result.dataReceived) {
+                setTopicStatus(prev => ({ ...prev, [`${type}${code}`]: 'success' }));
+
+                setLastTestedData(prev => ({
+                    ...prev,
+                    [`${type}${code}`]: {
+                        data: result.sampleData,
+                        dataType: result.dataType,
+                        timestamp: result.timestamp,
+                        rawData: result.rawData
+                    }
+                }));
+
+                toast.success(
+                    `✅ Topic valid! Received ${result.dataType} data`,
+                    {
+                        id: testToast,
+                        duration: 4000,
+                        style: {
+                            borderRadius: '10px',
+                            background: '#10b981',
+                            color: '#fff',
+                        }
+                    }
+                );
+
+                console.log('📊 Sample data received:', result.sampleData);
+
+                const samplePreview = JSON.stringify(result.sampleData).substring(0, 80);
+                toast.success(
+                    `📊 Sample: ${samplePreview}...`,
+                    {
+                        duration: 5000,
+                        style: {
+                            borderRadius: '10px',
+                            background: '#6366f1',
+                            color: '#fff',
+                            fontSize: '12px'
+                        }
+                    }
+                );
+
             } else {
-                toast.error(t('Topic validation failed!').replace('{{topic}}', topic), {
-                    icon: '❌',
+                setTopicStatus(prev => ({ ...prev, [`${type}${code}`]: 'error' }));
+
+                toast.error(
+                    result.message || '⚠️ No data received from this topic within 10 seconds',
+                    {
+                        id: testToast,
+                        duration: 6000,
+                        style: {
+                            borderRadius: '10px',
+                            background: '#ef4444',
+                            color: '#fff',
+                        }
+                    }
+                );
+            }
+
+        } catch (error) {
+            console.error('❌ Test connection error:', error);
+            setTopicStatus(prev => ({ ...prev, [`${type}${code}`]: 'error' }));
+
+            toast.error(
+                `❌ Connection test failed: ${error.message}`,
+                {
+                    duration: 5000,
                     style: {
                         borderRadius: '10px',
                         background: '#ef4444',
                         color: '#fff',
-                    },
-                });
-            }
-        } catch (error) {
-            setTopicStatus(prev => ({
-                ...prev,
-                [`${type}_${code}`]: 'error'
-            }));
-            toast.error(t('Connection test failed!'), {
-                icon: '❌',
-            });
+                    }
+                }
+            );
         } finally {
-            setTestingTopics(prev => ({ ...prev, [`${type}_${code}`]: false }));
+            setTestingTopics(prev => ({ ...prev, [`${type}${code}`]: false }));
         }
     };
+
+
 
     const handleSave = () => {
         let hasErrors = false;
@@ -287,6 +356,55 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
         }
         return null;
     };
+
+    // Component to show test results
+    const TestResultBadge = ({ type, code }) => {
+        const key = `${type}${code}`;
+        const testData = lastTestedData[key];
+        const status = topicStatus[key];
+
+        if (!testData && !status) return null;
+
+        if (status === 'success' && testData) {
+            return (
+                <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-1">
+                        <FaCheckCircle className="text-green-600 text-sm" />
+                        <span className="text-xs font-semibold text-green-800">
+                            Last Test: Success
+                        </span>
+                        <span className="text-xs text-green-600">
+                            ({testData.dataType})
+                        </span>
+                    </div>
+                    <div className="bg-green-100 rounded p-2 mt-1">
+                        <pre className="text-xs text-green-800 overflow-x-auto max-h-20">
+                            {JSON.stringify(testData.data, null, 2)}
+                        </pre>
+                    </div>
+                    <div className="text-xs text-green-600 mt-1">
+                        {new Date(testData.timestamp).toLocaleString()}
+                    </div>
+                </div>
+            );
+        }
+
+        if (status === 'error') {
+            return (
+                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                        <FaExclamationTriangle className="text-red-600 text-sm" />
+                        <span className="text-xs font-semibold text-red-800">
+                            No data received
+                        </span>
+                    </div>
+                </div>
+            );
+        }
+
+        return null;
+    };
+
 
     return (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -391,6 +509,8 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
                                         <div className="mt-2 text-xs text-gray-500">
                                             {t('Example:')} <code className="bg-gray-200 px-2 py-0.5 rounded">{sensor.code}</code> or <code className="bg-gray-200 px-2 py-0.5 rounded">ESP2</code>
                                         </div>
+
+                                        <TestResultBadge type="sensor" code={sensor.code} />
                                     </div>
                                 );
                             })}
@@ -492,7 +612,12 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
                                             <div className="mt-2 text-xs text-gray-500">
                                                 {t('Example:')} <code className="bg-gray-200 px-2 py-0.5 rounded">{actuator.code}</code> or <code className="bg-gray-200 px-2 py-0.5 rounded">control/{actuator.code}</code>
                                             </div>
+
+                                            <TestResultBadge type="actuator" code={actuator.code} />
+
                                         </div>
+
+
                                     );
                                 })}
                             </div>
@@ -1026,6 +1151,7 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                     actuatorTypes={actuatorTypes}
                     isLoadingActuators={isLoadingActuators}
                     userId={user?.id}
+                    user={user}
                     onClose={() => {
                         setShowConfig(false);
                         setSelectedRoom(null);
