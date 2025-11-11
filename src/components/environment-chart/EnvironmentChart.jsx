@@ -20,7 +20,7 @@ import { useTranslation } from '../../app/i18n/client.js';  // ✅ ADD THIS
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-const EnvironmentChart = () => {
+const EnvironmentChart = ({ selectedLocation }) => {
     const { user, socket } = useContext(AuthContext);
 
     // ✅ ADD THESE LINES
@@ -56,25 +56,49 @@ const EnvironmentChart = () => {
         return () => { isMountedRef.current = false; };
     }, []);
 
+    useEffect(() => {
+        console.log(`📊 [EnvironmentChart] Location changed to: ${selectedLocation}`);
+
+        // Reset state when location changes
+        setMeasurements([]);
+        setCurrentSensor(null);
+        setError(null);
+
+    }, [selectedLocation]);
+
     // Fetch sensors
     useEffect(() => {
         const fetchSensors = async () => {
-            if (!user?.token) {
+            if (!user?.token || !selectedLocation) {
                 setError(t('Please log in'));
                 setLoading(false);
                 return;
             }
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/sensors`, {
-                    headers: { 'Authorization': `Bearer ${user.token}`, 'Content-Type': 'application/json' },
-                    cache: 'no-store'
-                });
+                // ✅ CORRECT: Pass location as query parameter
+                const response = await fetch(
+                    `${API_BASE_URL}/api/sensors?location=${encodeURIComponent(selectedLocation)}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${user.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        cache: 'no-store'
+                    }
+                );
 
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const result = await response.json();
 
                 if (result.status === 'success' && result.sensors && isMountedRef.current) {
+                    // ❌ REMOVE THIS LINE - Backend already filtered!
+                    // const locationSensors = result.sensors.filter(
+                    //     sensor => sensor.location === selectedLocation
+                    // );
+
+                    // ✅ CORRECT: Use sensors directly (already filtered by backend)
+                    console.log(`📊 Found ${result.sensors.length} sensors for ${selectedLocation}`);
                     setAvailableSensors(result.sensors);
                 }
             } catch (err) {
@@ -83,7 +107,7 @@ const EnvironmentChart = () => {
         };
 
         fetchSensors();
-    }, [user, t]);
+    }, [user, selectedLocation, t]);
 
     // Available sensor types
     const availableSensorTypes = useMemo(() => {
@@ -187,15 +211,23 @@ const EnvironmentChart = () => {
 
     // Real-time Socket.IO updates
     useEffect(() => {
-        if (!socket || !currentSensor) return;
+        if (!socket || !currentSensor || !selectedLocation) return;
 
-        console.log(`🔌 Real-time updates: sensor_${currentSensor.id}`);
+        console.log(`🔌 Real-time updates: sensor_${currentSensor.id} in ${selectedLocation}`);
 
+        // ✅ ADD: Join location-specific room
+        socket.emit('joinLocation', selectedLocation);
         socket.emit('joinSensor', currentSensor.id);
 
         const handleSensorData = (data) => {
+            // ✅ ADD: Filter by location
+            if (data.location !== selectedLocation) {
+                console.log(`📊 Ignoring data from different location: ${data.location}`);
+                return;
+            }
+
             if (data.sensorId === currentSensor.id && isMountedRef.current) {
-                console.log(`📊 Live update: ${data.value}`);
+                console.log(`📊 Live update for ${selectedLocation}: ${data.value}`);
 
                 setMeasurements(prev => {
                     const newPoint = {
@@ -225,10 +257,11 @@ const EnvironmentChart = () => {
         socket.on('sensorData', handleSensorData);
 
         return () => {
+            socket.emit('leaveLocation', selectedLocation);
             socket.emit('leaveSensor', currentSensor.id);
             socket.off('sensorData', handleSensorData);
         };
-    }, [socket, currentSensor, selectedPeriod]);
+    }, [socket, currentSensor, selectedPeriod, selectedLocation])
 
     // Process chart data with sampling
     const { chartData, yAxisDomain } = useMemo(() => {

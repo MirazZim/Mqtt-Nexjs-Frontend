@@ -26,11 +26,13 @@ const BowlFanStatus = ({ selectedLocation }) => {
     useEffect(() => {
         if (!user || !selectedLocation) return;
 
+        console.log(`🌀 [BowlFan] Connecting for location: ${selectedLocation}`); // ✅ Add log
+
         const socketConnection = createSocket(user.token);
         setSocket(socketConnection);
 
         socketConnection.on('connect', () => {
-            console.log('🌀 Bowl Fan Status connected');
+            console.log(`🌀 Bowl Fan Status connected for ${selectedLocation}`);
             setConnected(true);
 
             socketConnection.emit('registerUser', {
@@ -48,21 +50,27 @@ const BowlFanStatus = ({ selectedLocation }) => {
         socketConnection.on('bowlFanUpdate', (data) => {
             console.log('🌀 Fan status update:', data);
 
+            // ✅ CRITICAL FIX: Filter by location!
+            if (data.location !== selectedLocation) {
+                console.log(`🌀 Ignoring fan update from different location: ${data.location}`);
+                return;
+            }
+
             const isFanOn = data.state === 'FO' || parseInt(data.state) === 1;
 
-            // ✅ FIX: Store keys instead of translated text
             setFanStatus({
-                statusKey: isFanOn ? 'ON' : 'OFF',  // Store key
-                messageKey: isFanOn ? 'Temp High, Fan is ON' : 'Temp normal, Fan off',  // Store key
+                statusKey: isFanOn ? 'ON' : 'OFF',
+                messageKey: isFanOn ? 'Temp High, Fan is ON' : 'Temp normal, Fan off',
                 active: isFanOn,
                 lastUpdate: new Date()
             });
         });
 
         return () => {
+            console.log(`🌀 Cleaning up BowlFan for ${selectedLocation}`);
             socketConnection.disconnect();
         };
-    }, [user, selectedLocation]); // ✅ FIX: Removed 't' from dependencies
+    }, [user, selectedLocation]);
 
     return (
         <div className={`p-4 rounded-lg border transition-all ${fanStatus.active
@@ -76,7 +84,7 @@ const BowlFanStatus = ({ selectedLocation }) => {
                         🌀{t('Bowl Cooling System')}
                     </h3>
                     <p className="text-xs text-gray-500 mt-0.5">
-                        {t('Bowl Name')}: {t('Fermentation Tank 01')}
+                        {t('Bowl Name')}: {selectedLocation}
                     </p>
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-semibold ${fanStatus.active
