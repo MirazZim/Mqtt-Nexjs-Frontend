@@ -171,8 +171,8 @@ const Dashboard = () => {
                         <button
                             onClick={() => changeLanguage('en')}
                             className={`px-4 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 transform hover:scale-105 ${lng === 'en'
-                                    ? 'bg-white text-cyan-600 shadow-lg shadow-cyan-500/40 ring-2 ring-white'
-                                    : 'text-white hover:bg-cyan-500/30 hover:text-cyan-100 border border-transparent hover:border-cyan-400/50'
+                                ? 'bg-white text-cyan-600 shadow-lg shadow-cyan-500/40 ring-2 ring-white'
+                                : 'text-white hover:bg-cyan-500/30 hover:text-cyan-100 border border-transparent hover:border-cyan-400/50'
                                 }`}
                         >
                             EN
@@ -181,8 +181,8 @@ const Dashboard = () => {
                         <button
                             onClick={() => changeLanguage('ja')}
                             className={`px-4 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 transform hover:scale-105 ${lng === 'ja'
-                                    ? 'bg-white text-pink-600 shadow-lg shadow-pink-500/40 ring-2 ring-white'
-                                    : 'text-white hover:bg-pink-500/30 hover:text-pink-100 border border-transparent hover:border-pink-400/50'
+                                ? 'bg-white text-pink-600 shadow-lg shadow-pink-500/40 ring-2 ring-white'
+                                : 'text-white hover:bg-pink-500/30 hover:text-pink-100 border border-transparent hover:border-pink-400/50'
                                 }`}
                         >
                             日本語
