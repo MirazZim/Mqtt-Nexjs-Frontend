@@ -716,10 +716,46 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
         };
     }, [user]);
 
+    // ✅ NEW: Listen for real-time measurement updates
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewMeasurement = (data) => {
+            console.log('📊 New measurement received:', data);
+
+            setLocations(prev => prev.map(loc => {
+                if (loc.location === data.location || loc.room_id === data.roomId) {
+                    return {
+                        ...loc,
+                        measurement_count: (loc.measurement_count || 0) + 1,
+                        last_measurement: new Date(data.timestamp)
+                    };
+                }
+                return loc;
+            }));
+        };
+
+        socket.on('newMeasurement', handleNewMeasurement);
+        socket.on('environmentUpdate', handleNewMeasurement);
+
+        return () => {
+            socket.off('newMeasurement', handleNewMeasurement);
+            socket.off('environmentUpdate', handleNewMeasurement);
+        };
+    }, [socket]);
+
 
     const setupRealtimeUpdates = () => {
         const socketConnection = createSocket(user.token);
         setSocket(socketConnection);
+
+        socketConnection.on('connect', () => {
+            console.log('🔌 LocationSelector socket connected');
+            // Join all location rooms on connect
+            locations.forEach(loc => {
+                socketConnection.emit('joinLocation', loc.location);
+            });
+        });
 
         socketConnection.on('locationListUpdate', (data) => {
             if (data.userId === user.id) {
@@ -743,6 +779,35 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                 });
             }
         });
+
+        // ✅ REAL-TIME MEASUREMENT COUNT UPDATE
+        const handleNewMeasurement = (data) => {
+            console.log('📊 LocationSelector received measurement:', data);
+
+            setLocations(prev => prev.map(loc => {
+                // Check multiple possible identifiers
+                const isMatch =
+                    loc.location === data.location ||
+                    loc.room_id === data.roomId ||
+                    loc.location === data.roomCode;
+
+                if (isMatch) {
+                    console.log(`✅ Updating count for ${loc.location}: ${(loc.measurement_count || 0) + 1}`);
+                    return {
+                        ...loc,
+                        measurement_count: (loc.measurement_count || 0) + 1,
+                        last_measurement: new Date(data.timestamp)
+                    };
+                }
+                return loc;
+            }));
+        };
+
+        // Listen to multiple event types
+        socketConnection.on('newMeasurement', handleNewMeasurement);
+        socketConnection.on('environmentUpdate', handleNewMeasurement);
+        socketConnection.on('sensorUpdate', handleNewMeasurement);
+        socketConnection.on('measurementUpdate', handleNewMeasurement);
     };
 
 

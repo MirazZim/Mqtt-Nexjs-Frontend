@@ -215,23 +215,31 @@ const EnvironmentChart = ({ selectedLocation }) => {
 
         console.log(`🔌 Real-time updates: sensor_${currentSensor.id} in ${selectedLocation}`);
 
-        // ✅ ADD: Join location-specific room
+        // ✅ Join location-specific room
         socket.emit('joinLocation', selectedLocation);
         socket.emit('joinSensor', currentSensor.id);
 
         const handleSensorData = (data) => {
-            // ✅ ADD: Filter by location
-            if (data.location !== selectedLocation) {
-                console.log(`📊 Ignoring data from different location: ${data.location}`);
+            console.log('📊 Raw socket data received:', data);
+
+            // ✅ Filter by location
+            if (data.location !== selectedLocation && data.roomId !== selectedLocation) {
+                console.log(`📊 Ignoring data from different location: ${data.location || data.roomId}`);
                 return;
             }
 
-            if (data.sensorId === currentSensor.id && isMountedRef.current) {
-                console.log(`📊 Live update for ${selectedLocation}: ${data.value}`);
+            // ✅ Check if data matches current sensor
+            const matchesSensor =
+                data.sensorId === currentSensor.id ||
+                data.sensor_id === currentSensor.id ||
+                (data.sensorType === selectedSensorType && data.location === selectedLocation);
+
+            if (matchesSensor && isMountedRef.current) {
+                console.log(`✅ Live update for ${selectedLocation}: ${data.value}`);
 
                 setMeasurements(prev => {
                     const newPoint = {
-                        timestamp: data.timestamp,
+                        timestamp: data.timestamp || new Date().toISOString(),
                         value: parseFloat(data.value),
                         quality: data.quality || 'good'
                     };
@@ -254,14 +262,21 @@ const EnvironmentChart = ({ selectedLocation }) => {
             }
         };
 
+        // ✅ Listen to multiple event types
         socket.on('sensorData', handleSensorData);
+        socket.on('sensorUpdate', handleSensorData);
+        socket.on('environmentUpdate', handleSensorData);
+        socket.on('newMeasurement', handleSensorData);
 
         return () => {
             socket.emit('leaveLocation', selectedLocation);
             socket.emit('leaveSensor', currentSensor.id);
             socket.off('sensorData', handleSensorData);
+            socket.off('sensorUpdate', handleSensorData);
+            socket.off('environmentUpdate', handleSensorData);
+            socket.off('newMeasurement', handleSensorData);
         };
-    }, [socket, currentSensor, selectedPeriod, selectedLocation])
+    }, [socket, currentSensor, selectedPeriod, selectedLocation, selectedSensorType]);
 
     // Process chart data with sampling
     const { chartData, yAxisDomain } = useMemo(() => {
