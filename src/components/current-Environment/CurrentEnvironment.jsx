@@ -9,10 +9,9 @@ import { usePathname } from 'next/navigation';
 
 const CurrentEnvironment = ({ selectedLocation }) => {
     const { user } = useContext(AuthContext);
-    const pathname = usePathname()
-    const lng = pathname.split("/")[1]
+    const pathname = usePathname();
+    const lng = pathname.split("/")[1];
     const { t } = useTranslation(lng, "current-environment");
-
 
     // State declarations MUST come before hooks usage
     const [currentData, setCurrentData] = useState({
@@ -35,7 +34,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
         sugar_level: 35.0
     });
 
-    // ✅ NOW use smooth sensor hooks AFTER state declarations
+    // Use smooth sensor hooks AFTER state declarations
     const smoothTemp = useSmoothSensor(currentData.temperature, 300);
     const smoothHumidity = useSmoothSensor(currentData.humidity, 300);
     const smoothAirflow = useSmoothSensor(currentData.airflow, 300);
@@ -47,8 +46,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
     // Actuator status states
     const [actuatorStatus, setActuatorStatus] = useState({
         bowlFan: {
-            statusKey: null,        // ✅ Changed from 'status'
-            messageKey: 'Waiting for status...',  // ✅ Store key, not translated text
+            statusKey: null,
+            messageKey: 'Waiting for status...',
             active: false
         },
         sonarPump: {
@@ -90,7 +89,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
     const [lastUpdate, setLastUpdate] = useState(null);
     const [isConnecting, setIsConnecting] = useState(false);
 
-    // ✅ NEW: Refs to prevent timeout race conditions
+    // Refs to prevent timeout race conditions
     const statusTimeoutRefs = useRef({
         temperature: null,
         humidity: null,
@@ -107,7 +106,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
     const maxReconnectAttempts = 2;
     const baseReconnectDelay = 1000;
 
-    // ✅ NEW: Improved status update function
+    // Improved status update function
     const updateSensorStatus = (sensorType, value) => {
         if (typeof value !== 'number') return;
 
@@ -189,7 +188,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
             sensorTimeoutRef.current = null;
         }
 
-        // ✅ Clear all sensor status timeouts
+        // Clear all sensor status timeouts
         Object.keys(statusTimeoutRefs.current).forEach(key => {
             if (statusTimeoutRefs.current[key]) {
                 clearTimeout(statusTimeoutRefs.current[key]);
@@ -242,6 +241,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
         const setupTimer = setTimeout(() => {
             fetchLatestEnvironment();
+            fetchActuatorStates();
             fetchSetpoints();
             setupRealtimeUpdates();
         }, 100);
@@ -320,9 +320,13 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                 setRealTimeStatus(prev => ({ ...prev, connected: true }));
                 setIsConnecting(false);
 
-                // ✅ Join location-specific room
+                // JOIN LOCATION-SPECIFIC ROOM
                 socketConnection.emit('joinLocation', selectedLocation);
                 console.log(`[CurrentEnvironment] Joined location: ${selectedLocation}`);
+
+                // JOIN ACTUATOR ROOM (standardized format)
+                socketConnection.emit('joinRoom', `room_${selectedLocation}`);
+                console.log(`[CurrentEnvironment] Joined actuator room: room_${selectedLocation}`);
             });
 
             socketConnection.on('disconnect', (reason) => {
@@ -347,241 +351,150 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                 setTimeout(attemptReconnect, 2000);
             });
 
-            // ✅ CRITICAL FIX: Filter all sensor updates by room
+            // ✅ UNIFIED SENSOR HANDLER - Handles all sensor types
             socketConnection.on('sensorUpdate', (data) => {
                 console.log('[CurrentEnvironment] sensorUpdate:', data);
 
-                // ✅ Room filtering
+                // Room filtering with type coercion
                 const roomMatches =
-                    data.roomCode === selectedLocation ||
-                    data.roomName === selectedLocation ||
-                    data.location === selectedLocation ||
-                    (data.roomCode && selectedLocation &&
-                        data.roomCode.toLowerCase() === selectedLocation.toLowerCase()) ||
-                    (data.roomName && selectedLocation &&
-                        data.roomName.toLowerCase() === selectedLocation.toLowerCase());
+                    data.roomCode == selectedLocation ||
+                    data.roomId == selectedLocation ||
+                    data.location == selectedLocation ||
+                    String(data.roomCode) === String(selectedLocation) ||
+                    String(data.roomId) === String(selectedLocation);
 
                 if (!roomMatches) {
-                    console.log(`[CurrentEnvironment] Ignoring sensor data from different room: ${data.roomCode || data.roomName || data.location}`);
+                    console.log(`[CurrentEnvironment] Ignoring sensor from room: ${data.roomCode || data.roomId}`);
                     return;
                 }
 
-                const { sensorType, value, sensorName } = data;
+                const { sensorType, value } = data;
 
-                // ✅ DYNAMIC: Map ANY sensor type to the correct field
+                // Sensor type mapping
                 const sensorTypeMap = {
                     'temperature': 'temperature',
                     'humidity': 'humidity',
-                    'bowl_temp': 'bowl_temp',         // ✅ Map to bowl_temp
-                    'sonar_distance': 'sonar_distance', // ✅ Map to sonar_distance
-                    'co2_level': 'co2_level',         // ✅ Map to co2_level
-                    'sugar_level': 'sugar_level',     // ✅ Map to sugar_level
+                    'bowl_temp': 'bowl_temp',
+                    'sonar_distance': 'sonar_distance',
+                    'co2_level': 'co2_level',
+                    'sugar_level': 'sugar_level',
                     'airflow': 'airflow'
                 };
 
                 const fieldName = sensorTypeMap[sensorType];
 
                 if (fieldName && typeof value === 'number') {
-                    console.log(`[CurrentEnvironment] ✅ Updating ${fieldName} for ${selectedLocation}: ${value}`);
+                    console.log(`[CurrentEnvironment] ✅ Updating ${fieldName}: ${value}`);
 
-                    // ✅ Update currentData
                     setCurrentData(prev => ({ ...prev, [fieldName]: value }));
-
-                    // ✅ Update sensor status
                     updateSensorStatus(fieldName, value);
                     setSensorTimeout();
                     setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
-                    setLastUpdate(new Date()); // ✅ Add timestamp update
-                } else {
-                    console.warn(`[CurrentEnvironment] Invalid sensor data:`, { sensorType, value, fieldName });
+                    setLastUpdate(new Date());
                 }
             });
 
-            // ✅ FIX 2: Filter environment updates by room
-            socketConnection.on('environmentUpdate', (data) => {
-                // Check if data is for current room
-                if (data.location !== selectedLocation) {
-                    console.log(`[CurrentEnvironment] Ignoring environment data from ${data.location}`);
+            // ✅ UNIFIED ACTUATOR HANDLER - Handles all actuator types
+            socketConnection.on('actuatorUpdate', (data) => {
+                console.log('[CurrentEnvironment] actuatorUpdate received:', data);
+
+                // Flexible room matching with type coercion
+                const roomMatches =
+                    data.roomCode == selectedLocation ||
+                    data.roomId == selectedLocation ||
+                    data.location == selectedLocation ||
+                    String(data.roomCode) === String(selectedLocation) ||
+                    String(data.roomId) === String(selectedLocation);
+
+                if (!roomMatches) {
+                    console.log(`[CurrentEnvironment] ❌ Ignoring actuator from room ${data.roomCode || data.roomId} (expected ${selectedLocation})`);
                     return;
                 }
 
-                console.log(`[REAL-TIME UPDATE for ${selectedLocation}]`, {
-                    temp: data.temperature,
-                    hum: data.humidity,
-                    bowl: data.bowltemp,
-                    sonar: data.sonardistance,
-                    co2: data.co2level,
-                    sugar: data.sugarlevel,
-                    timestamp: new Date().toLocaleTimeString()
-                });
+                console.log(`[CurrentEnvironment] ✅ Processing actuator for room ${selectedLocation}`);
 
-                setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
-                setSensorTimeout();
+                // Actuator type mapping
+                const actuatorTypeMap = {
+                    'bowl_fan': 'bowlFan',
+                    'bowl_fan_status': 'bowlFan',
+                    'sonar_pump': 'sonarPump',
+                    'sonar_pump_status': 'sonarPump',
+                    'co2_fermentation': 'co2Fermentation',
+                    'co2_fermentation_status': 'co2Fermentation',
+                    'sugar_fermentation': 'sugarFermentation',
+                    'sugar_fermentation_status': 'sugarFermentation'
+                };
 
-                setCurrentData(prev => ({
-                    temperature: typeof data.temperature === 'number' ? data.temperature : prev.temperature,
-                    humidity: typeof data.humidity === 'number' ? data.humidity : prev.humidity,
-                    airflow: typeof data.airflow === 'number' ? data.airflow : prev.airflow,
-                    bowltemp: typeof data.bowltemp === 'number' ? data.bowltemp : prev.bowltemp,
-                    sonardistance: typeof data.sonardistance === 'number' ? data.sonardistance : prev.sonardistance,
-                    co2level: typeof data.co2level === 'number' ? data.co2level : prev.co2level,
-                    sugarlevel: typeof data.sugarlevel === 'number' ? data.sugarlevel : prev.sugarlevel
-                }));
+                const stateKey = actuatorTypeMap[data.actuatorType];
 
-                setLastUpdate(new Date());
+                if (stateKey) {
+                    setActuatorStatus(prev => ({
+                        ...prev,
+                        [stateKey]: {
+                            statusKey: data.state || data.status,
+                            messageKey: getMessageKey(data.actuatorType, data.state || data.status),
+                            active: (data.state == 1 || data.numericState == 1),
+                            complete: (data.state == 1 || data.numericState == 1) && stateKey === 'sugarFermentation'
+                        }
+                    }));
 
-                // Update individual sensor statuses
-                updateSensorStatus('temperature', data.temperature);
-                updateSensorStatus('humidity', data.humidity);
-                updateSensorStatus('bowltemp', data.bowltemp);
-                updateSensorStatus('sonardistance', data.sonardistance);
-                updateSensorStatus('co2level', data.co2level);
-                updateSensorStatus('sugarlevel', data.sugarlevel);
-
-                // Update setpoints if provided
-                if (typeof data.desiredTemperature === 'number') {
-                    setSetpoints(prev => ({ ...prev, temperature: data.desiredTemperature }));
-                }
-                if (typeof data.desiredHumidity === 'number') {
-                    setSetpoints(prev => ({ ...prev, humidity: data.desiredHumidity }));
-                }
-                if (typeof data.desiredBowlTemp === 'number') {
-                    setSetpoints(prev => ({ ...prev, bowltemp: data.desiredBowlTemp }));
-                }
-                if (typeof data.desiredSonarDistance === 'number') {
-                    setSetpoints(prev => ({ ...prev, sonardistance: data.desiredSonarDistance }));
-                }
-                if (typeof data.desiredCO2Level === 'number') {
-                    setSetpoints(prev => ({ ...prev, co2level: data.desiredCO2Level }));
-                }
-                if (typeof data.desiredSugarLevel === 'number') {
-                    setSetpoints(prev => ({ ...prev, sugarlevel: data.desiredSugarLevel }));
+                    console.log(`✅ [CurrentEnvironment] Updated ${stateKey}: ${data.state || data.status}`);
+                } else {
+                    console.warn(`⚠️ Unknown actuator type: ${data.actuatorType}`);
                 }
             });
 
-            // ✅ FIX 3: Filter individual sensor type updates
-            socketConnection.on('temperatureUpdate', (data) => {
-                if (data.location !== selectedLocation) return;
-                console.log('[CurrentEnvironment] temperatureUpdate:', data);
-                setCurrentData(prev => ({ ...prev, temperature: data.temperature }));
-                updateSensorStatus('temperature', data.temperature);
-                setSensorTimeout();
-                setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
-            });
-
-            socketConnection.on('humidityUpdate', (data) => {
-                if (data.location !== selectedLocation) return;
-                console.log('[CurrentEnvironment] humidityUpdate:', data);
-                setCurrentData(prev => ({ ...prev, humidity: data.humidity }));
-                updateSensorStatus('humidity', data.humidity);
-                setSensorTimeout();
-                setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
-            });
-
-            socketConnection.on('bowlTemperatureUpdate', (data) => {
-                if (data.location !== selectedLocation) return;
-                console.log('[CurrentEnvironment] bowlTemperatureUpdate:', data);
-                setCurrentData(prev => ({ ...prev, bowltemp: data.bowltemp }));
-                updateSensorStatus('bowltemp', data.bowltemp);
-                setSensorTimeout();
-                setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
-            });
-
-            socketConnection.on('sonarUpdate', (data) => {
-                if (data.location !== selectedLocation) return;
-                console.log('[CurrentEnvironment] sonarUpdate:', data);
-                setCurrentData(prev => ({ ...prev, sonardistance: data.sonardistance }));
-                updateSensorStatus('sonardistance', data.sonardistance);
-                setSensorTimeout();
-                setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
-            });
-
-            socketConnection.on('co2Update', (data) => {
-                if (data.location !== selectedLocation) return;
-                console.log('[CurrentEnvironment] co2Update:', data);
-                setCurrentData(prev => ({ ...prev, co2level: data.co2level }));
-                updateSensorStatus('co2level', data.co2level);
-                setSensorTimeout();
-                setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
-            });
-
-            socketConnection.on('sugarUpdate', (data) => {
-                if (data.location !== selectedLocation) return;
-                console.log('[CurrentEnvironment] sugarUpdate:', data);
-                setCurrentData(prev => ({ ...prev, sugarlevel: data.sugarlevel }));
-                updateSensorStatus('sugarlevel', data.sugarlevel);
-                setSensorTimeout();
-                setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
-            });
-
-            // ✅ FIX 4: Filter actuator status updates
-            socketConnection.on('bowlFanUpdate', (data) => {
-                if (data.location !== selectedLocation) return;
-                console.log('CurrentEnvironment bowlFanUpdate:', data);
-                setActuatorStatus(prev => ({
-                    ...prev,
-                    bowlFan: {
-                        statusKey: data.state === 1 ? 'ON' : 'OFF',  // ✅ Store key
-                        messageKey: data.state === 1 ? 'Bowl Fan is ON' : 'Bowl Fan is OFF',  // ✅ Store key
-                        active: data.state === 1
+            // Helper function to get message translation key
+            function getMessageKey(actuatorType, state) {
+                const messages = {
+                    'bowl_fan': {
+                        'ON': 'Temp High, Fan is ON',
+                        'OFF': 'Temp normal, Fan off'
+                    },
+                    'bowl_fan_status': {
+                        'ON': 'Temp High, Fan is ON',
+                        'OFF': 'Temp normal, Fan off'
+                    },
+                    'sonar_pump': {
+                        'ON': 'Water level low, Pump is ON',
+                        'OFF': 'Water level normal, Pump is Off'
+                    },
+                    'sonar_pump_status': {
+                        'ON': 'Water level low, Pump is ON',
+                        'OFF': 'Water level normal, Pump is Off'
+                    },
+                    'co2_fermentation': {
+                        'ACTIVE': 'Fermentation going',
+                        'OFF': 'Fermentation is Off'
+                    },
+                    'co2_fermentation_status': {
+                        'COFF': 'Fermentation is Off',
+                        'CON': 'Fermentation going'
+                    },
+                    'sugar_fermentation': {
+                        'COMPLETE': 'Fermentation complete',
+                        'CLOSED': 'Fermentation closed'
+                    },
+                    'sugar_fermentation_status': {
+                        'FON': 'Fermentation complete',
+                        'FOFF': 'Fermentation closed'
                     }
-                }));
-            });
+                };
 
-            socketConnection.on('pumpUpdate', (data) => {
-                if (data.location !== selectedLocation) return;
-                console.log('CurrentEnvironment pumpUpdate:', data);
-                setActuatorStatus(prev => ({
-                    ...prev,
-                    sonarPump: {
-                        statusKey: data.state === 1 ? 'ON' : 'OFF',  // ✅ Store key
-                        messageKey: data.state === 1 ? 'Pump is ON' : 'Pump is OFF',  // ✅ Store key
-                        active: data.state === 1
-                    }
-                }));
-            });
+                return messages[actuatorType]?.[state] || `Status: ${state}`;
+            }
 
-            socketConnection.on('co2FermentationUpdate', (data) => {
-                if (data.location !== selectedLocation) return;
-                console.log('CurrentEnvironment co2FermentationUpdate:', data);
-                const isFermentationGoing = data.value === 'AF';
-                setActuatorStatus(prev => ({
-                    ...prev,
-                    co2Fermentation: {
-                        active: isFermentationGoing,
-                        messageKey: isFermentationGoing ? 'Fermentation going' : 'Fermentation is Off'  // ✅ Store key
-                    }
-                }));
-            });
-
-            socketConnection.on('sugarFermentationUpdate', (data) => {
-                if (data.location !== selectedLocation) return;
-                console.log('CurrentEnvironment sugarFermentationUpdate:', data);
-                const isFermentationComplete = data.value === 'FFC';
-                setActuatorStatus(prev => ({
-                    ...prev,
-                    sugarFermentation: {
-                        complete: isFermentationComplete,
-                        messageKey: isFermentationComplete ? 'Fermentation complete' : 'Fermentation closed'  // ✅ Store key
-                    }
-                }));
-            });
-
-            // Keep other handlers (publishResult, textMessageReceived, setpointUpdate, etc.)
+            // Keep other essential handlers
             socketConnection.on('publishResult', (result) => {
                 if (result.topic === 'text') {
-                    if (result.success) {
-                        setTextPublishStatus(`Text sent: ${result.message}`);
-                    } else {
-                        setTextPublishStatus(`Text failed: ${result.error}`);
-                    }
+                    setTextPublishStatus(result.success
+                        ? `Text sent: ${result.message}`
+                        : `Text failed: ${result.error}`);
                     setTimeout(() => setTextPublishStatus(''), 1000);
                 } else {
-                    if (result.success) {
-                        setPublishStatus(`Sent ${result.message}: ${result.command} to ${result.topic} (${result.espDevice})`);
-                    } else {
-                        setPublishStatus(`Failed: ${result.error}`);
-                    }
+                    setPublishStatus(result.success
+                        ? `Sent ${result.message}: ${result.command} to ${result.topic}`
+                        : `Failed: ${result.error}`);
                     setTimeout(() => setPublishStatus(''), 3000);
                 }
             });
@@ -592,21 +505,18 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
             socketConnection.on('setpointUpdate', (data) => {
                 if (data.location !== selectedLocation || data.userId !== user.id) return;
+                console.log('[CurrentEnvironment] setpoint update:', data);
 
-                console.log('[CurrentEnvironment] setpoint update received:', data);
-
-                if (typeof data.desiredTemperature === 'number') {
-                    setSetpoints(prev => ({ ...prev, temperature: data.desiredTemperature }));
-                }
-                if (typeof data.desiredHumidity === 'number') {
-                    setSetpoints(prev => ({ ...prev, humidity: data.desiredHumidity }));
-                }
-                if (typeof data.desiredAirflow === 'number') {
-                    setSetpoints(prev => ({ ...prev, airflow: data.desiredAirflow }));
-                }
-                if (typeof data.desiredBowlTemp === 'number') {
-                    setSetpoints(prev => ({ ...prev, bowltemp: data.desiredBowlTemp }));
-                }
+                setSetpoints(prev => ({
+                    ...prev,
+                    ...(typeof data.desiredTemperature === 'number' && { temperature: data.desiredTemperature }),
+                    ...(typeof data.desiredHumidity === 'number' && { humidity: data.desiredHumidity }),
+                    ...(typeof data.desiredAirflow === 'number' && { airflow: data.desiredAirflow }),
+                    ...(typeof data.desiredBowlTemp === 'number' && { bowl_temp: data.desiredBowlTemp }),
+                    ...(typeof data.desiredSonarDistance === 'number' && { sonar_distance: data.desiredSonarDistance }),
+                    ...(typeof data.desiredCO2Level === 'number' && { co2_level: data.desiredCO2Level }),
+                    ...(typeof data.desiredSugarLevel === 'number' && { sugar_level: data.desiredSugarLevel })
+                }));
             });
 
         } catch (error) {
@@ -617,41 +527,48 @@ const CurrentEnvironment = ({ selectedLocation }) => {
         }
     };
 
-    useEffect(() => {
-        if (!socket) return;
+    const fetchActuatorStates = async () => {
+        if (!user || !selectedLocation) return;
 
-        const handleCO2Fermentation = (data) => {
-            console.log('CurrentEnvironment Received co2FermentationUpdate:', data);
-            setActuatorStatus(prev => ({
-                ...prev,
-                co2Fermentation: {
-                    active: data.value === 'AF',
-                    messageKey: data.value === 'AF' ? 'Fermentation going' : 'Fermentation is Off'  // ✅ Store key
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/api/actuators/latest?room=${selectedLocation}`,
+                { headers: { 'Authorization': `Bearer ${user.token}` } }
+            );
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Fetched actuator states:', data);
+
+                if (data.actuators) {
+                    const newActuatorStatus = { ...actuatorStatus };
+
+                    data.actuators.forEach(actuator => {
+                        const typeMap = {
+                            'bowl_fan': 'bowlFan',
+                            'sonar_pump': 'sonarPump',
+                            'co2_fermentation': 'co2Fermentation',
+                            'sugar_fermentation': 'sugarFermentation'
+                        };
+
+                        const key = typeMap[actuator.actuator_type];
+                        if (key) {
+                            newActuatorStatus[key] = {
+                                statusKey: actuator.status,
+                                messageKey: actuator.message,
+                                active: actuator.state === 1,
+                                complete: actuator.state === 1 && key === 'sugarFermentation'
+                            };
+                        }
+                    });
+
+                    setActuatorStatus(newActuatorStatus);
                 }
-            }));
-        };
-
-        const handleSugarFermentation = (data) => {
-            console.log('CurrentEnvironment Received sugarFermentationUpdate:', data);
-            setActuatorStatus(prev => ({
-                ...prev,
-                sugarFermentation: {
-                    complete: data.value === 'FFC',
-                    messageKey: data.value === 'FFC' ? 'Fermentation complete' : 'Fermentation closed'  // ✅ Store key
-                }
-            }));
-        };
-
-
-        socket.on('co2FermentationUpdate', handleCO2Fermentation);
-        socket.on('sugarFermentationUpdate', handleSugarFermentation);
-
-        return () => {
-            socket.off('co2FermentationUpdate', handleCO2Fermentation);
-            socket.off('sugarFermentationUpdate', handleSugarFermentation);
-        };
-    }, [socket]);
-
+            }
+        } catch (err) {
+            console.error('Error fetching actuator states:', err);
+        }
+    };
 
     const fetchLatestEnvironment = async () => {
         if (!selectedLocation || !user) return;
@@ -671,7 +588,6 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                 if (data.status === 'success' && data.measurement) {
                     const measurement = data.measurement;
 
-                    // Check if we have any non-null data
                     const hasData = Object.values(measurement).some(val =>
                         val !== null && typeof val === 'number'
                     );
@@ -693,7 +609,6 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                             const timestamp = new Date(measurement.created_at);
                             setLastUpdate(timestamp);
 
-                            // Check if data is recent (within 2 minutes)
                             const timeSinceLastMeasurement = Date.now() - timestamp.getTime();
 
                             if (timeSinceLastMeasurement < 120000) {
@@ -711,12 +626,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 }));
                             }
                         }
-                    } else {
-                        console.warn(`⚠️ [CurrentEnvironment] No measurement data available`);
                     }
                 }
-            } else {
-                console.warn(`⚠️ [CurrentEnvironment] API returned status: ${response.status}`);
             }
         } catch (err) {
             console.error('❌ [CurrentEnvironment] Error fetching latest environment:', err);
@@ -724,8 +635,6 @@ const CurrentEnvironment = ({ selectedLocation }) => {
             setLoading(false);
         }
     };
-
-
 
     const fetchSetpoints = async () => {
         if (!user) return;
@@ -1025,7 +934,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     <span className="text-lg">{actuatorStatus.co2Fermentation.active ? '✅' : '❌'}</span>
                                     <div className="flex-1">
                                         <p className="font-semibold text-gray-700 mb-0.5">{t('CO2 Monitor')}</p>
-                                        <p className="text-10px text-gray-600 leading-tight"> {t(actuatorStatus.co2Fermentation.messageKey)}</p>
+                                        <p className="text-10px text-gray-600 leading-tight">{t(actuatorStatus.co2Fermentation.messageKey)}</p>
                                     </div>
                                 </div>
                             </div>
