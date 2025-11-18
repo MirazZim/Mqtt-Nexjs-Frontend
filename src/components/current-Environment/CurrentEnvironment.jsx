@@ -925,7 +925,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
 
                         {/* CO2 Fermentation Status - ONLY SHOW IF CO2 SENSOR EXISTS */}
-                        {(currentData.co2_level !== null && currentData.co2_level !== undefined) && (
+                        {/* {(currentData.co2_level !== null && currentData.co2_level !== undefined) && (
                             <div className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${actuatorStatus.co2Fermentation.active
                                 ? 'bg-green-50 border-2 border-green-200'
                                 : 'bg-red-50 border-2 border-red-200'
@@ -938,10 +938,10 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     </div>
                                 </div>
                             </div>
-                        )}
+                        )} */}
 
                         {/* Sugar Fermentation Status - ONLY SHOW IF SUGAR SENSOR EXISTS */}
-                        {(currentData.sugar_level !== null && currentData.sugar_level !== undefined) && (
+                        {/* {(currentData.sugar_level !== null && currentData.sugar_level !== undefined) && (
                             <div className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${actuatorStatus.sugarFermentation.complete
                                 ? 'bg-blue-50 border-2 border-blue-200'
                                 : 'bg-gray-50 border-2 border-gray-200'
@@ -954,7 +954,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     </div>
                                 </div>
                             </div>
-                        )}
+                        )} */}
 
                     </div>
                 </div>

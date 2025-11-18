@@ -1,0 +1,22 @@
+{
+    "Fermentation Status": "Fermentation Status",
+    "Fermentation Complete": "Fermentation Complete",
+    "Fermentation off, Check CO2, Sugar level ok": "Fermentation off, Check CO2, Sugar level ok",
+    "Fermentation Ongoing, High Sugar": "Fermentation Ongoing, High Sugar",
+    "Fermentation OFF": "Fermentation OFF",
+    "Farmentation OFF": "Fermentation OFF",
+    "Farmentation off, Check CO2, Sugar level ok": "Fermentation off, Check CO2, Sugar level ok",
+    "Farmentation Ongoing, High Sugar": "Fermentation Ongoing, High Sugar",
+    "Waiting for status...": "Waiting for status...",
+    "Status received": "Status received",
+    "Updated:": "Updated:",
+    "CO2 Status": "CO2 Status",
+    "Sugar Status": "Sugar Status",
+    "Active": "Active",
+    "Inactive": "Inactive",
+    "Complete": "Complete",
+    "Processing": "Processing",
+    "UNKNOWN": "UNKNOWN",
+    "Room:": "Room:",
+    "Status:": "Status:"
+}

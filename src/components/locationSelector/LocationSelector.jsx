@@ -708,23 +708,60 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
     };
     useEffect(() => {
         if (!user) return;
+
         fetchUserLocations();
-        setupRealtimeUpdates();
         fetchActuatorTypes();
+
         return () => {
-            if (socket) socket.disconnect();
+            if (socket) {
+                socket.disconnect();
+                setSocket(null);
+            }
         };
     }, [user]);
 
-    // ✅ NEW: Listen for real-time measurement updates
+    // ✅ FIXED: Setup socket AFTER locations are loaded
     useEffect(() => {
-        if (!socket) return;
+        if (!user || locations.length === 0) return;
+
+        // Clean up existing socket
+        if (socket) {
+            socket.disconnect();
+        }
+
+        setupRealtimeUpdates();
+
+        return () => {
+            if (socket) {
+                locations.forEach(loc => {
+                    socket.emit('leaveLocation', loc.location);
+                });
+            }
+        };
+    }, [user, locations.length]); // ✅ Depend on locations.length
+
+    // ✅ FIXED: Real-time measurement updates with better matching
+    useEffect(() => {
+        if (!socket || locations.length === 0) return;
 
         const handleNewMeasurement = (data) => {
-            console.log('📊 New measurement received:', data);
+            console.log('📊 LocationSelector measurement received:', {
+                location: data.location,
+                roomId: data.roomId,
+                roomCode: data.roomCode,
+                timestamp: data.timestamp
+            });
 
             setLocations(prev => prev.map(loc => {
-                if (loc.location === data.location || loc.room_id === data.roomId) {
+                // ✅ FIXED: Comprehensive matching
+                const isMatch =
+                    loc.location === data.location ||
+                    String(loc.room_id) === String(data.roomId) ||
+                    loc.location === data.roomCode ||
+                    loc.room_id === data.roomCode;
+
+                if (isMatch) {
+                    console.log(`✅ Incrementing count for ${loc.location}: ${(loc.measurement_count || 0) + 1}`);
                     return {
                         ...loc,
                         measurement_count: (loc.measurement_count || 0) + 1,
@@ -735,15 +772,18 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
             }));
         };
 
-        socket.on('newMeasurement', handleNewMeasurement);
-        socket.on('environmentUpdate', handleNewMeasurement);
+        // ✅ Listen to ALL possible events
+        const events = ['newMeasurement', 'environmentUpdate', 'sensorUpdate', 'measurementUpdate'];
+        events.forEach(event => {
+            socket.on(event, handleNewMeasurement);
+        });
 
         return () => {
-            socket.off('newMeasurement', handleNewMeasurement);
-            socket.off('environmentUpdate', handleNewMeasurement);
+            events.forEach(event => {
+                socket.off(event, handleNewMeasurement);
+            });
         };
-    }, [socket]);
-
+    }, [socket, locations]);
 
     const setupRealtimeUpdates = () => {
         const socketConnection = createSocket(user.token);

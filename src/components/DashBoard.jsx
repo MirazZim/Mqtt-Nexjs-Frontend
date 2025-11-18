@@ -10,7 +10,11 @@ import AuthContext from '../context/AuthContext.jsx';
 import BowlFanStatus from '../components/Third-Column/Bowl-Fan-Status/BowlFanStatus.jsx';
 import SonarPumpStatus from '../components/Third-Column/Sonar-pump-status/SonarPumpStatus.jsx';
 import IPCamera from '../components/Third-Column/Ip-camera/ip-camera.jsx';
+import FermentationResult from './results/results.jsx';
 import { useTranslation } from '../app/i18n/client.js';
+import API_BASE_URL from '../config/api.js';
+import Chatbot from '../components/chatbot/Chatbot.jsx';
+
 
 // Lazy load heavy components
 const EnvironmentChart = lazy(() => import('../components/environment-chart/EnvironmentChart.jsx'));
@@ -51,13 +55,16 @@ const Dashboard = () => {
     const router = useRouter();
     const lng = pathname.split("/")[1];
     const { t } = useTranslation(lng, "dashboard");
+    // ✅ GET BOTH socket AND user from AuthContext
+    const { socket, user } = useContext(AuthContext);
+
+    // ✅ ADD currentRoom state
+    const [currentRoom, setCurrentRoom] = useState(null);
 
     const [selectedLocation, setSelectedLocation] = useState(() => {
         const savedLocation = localStorage.getItem('selectedLocation');
         return savedLocation || 'main-room';
     });
-
-    const { socket } = useContext(AuthContext);
     const [targetTemperature, setTargetTemperature] = useState(() => {
         const savedTemp = localStorage.getItem('targetTemperature');
         return savedTemp ? parseFloat(savedTemp) : 22.0;
@@ -252,6 +259,12 @@ const Dashboard = () => {
 
                         <div className="col-span-9 space-y-6">
 
+                            {/* ✅ Pass roomId to FermentationResult */}
+                            <FermentationResult
+                                socket={socket}
+                                selectedLocation={selectedLocation}
+
+                            />
                             {/* Temperature Chart */}
                             <div className="bg-white rounded-lg shadow-md p-3 text-black">
                                 <div className="flex items-center justify-between">
@@ -276,11 +289,11 @@ const Dashboard = () => {
                                         </div>
                                     ) : (
                                         <ComponentLoader height={700}>
-                                            <SpatialTemperatureMap
+                                            {/* <SpatialTemperatureMap
                                                 selectedLocation="sensor-room"
                                                 targetTemperature={22}
                                                 preloadedData={locationsData}
-                                            />
+                                            /> */}
                                         </ComponentLoader>
                                     )}
                                 </div>
@@ -307,18 +320,20 @@ const Dashboard = () => {
 
                             <IPCamera selectedLocation={selectedLocation} />
 
-                            <div className="space-y-2">
-                                {/* Sensor Item */}
-                                <div className="bg-gray-50 rounded-md p-2 border border-gray-200">
-                                    <div className="space-y-4">
-                                        {/* Bowl Fan Status Component */}
-                                        <BowlFanStatus selectedLocation={selectedLocation} />
+                            <Chatbot />
 
-                                        {/* Sonar Pump Status Component */}
-                                        <SonarPumpStatus selectedLocation={selectedLocation} />
-                                    </div>
-                                </div>
-                            </div>
+                            {/* <div className="space-y-2"> */}
+                            {/* Sensor Item */}
+                            {/* <div className="bg-gray-50 rounded-md p-2 border border-gray-200"> */}
+                            {/* <div className="space-y-4"> */}
+                            {/* Bowl Fan Status Component */}
+                            {/* <BowlFanStatus selectedLocation={selectedLocation} /> */}
+
+                            {/* Sonar Pump Status Component */}
+                            {/* <SonarPumpStatus selectedLocation={selectedLocation} /> */}
+                            {/* </div> */}
+                            {/* </div> */}
+                            {/* </div> */}
                         </div>
 
                         {/* New Sensors Card 2 */}

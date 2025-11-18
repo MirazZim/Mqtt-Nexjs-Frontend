@@ -302,8 +302,8 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
                     <button
                         onClick={() => setAutoSave(!autoSave)}
                         className={`flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium rounded-lg transition-colors ${autoSave
-                                ? 'bg-red-500 hover:bg-red-600 text-white'
-                                : 'bg-green-500 hover:bg-green-600 text-white'
+                            ? 'bg-red-500 hover:bg-red-600 text-white'
+                            : 'bg-green-500 hover:bg-green-600 text-white'
                             }`}
                     >
                         <FaCircle className={`text-[6px] ${autoSave ? 'animate-pulse' : ''}`} />

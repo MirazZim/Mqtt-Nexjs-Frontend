@@ -1,0 +1,22 @@
+{
+    "Fermentation Status": "発酵状態",
+    "Fermentation Complete": "発酵完了",
+    "Fermentation off, Check CO2, Sugar level ok": "発酵停止、CO2を確認、糖度正常",
+    "Fermentation Ongoing, High Sugar": "発酵進行中、高糖度",
+    "Fermentation OFF": "発酵停止",
+    "Farmentation OFF": "発酵停止",
+    "Farmentation off, Check CO2, Sugar level ok": "発酵停止、CO2を確認、糖度正常",
+    "Farmentation Ongoing, High Sugar": "発酵進行中、高糖度",
+    "Waiting for status...": "ステータス待機中...",
+    "Status received": "ステータス受信",
+    "Updated:": "更新:",
+    "CO2 Status": "CO2状態",
+    "Sugar Status": "糖度状態",
+    "Active": "アクティブ",
+    "Inactive": "非アクティブ",
+    "Complete": "完了",
+    "Processing": "処理中",
+    "UNKNOWN": "不明",
+    "Room:": "部屋:",
+    "Status:": "状態:"
+}
