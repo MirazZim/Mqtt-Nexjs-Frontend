@@ -64,16 +64,17 @@ const EnvironmentControl = ({ selectedLocation }) => {
     const [humidityPublishStatus, setHumidityPublishStatus] = useState('');
     const [isConnecting, setIsConnecting] = useState(false);
 
-    // Add these after your other state declarations (around line 70)
-    const [fanSpeed, setFanSpeed] = useState(0); // 0-100
-    const [fanStatus, setFanStatus] = useState('OFF'); // OFF, LOW, MEDIUM, HIGH
-    const [fanLevel, setFanLevel] = useState('OFF'); // OFF, LOW, MEDIUM, HIGH
+    // Fan Knob State
+    const [fanKnobValue, setFanKnobValue] = useState(0);
     const [fanIsDragging, setFanIsDragging] = useState(false);
+    const [fanIsHovering, setFanIsHovering] = useState(false);
     const [fanPublishStatus, setFanPublishStatus] = useState('');
 
     // Fan Speed Configuration
     const FAN_MIN_VALUE = 0;
     const FAN_MAX_VALUE = 100;
+    const FAN_TOTAL_ANGLE = 270;
+    const FAN_START_ANGLE = -135;
 
     // Temperature Knob Configuration
     const TEMP_MIN_VALUE = 25;
@@ -96,6 +97,10 @@ const EnvironmentControl = ({ selectedLocation }) => {
     const humidityStartAngleRef = useRef(0);
     const humidityStartValueRef = useRef(25);
 
+    const fanKnobRef = useRef(null);
+    const fanStartAngleRef = useRef(0);
+    const fanStartValueRef = useRef(0);
+
     // Enhanced connection state management
     const [realTimeStatus, setRealTimeStatus] = useState({
         temperature: false,
@@ -112,6 +117,8 @@ const EnvironmentControl = ({ selectedLocation }) => {
     const [actuators, setActuators] = useState([]);
     const [fanSpeedActuator, setFanSpeedActuator] = useState(null);
     const [isLoadingActuators, setIsLoadingActuators] = useState(true);
+    const [fanSpeed, setFanSpeed] = useState(0);
+
 
     // Refs for reconnection logic and sensor timeout
     const reconnectTimeoutRef = useRef(null);
@@ -140,71 +147,103 @@ const EnvironmentControl = ({ selectedLocation }) => {
     // After state declarations, around line 150-200
 
     useEffect(() => {
-        const fetchActuators = async () => {
-            console.log('🔍 [fetchActuators] Starting...');
-            console.log('🔍 [fetchActuators] user:', user);
-            console.log('🔍 [fetchActuators] selectedLocation:', selectedLocation);
-
-            if (!user || !selectedLocation) {
-                console.warn('⚠️ [fetchActuators] Missing user or selectedLocation');
-                return;
-            }
-
-            setIsLoadingActuators(true);
+        const fetchCurrentFanSpeed = async () => {
+            if (!user || !selectedLocation) return;
 
             try {
-                // ✅ FIX: Use user.token like your other components
                 const response = await fetch(
-                    `${API_BASE_URL}/api/actuators/room-actuators?location=${selectedLocation}`,
+                    `${API_BASE_URL}/api/fan-speed/current/${selectedLocation}`,
                     {
                         headers: {
-                            'Authorization': `Bearer ${user.token}` // ✅ Changed from localStorage
+                            'Authorization': `Bearer ${user.token}`
                         }
                     }
                 );
 
-                console.log('🔍 [fetchActuators] Response status:', response.status);
-
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('✅ [fetchActuators] Fetched actuators:', data.data.actuators);
-
-                    setActuators(data.data.actuators);
-
-                    // Find fan speed actuator
-                    const fanActuator = data.data.actuators.find(
-                        act => act.type_code === 'fan_speed_control'
-                    );
-
-                    if (fanActuator) {
-                        setFanSpeedActuator(fanActuator);
-                        console.log(`✅ [fetchActuators] Fan speed actuator found:`, fanActuator);
-
-                        // Set initial state from database
-                        if (fanActuator.current_state && fanActuator.current_state !== 'off') {
-                            const currentSpeed = parseInt(fanActuator.current_state) || 0;
-                            setFanSpeed(currentSpeed);
-                            console.log(`✅ [fetchActuators] Set initial fan speed: ${currentSpeed}%`);
-                        }
-                    } else {
-                        console.warn('⚠️ [fetchActuators] No fan speed actuator found in room');
-                        setFanSpeedActuator(null);
+                    if (data.status === 'success' && data.data) {
+                        const currentSpeed = data.data.currentSpeed;
+                        setFanKnobValue(currentSpeed);
+                        setFanSpeed(currentSpeed);
+                        console.log(`✅ Initial fan speed loaded: ${currentSpeed}%`);
                     }
-                } else {
-                    console.error('❌ [fetchActuators] Response not OK:', response.status, response.statusText);
                 }
             } catch (error) {
-                console.error('❌ [fetchActuators] Error:', error);
-            } finally {
-                setIsLoadingActuators(false);
-                console.log('🔍 [fetchActuators] Finished');
+                console.error('❌ Error fetching current fan speed:', error);
             }
         };
 
-        console.log('🔍 [useEffect] fetchActuators triggered');
-        fetchActuators();
-    }, [user, selectedLocation, API_BASE_URL]);
+        fetchCurrentFanSpeed();
+    }, [user, selectedLocation]);
     // ✅ Dependencies
+
+    useEffect(() => {
+        const fetchActuators = async () => {
+            if (!user || !selectedLocation) {
+                setIsLoadingActuators(false);
+                return;
+            }
+
+            setIsLoadingActuators(true);
+            console.log(`🔍 Fetching actuators for room: ${selectedLocation}`);
+
+            try {
+                const response = await fetch(
+                    `${API_BASE_URL}/api/actuators?roomCode=${selectedLocation}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${user.token}`
+                        }
+                    }
+                );
+
+                console.log(`📡 Actuators response status: ${response.status}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('📦 Actuators data received:', data);
+
+                    // ✅ Fixed: Backend returns actuators directly in response
+                    if (data.status === 'success' && Array.isArray(data.actuators)) {
+                        // Find fan speed control actuator
+                        const fanActuator = data.actuators.find(
+                            act => act.actuator_type_code === 'fan_speed_control' && act.is_active === 1
+                        );
+
+                        if (fanActuator) {
+                            setFanSpeedActuator(fanActuator);
+                            console.log('✅ Fan speed actuator found:', fanActuator.actuator_name);
+
+                            // Set initial knob value from current state
+                            const initialSpeed = parseInt(fanActuator.current_state) || 0;
+                            setFanKnobValue(initialSpeed);
+                            setFanSpeed(initialSpeed);
+                        } else {
+                            console.log('ℹ️ No fan speed actuator found for this room');
+                            setFanSpeedActuator(null);
+                        }
+
+                        setActuators(data.actuators);
+                    } else {
+                        console.warn('⚠️ Invalid actuators response format:', data);
+                        setFanSpeedActuator(null);
+                    }
+                } else {
+                    console.error('❌ Failed to fetch actuators:', response.status);
+                    setFanSpeedActuator(null);
+                }
+            } catch (error) {
+                console.error('❌ Error fetching actuators:', error);
+                setFanSpeedActuator(null);
+            } finally {
+                setIsLoadingActuators(false);
+                console.log('✅ Actuator loading complete');
+            }
+        };
+
+        fetchActuators();
+    }, [user, selectedLocation]);
 
 
 
@@ -307,7 +346,6 @@ const EnvironmentControl = ({ selectedLocation }) => {
             return;
         }
 
-        // ✅ Check if fan speed actuator exists
         if (!fanSpeedActuator) {
             setFanPublishStatus('❌ Fan speed actuator not configured');
             setTimeout(() => setFanPublishStatus(''), 3000);
@@ -315,21 +353,26 @@ const EnvironmentControl = ({ selectedLocation }) => {
         }
 
         setLoading(true);
-
         const validSpeed = Math.max(0, Math.min(100, parseInt(speed)));
+
         setFanPublishStatus(`📤 Setting fan speed: ${validSpeed}%`);
 
-        // ✅ DYNAMIC: Use topic from database
-        socket.emit('publishTextToMQTT', {
-            topic: fanSpeedActuator.mqtt_topic, // ✅ Fully dynamic!
-            message: validSpeed.toString(),
-            userId: user.id,
-            location: selectedLocation
-        });
+        try {
+            // ✅ Use Socket.IO to send fan speed command
+            socket.emit('setFanSpeed', {
+                roomCode: selectedLocation,
+                speed: validSpeed
+            });
 
-        setFanSpeed(validSpeed);
-        setLoading(false);
-        setTimeout(() => setFanPublishStatus(''), 3000);
+            console.log(`🌀 Fan speed command sent via Socket.IO: ${validSpeed}%`);
+
+        } catch (error) {
+            console.error('❌ Error sending fan speed command:', error);
+            setFanPublishStatus(`❌ Failed to send command`);
+            setTimeout(() => setFanPublishStatus(''), 3000);
+        } finally {
+            setLoading(false);
+        }
     };
 
 
@@ -402,6 +445,11 @@ const EnvironmentControl = ({ selectedLocation }) => {
     const humidityValueToAngle = (value) => {
         const percentage = (value - HUMIDITY_MIN_VALUE) / (HUMIDITY_MAX_VALUE - HUMIDITY_MIN_VALUE);
         return HUMIDITY_START_ANGLE + (percentage * HUMIDITY_TOTAL_ANGLE);
+    };
+
+    const fanValueToAngle = (value) => {
+        const percentage = (value - FAN_MIN_VALUE) / (FAN_MAX_VALUE - FAN_MIN_VALUE);
+        return FAN_START_ANGLE + (percentage * FAN_TOTAL_ANGLE);
     };
 
     // Temperature Knob Event Handlers
@@ -534,6 +582,71 @@ const EnvironmentControl = ({ selectedLocation }) => {
         }
     };
 
+    // Fan Knob Event Handlers
+    const handleFanMouseDown = (e) => {
+        if (!realTimeStatus.connected || !realTimeStatus.sensorActive || !fanKnobRef.current) return;
+
+        setFanIsDragging(true);
+        const rect = fanKnobRef.current.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        fanStartAngleRef.current = getAngleFromCenter(centerX, centerY, e.clientX, e.clientY);
+        fanStartValueRef.current = fanKnobValue;
+
+        e.preventDefault();
+    };
+
+    const handleFanMouseMove = (e) => {
+        if (!fanIsDragging || !fanKnobRef.current) return;
+
+        const rect = fanKnobRef.current.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        const currentAngle = getAngleFromCenter(centerX, centerY, e.clientX, e.clientY);
+        let angleDelta = currentAngle - fanStartAngleRef.current;
+
+        if (angleDelta > 180) angleDelta -= 360;
+        if (angleDelta < -180) angleDelta += 360;
+
+        const sensitivity = 0.3;
+        const valueDelta = Math.round((angleDelta * sensitivity));
+        const newValue = Math.max(FAN_MIN_VALUE, Math.min(FAN_MAX_VALUE, fanStartValueRef.current + valueDelta));
+
+        if (newValue !== fanKnobValue) {
+            setFanKnobValue(newValue);
+            updateFanSpeed(newValue);
+        }
+    };
+
+    const handleFanMouseUp = () => {
+        setFanIsDragging(false);
+    };
+
+    const handleFanWheel = (e) => {
+        if (!realTimeStatus.connected || !realTimeStatus.sensorActive) return;
+        e.preventDefault();
+
+        const delta = e.deltaY > 0 ? -1 : 1;
+        const newValue = Math.max(FAN_MIN_VALUE, Math.min(FAN_MAX_VALUE, fanKnobValue + delta));
+
+        if (newValue !== fanKnobValue) {
+            setFanKnobValue(newValue);
+            updateFanSpeed(newValue);
+        }
+    };
+
+    const handleFanValueChange = (e) => {
+        if (!realTimeStatus.connected || !realTimeStatus.sensorActive) return;
+
+        const value = parseInt(e.target.value);
+        if (!isNaN(value) && value >= FAN_MIN_VALUE && value <= FAN_MAX_VALUE) {
+            setFanKnobValue(value);
+            updateFanSpeed(value);
+        }
+    };
+
     // Mouse event listeners for temperature knob
     useEffect(() => {
         if (tempIsDragging) {
@@ -553,36 +666,42 @@ const EnvironmentControl = ({ selectedLocation }) => {
     // In your React component
     // Replace your existing incomplete socket listener with this complete version
     useEffect(() => {
-        if (socket) {
-            // Handle generic actuator updates
-            socket.on('actuatorUpdate', (data) => {
-                console.log('🎛️ Actuator update:', data);
+        if (!socket) return;
 
-                if (data.actuatorType === 'fan_speed_control') {
-                    setFanSpeed(data.value);
-                    setFanStatus(data.state);
-                    setFanPublishStatus(`✅ Fan speed: ${data.value}%`);
-                    setTimeout(() => setFanPublishStatus(''), 3000);
-                }
-            });
+        // ✅ Handle successful fan speed update
+        socket.on('fanSpeedSuccess', (data) => {
+            console.log('✅ Fan speed success:', data);
+            setFanKnobValue(data.newSpeed);
+            setFanPublishStatus(`✅ Fan speed set: ${data.newSpeed}%`);
+            setTimeout(() => setFanPublishStatus(''), 3000);
+        });
 
-            // Handle specialized fan speed updates
-            socket.on('fanSpeedUpdate', (data) => {
-                console.log('🌀 Fan speed update:', data);
-                setFanSpeed(data.speed);
-                setFanStatus(data.status);
-                setFanLevel(data.level);
-                setFanPublishStatus(`✅ Fan ${data.level}: ${data.speed}%`);
+        // ✅ Handle fan speed errors
+        socket.on('fanSpeedError', (data) => {
+            console.error('❌ Fan speed error:', data);
+            setFanPublishStatus(`❌ ${data.message}`);
+            setTimeout(() => setFanPublishStatus(''), 3000);
+        });
+
+        // ✅ Handle broadcast updates (when other users change fan speed)
+        socket.on('fanSpeedUpdated', (data) => {
+            console.log('🔄 Fan speed updated by another user:', data);
+
+            // Only update if it's for the current room
+            if (data.roomCode === selectedLocation) {
+                setFanKnobValue(data.newSpeed);
+                setFanPublishStatus(`🔄 ${data.updatedBy} set fan speed: ${data.newSpeed}%`);
                 setTimeout(() => setFanPublishStatus(''), 3000);
-            });
+            }
+        });
 
-            return () => {
-                socket.off('actuatorUpdate');
-                socket.off('fanSpeedUpdate');
-            };
-        }
-    }, [socket]);
-
+        // Cleanup
+        return () => {
+            socket.off('fanSpeedSuccess');
+            socket.off('fanSpeedError');
+            socket.off('fanSpeedUpdated');
+        };
+    }, [socket, selectedLocation]);
 
 
 
@@ -602,6 +721,30 @@ const EnvironmentControl = ({ selectedLocation }) => {
             };
         }
     }, [humidityIsDragging, humidityKnobValue, HUMIDITY_MIN_VALUE, HUMIDITY_MAX_VALUE]);
+
+    // Mouse event listeners for fan knob
+    useEffect(() => {
+        if (fanIsDragging) {
+            const handleMouseMove = (e) => handleFanMouseMove(e);
+            const handleMouseUp = () => handleFanMouseUp();
+
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+
+            return () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
+        }
+    }, [fanIsDragging, fanKnobValue, FAN_MIN_VALUE, FAN_MAX_VALUE]);
+
+    // Sync fan knob value with fan speed actuator
+    useEffect(() => {
+        if (fanSpeedActuator && fanSpeedActuator.current_state) {
+            const currentSpeed = parseInt(fanSpeedActuator.current_state) || 0;
+            setFanKnobValue(Math.max(FAN_MIN_VALUE, Math.min(FAN_MAX_VALUE, currentSpeed)));
+        }
+    }, [fanSpeedActuator]);
 
     // Generate tick marks for temperature
     const generateTempTicks = () => {
@@ -641,6 +784,34 @@ const EnvironmentControl = ({ selectedLocation }) => {
             const angle = humidityValueToAngle(value);
             const isMain = value % 5 === 0;
             const isCurrent = value === humidityKnobValue;
+
+            ticks.push(
+                <div
+                    key={value}
+                    className={`tick-small ${isMain ? 'main' : 'minor'} ${isCurrent ? 'current' : ''}`}
+                    style={{
+                        transform: `rotate(${angle}deg)`
+                    }}
+                >
+                    {isMain && (
+                        <span className="tick-label-small">{value}</span>
+                    )}
+                </div>
+            );
+        }
+        return ticks;
+    };
+
+    // Generate tick marks for fan speed
+    const generateFanTicks = () => {
+        const ticks = [];
+        const totalTicks = 11; // 0, 10, 20, ..., 100
+
+        for (let i = 0; i < totalTicks; i++) {
+            const value = i * 10;
+            const angle = fanValueToAngle(value);
+            const isMain = value % 20 === 0;
+            const isCurrent = value === fanKnobValue;
 
             ticks.push(
                 <div
@@ -1082,190 +1253,7 @@ const EnvironmentControl = ({ selectedLocation }) => {
 
     return (
         <div className="space-y-3 md:space-y-4">
-            {/* Minimalist Header */}
-            <div className="flex items-center justify-between">
-                <h2 className="text-base md:text-lg font-medium text-gray-900">{t('Environment Control')}</h2>
-                <div className="flex items-center gap-1.5 text-xs">
-                    <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-gray-500 hidden sm:inline">{selectedLocation}</span>
-                </div>
-            </div>
 
-            {/* Clean Status Bar */}
-            <div className="flex items-center gap-3 pb-2 md:pb-3 border-b border-gray-100">
-                <div className="flex items-center gap-1.5">
-                    <div className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${realTimeStatus.connected ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
-                    <span className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wider">{t('Broker')}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <div className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${realTimeStatus.sensorActive ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
-                    <span className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wider">{t('Sensors')}</span>
-                </div>
-            </div>
-
-            {/* Temperature Control - Ultra Clean Card */}
-            <div className="bg-white rounded-lg md:rounded-xl border border-gray-100 hover:border-gray-200 transition-all duration-300 overflow-hidden">
-                <div className="p-3 md:p-5">
-                    {/* Card Header */}
-                    <div className="flex items-start justify-between mb-3 md:mb-4">
-                        <div>
-                            <div className="flex items-center gap-2 mb-1.5">
-                                <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center">
-                                    <FaThermometerHalf className="text-white text-sm md:text-base" />
-                                </div>
-                                <h3 className="text-sm md:text-base font-medium text-gray-900">{t('Temperature')}</h3>
-                            </div>
-                            {/* <div className="flex items-baseline gap-1.5">
-                                <span className="text-2xl md:text-3xl font-light tracking-tight"
-                                    style={{ color: getStatusColor(currentData.temperature, setpoints.temperature, 0.5) }}>
-                                    {displayedTemperature}
-                                </span>
-                                <span className="text-base md:text-lg font-light text-gray-400">°C</span>
-                            </div> */}
-                        </div>
-
-                        {/* Status Indicator */}
-                        <div className={`px-2 py-1 md:px-2.5 md:py-1.5 rounded-full text-[10px] md:text-xs font-medium ${realTimeStatus.sensorActive
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : 'bg-gray-100 text-gray-500'
-                            }`}>
-                            {realTimeStatus.sensorActive ? t('Live') : t('Off')}
-                        </div>
-                    </div>
-
-                    {/* Target Display */}
-                    <div className="mb-3 md:mb-4 pb-3 md:pb-4 border-b border-gray-50">
-                        <div className="flex items-center justify-between text-xs md:text-sm">
-                            <span className="text-gray-500">{t('Target')}</span>
-                            <span className="font-medium text-gray-900">{setpoints.temperature}°C</span>
-                        </div>
-                        {currentData.temperature !== null && (
-                            <div className="mt-1.5">
-                                <div className="h-0.5 md:h-1 bg-gray-100 rounded-full overflow-hidden">
-                                    <div
-                                        className={`h-full transition-all duration-500 ${Math.abs(currentData.temperature - setpoints.temperature) <= 0.5
-                                            ? 'bg-emerald-500'
-                                            : 'bg-amber-500'
-                                            }`}
-                                        style={{
-                                            width: `${Math.min(100, (1 - Math.abs(currentData.temperature - setpoints.temperature) / 5) * 100)}%`
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Sleek Knob Control */}
-                    <div className="flex flex-col items-center space-y-3 md:space-y-4">
-                        <div className="relative">
-                            {/* Minimalist Progress Ring */}
-                            <svg className="w-32 h-32 md:w-40 md:h-40 -rotate-90" viewBox="0 0 160 160">
-                                {/* Background ring */}
-                                <circle
-                                    cx="80"
-                                    cy="80"
-                                    r="70"
-                                    fill="none"
-                                    stroke="#f3f4f6"
-                                    strokeWidth="2"
-                                />
-
-                                {/* Progress ring */}
-                                <circle
-                                    cx="80"
-                                    cy="80"
-                                    r="70"
-                                    fill="none"
-                                    stroke="url(#tempGradient)"
-                                    strokeWidth="2"
-                                    strokeDasharray={`${((tempKnobValue - TEMP_MIN_VALUE) / (TEMP_MAX_VALUE - TEMP_MIN_VALUE)) * 440} 440`}
-                                    className="transition-all duration-300"
-                                    strokeLinecap="round"
-                                />
-
-                                <defs>
-                                    <linearGradient id="tempGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stopColor="#f97316" />
-                                        <stop offset="100%" stopColor="#ec4899" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-
-                            {/* Central Knob */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <div
-                                    ref={tempKnobRef}
-                                    className={`relative w-24 h-24 md:w-28 md:h-28 rounded-full bg-white shadow-lg cursor-grab active:cursor-grabbing transition-all duration-200 ${tempIsDragging ? 'scale-105 shadow-xl' : ''
-                                        } ${tempIsHovering ? 'shadow-xl' : ''} ${!realTimeStatus.connected || !realTimeStatus.sensorActive ? 'opacity-40 cursor-not-allowed' : ''
-                                        }`}
-                                    style={{
-                                        transform: `rotate(${tempValueToAngle(tempKnobValue)}deg)`
-                                    }}
-                                    onMouseDown={handleTempMouseDown}
-                                    onMouseEnter={() => setTempIsHovering(true)}
-                                    onMouseLeave={() => setTempIsHovering(false)}
-                                    onWheel={handleTempWheel}
-                                >
-                                    {/* Knob indicator line */}
-                                    <div className="absolute top-1.5 md:top-2 left-1/2 -translate-x-1/2 w-0.5 h-4 md:h-5 bg-gradient-to-b from-orange-500 to-pink-500 rounded-full"></div>
-
-                                    {/* Center value */}
-                                    <div className="absolute inset-0 flex items-center justify-center flex-col">
-                                        <span className="text-xl md:text-2xl font-light text-gray-900">{tempKnobValue}</span>
-                                        <span className="text-[9px] md:text-xs text-gray-400 uppercase tracking-wider">°C</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Input with Buttons */}
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => handleTempValueChange({ target: { value: tempKnobValue - 1 } })}
-                                disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gray-50 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-gray-600"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                                </svg>
-                            </button>
-
-                            <input
-                                type="number"
-                                min={TEMP_MIN_VALUE}
-                                max={TEMP_MAX_VALUE}
-                                value={tempKnobValue}
-                                onChange={handleTempValueChange}
-                                disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                className="w-16 md:w-18 px-3 py-1.5 md:py-2 text-center text-base md:text-lg font-light bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                            />
-
-                            <button
-                                onClick={() => handleTempValueChange({ target: { value: tempKnobValue + 1 } })}
-                                disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gray-50 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-gray-600"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        {/* Status Message */}
-                        {tempPublishStatus && (
-                            <div className={`text-[10px] md:text-xs px-3 py-1.5 rounded-full ${tempPublishStatus.includes('✅')
-                                ? 'bg-emerald-50 text-emerald-700'
-                                : 'bg-red-50 text-red-700'
-                                }`}>
-                                {tempPublishStatus}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
 
             {/* Fan Speed Control - Fully Dynamic */}
             {isLoadingActuators ? (
@@ -1294,35 +1282,32 @@ const EnvironmentControl = ({ selectedLocation }) => {
                     </div>
                 </div>
             ) : (
-                // Fan Speed Control Card (Actuator Exists)
+                // Fan Speed Control Card - Knob Style
                 <div className="bg-white rounded-lg md:rounded-xl border border-gray-100 hover:border-gray-200 transition-all duration-300 overflow-hidden">
                     <div className="p-3 md:p-5">
                         {/* Card Header - Dynamic */}
                         <div className="flex items-start justify-between mb-3 md:mb-4">
-                            <div className="flex-1">
+                            <div>
                                 <div className="flex items-center gap-2 mb-1.5">
                                     <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center">
                                         <FaWind className="text-white text-sm md:text-base" />
                                     </div>
-                                    <div>
-                                        {/* ✅ Dynamic actuator name */}
-                                        <h3 className="text-sm md:text-base font-medium text-gray-900">
-                                            {fanSpeedActuator.actuator_name}
-                                        </h3>
-                                        {/* ✅ Show topic for debugging/info */}
-                                        <div className="text-[10px] text-gray-400">
-                                            {fanSpeedActuator.mqtt_topic}
-                                        </div>
-                                    </div>
+                                    <h3 className="text-sm md:text-base font-medium text-gray-900">
+                                        {fanSpeedActuator.actuator_name}
+                                    </h3>
+                                </div>
+                                {/* Show topic for debugging/info */}
+                                <div className="text-[10px] text-gray-400 ml-9">
+                                    {fanSpeedActuator.mqtt_topic}
                                 </div>
                             </div>
 
                             {/* Status Indicator */}
-                            <div className={`px-2 py-1 md:px-2.5 md:py-1.5 rounded-full text-[10px] md:text-xs font-medium whitespace-nowrap ${fanStatus !== 'OFF'
+                            <div className={`px-2 py-1 md:px-2.5 md:py-1.5 rounded-full text-[10px] md:text-xs font-medium ${fanKnobValue > 0
                                 ? 'bg-cyan-50 text-cyan-700'
                                 : 'bg-gray-100 text-gray-500'
                                 }`}>
-                                {fanStatus}
+                                {fanKnobValue > 0 ? `${fanKnobValue}%` : t('Off')}
                             </div>
                         </div>
 
@@ -1330,85 +1315,85 @@ const EnvironmentControl = ({ selectedLocation }) => {
                         <div className="mb-3 md:mb-4 pb-3 md:pb-4 border-b border-gray-50">
                             <div className="flex items-center justify-between text-xs md:text-sm">
                                 <span className="text-gray-500">{t('Current Speed')}</span>
-                                <span className="font-medium text-gray-900">{fanSpeed}%</span>
+                                <span className="font-medium text-gray-900">{fanKnobValue}%</span>
                             </div>
                             <div className="mt-1.5">
                                 <div className="h-0.5 md:h-1 bg-gray-100 rounded-full overflow-hidden">
                                     <div
                                         className="h-full bg-gradient-to-r from-blue-400 to-cyan-500 transition-all duration-500"
-                                        style={{ width: `${fanSpeed}%` }}
+                                        style={{ width: `${fanKnobValue}%` }}
                                     />
                                 </div>
                             </div>
                         </div>
 
-                        {/* Fan Speed Slider */}
+                        {/* Sleek Knob Control */}
                         <div className="flex flex-col items-center space-y-3 md:space-y-4">
-                            <div className="w-full">
-                                <input
-                                    type="range"
-                                    min={FAN_MIN_VALUE}
-                                    max={FAN_MAX_VALUE}
-                                    value={fanSpeed}
-                                    onChange={(e) => {
-                                        const newSpeed = parseInt(e.target.value);
-                                        setFanSpeed(newSpeed);
-                                        setFanIsDragging(true);
-                                    }}
-                                    onMouseUp={(e) => {
-                                        const newSpeed = parseInt(e.target.value);
-                                        updateFanSpeed(newSpeed);
-                                        setFanIsDragging(false);
-                                    }}
-                                    onTouchEnd={(e) => {
-                                        const newSpeed = parseInt(e.target.value);
-                                        updateFanSpeed(newSpeed);
-                                        setFanIsDragging(false);
-                                    }}
-                                    disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                                    style={{
-                                        background: `linear-gradient(to right, #3b82f6 0%, #06b6d4 ${fanSpeed}%, #e5e7eb ${fanSpeed}%, #e5e7eb 100%)`
-                                    }}
-                                />
+                            <div className="relative">
+                                {/* Minimalist Progress Ring */}
+                                <svg className="w-32 h-32 md:w-40 md:h-40 -rotate-90" viewBox="0 0 160 160">
+                                    {/* Background ring */}
+                                    <circle
+                                        cx="80"
+                                        cy="80"
+                                        r="70"
+                                        fill="none"
+                                        stroke="#f3f4f6"
+                                        strokeWidth="2"
+                                    />
+
+                                    {/* Progress ring */}
+                                    <circle
+                                        cx="80"
+                                        cy="80"
+                                        r="70"
+                                        fill="none"
+                                        stroke="url(#fanGradient)"
+                                        strokeWidth="2"
+                                        strokeDasharray={`${((fanKnobValue - FAN_MIN_VALUE) / (FAN_MAX_VALUE - FAN_MIN_VALUE)) * 440} 440`}
+                                        className="transition-all duration-300"
+                                        strokeLinecap="round"
+                                    />
+
+                                    <defs>
+                                        <linearGradient id="fanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stopColor="#3b82f6" />
+                                            <stop offset="100%" stopColor="#06b6d4" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+
+                                {/* Central Knob */}
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <div
+                                        ref={fanKnobRef}
+                                        className={`relative w-24 h-24 md:w-28 md:h-28 rounded-full bg-white shadow-lg cursor-grab active:cursor-grabbing transition-all duration-200 ${fanIsDragging ? 'scale-105 shadow-xl' : ''
+                                            } ${fanIsHovering ? 'shadow-xl' : ''} ${!realTimeStatus.connected || !realTimeStatus.sensorActive ? 'opacity-40 cursor-not-allowed' : ''
+                                            }`}
+                                        style={{
+                                            transform: `rotate(${fanValueToAngle(fanKnobValue)}deg)`
+                                        }}
+                                        onMouseDown={handleFanMouseDown}
+                                        onMouseEnter={() => setFanIsHovering(true)}
+                                        onMouseLeave={() => setFanIsHovering(false)}
+                                        onWheel={handleFanWheel}
+                                    >
+                                        {/* Knob indicator line */}
+                                        <div className="absolute top-1.5 md:top-2 left-1/2 -translate-x-1/2 w-0.5 h-4 md:h-5 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-full"></div>
+
+                                        {/* Center value */}
+                                        <div className="absolute inset-0 flex items-center justify-center flex-col">
+                                            <span className="text-xl md:text-2xl font-light text-gray-900">{fanKnobValue}</span>
+                                            <span className="text-[9px] md:text-xs text-gray-400 uppercase tracking-wider">%</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            {/* Speed Control Buttons */}
-                            <div className="flex items-center gap-2 w-full justify-between">
-                                <button
-                                    onClick={() => updateFanSpeed(0)}
-                                    disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                    className="px-3 py-1.5 text-xs font-medium bg-gray-50 hover:bg-gray-100 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    {t('OFF')}
-                                </button>
-                                <button
-                                    onClick={() => updateFanSpeed(25)}
-                                    disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                    className="px-3 py-1.5 text-xs font-medium bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    {t('LOW')}
-                                </button>
-                                <button
-                                    onClick={() => updateFanSpeed(50)}
-                                    disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                    className="px-3 py-1.5 text-xs font-medium bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    {t('MEDIUM')}
-                                </button>
-                                <button
-                                    onClick={() => updateFanSpeed(100)}
-                                    disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                    className="px-3 py-1.5 text-xs font-medium bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    {t('HIGH')}
-                                </button>
-                            </div>
-
-                            {/* Numeric Input */}
+                            {/* Input with Buttons */}
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={() => updateFanSpeed(Math.max(0, fanSpeed - 5))}
+                                    onClick={() => handleFanValueChange({ target: { value: fanKnobValue - 5 } })}
                                     disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
                                     className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gray-50 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-gray-600"
                                 >
@@ -1421,31 +1406,52 @@ const EnvironmentControl = ({ selectedLocation }) => {
                                     type="number"
                                     min={FAN_MIN_VALUE}
                                     max={FAN_MAX_VALUE}
-                                    value={fanSpeed}
-                                    onChange={(e) => {
-                                        const newSpeed = parseInt(e.target.value);
-                                        if (!isNaN(newSpeed) && newSpeed >= 0 && newSpeed <= 100) {
-                                            setFanSpeed(newSpeed);
-                                        }
-                                    }}
-                                    onBlur={(e) => {
-                                        const newSpeed = parseInt(e.target.value);
-                                        if (!isNaN(newSpeed)) {
-                                            updateFanSpeed(newSpeed);
-                                        }
-                                    }}
+                                    value={fanKnobValue}
+                                    onChange={handleFanValueChange}
                                     disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
                                     className="w-16 md:w-18 px-3 py-1.5 md:py-2 text-center text-base md:text-lg font-light bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                                 />
 
                                 <button
-                                    onClick={() => updateFanSpeed(Math.min(100, fanSpeed + 5))}
+                                    onClick={() => handleFanValueChange({ target: { value: fanKnobValue + 5 } })}
                                     disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
                                     className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gray-50 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-gray-600"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                     </svg>
+                                </button>
+                            </div>
+
+                            {/* Quick Action Buttons */}
+                            <div className="flex items-center gap-2 w-full justify-center flex-wrap">
+                                <button
+                                    onClick={() => handleFanValueChange({ target: { value: 0 } })}
+                                    disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
+                                    className="px-3 py-1.5 text-xs font-medium bg-gray-50 hover:bg-gray-100 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    {t('OFF')}
+                                </button>
+                                <button
+                                    onClick={() => handleFanValueChange({ target: { value: 25 } })}
+                                    disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
+                                    className="px-3 py-1.5 text-xs font-medium bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    {t('LOW')} (25%)
+                                </button>
+                                <button
+                                    onClick={() => handleFanValueChange({ target: { value: 50 } })}
+                                    disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
+                                    className="px-3 py-1.5 text-xs font-medium bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    {t('MEDIUM')} (50%)
+                                </button>
+                                <button
+                                    onClick={() => handleFanValueChange({ target: { value: 100 } })}
+                                    disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
+                                    className="px-3 py-1.5 text-xs font-medium bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    {t('HIGH')} (100%)
                                 </button>
                             </div>
 

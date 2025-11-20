@@ -21,7 +21,65 @@ const SystemHealthDashboard = ({ socket }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(5);
 
+    // ✅ FIX #1: Separate useEffect for Socket.IO listeners (doesn't depend on filters)
     useEffect(() => {
+        if (!socket) return;
+
+        console.log('🔌 Setting up Socket.IO listeners...');
+
+        // System health updates
+        socket.on('systemHealthUpdate', (data) => {
+            console.log('📊 System health update received:', data);
+            setHealthData(data);
+        });
+
+        // Legacy user action audit (keep for compatibility)
+        socket.on('userActionAudit', (newAction) => {
+            console.log('📋 User action audit received:', newAction);
+            setAuditData(prev => [newAction, ...prev.slice(0, 49)]);
+        });
+
+        // ✅ FIX #1: NEW - Listen for fan speed and other admin audit logs
+        socket.on('adminAuditLog', (data) => {
+            console.log('🔔 Admin audit log received:', data);
+
+            // Format the data to match audit trail structure
+            const formattedAction = {
+                id: Date.now(),
+                user_id: data.userId,
+                username: data.user,
+                room_id: data.roomId,
+                location: data.roomCode,
+                action_type: data.type,
+                action_description: data.type === 'fan_speed_change'
+                    ? `changed fan speed in ${data.roomCode}`
+                    : data.description || 'performed an action',
+                old_value: data.oldValue,
+                new_value: data.newValue,
+                created_at: data.timestamp
+            };
+
+            setAuditData(prev => [formattedAction, ...prev.slice(0, 49)]);
+        });
+
+        // Join admin dashboard room
+        socket.emit('join', 'admin_dashboard');
+        console.log('✅ Joined admin_dashboard room');
+
+        // Cleanup
+        return () => {
+            console.log('🔌 Cleaning up Socket.IO listeners...');
+            socket.off('systemHealthUpdate');
+            socket.off('userActionAudit');
+            socket.off('adminAuditLog');
+            socket.emit('leave', 'admin_dashboard');
+        };
+    }, [socket]); // Only re-run when socket changes
+
+    // ✅ FIX #2: Separate useEffect for data fetching with filters
+    useEffect(() => {
+        if (!user?.token) return;
+
         const fetchSystemHealth = async () => {
             try {
                 const response = await fetch(`${API_BASE_URL}/api/admin/system-health`, {
@@ -41,9 +99,12 @@ const SystemHealthDashboard = ({ socket }) => {
         const fetchAuditTrail = async () => {
             try {
                 console.log('🔍 Fetching audit trail...');
-                const response = await fetch(`${API_BASE_URL}/api/admin/audit-trail?type=${auditFilter}&limit=50`, {
-                    headers: { 'Authorization': `Bearer ${user.token}` }
-                });
+                const response = await fetch(
+                    `${API_BASE_URL}/api/admin/audit-trail?type=${auditFilter}&limit=50`,
+                    {
+                        headers: { 'Authorization': `Bearer ${user.token}` }
+                    }
+                );
 
                 console.log('📡 Audit trail response status:', response.status);
                 const data = await response.json();
@@ -62,9 +123,12 @@ const SystemHealthDashboard = ({ socket }) => {
 
         const fetchAuditStatistics = async () => {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/admin/audit-statistics?timeframe=${auditTimeframe}`, {
-                    headers: { 'Authorization': `Bearer ${user.token}` }
-                });
+                const response = await fetch(
+                    `${API_BASE_URL}/api/admin/audit-statistics?timeframe=${auditTimeframe}`,
+                    {
+                        headers: { 'Authorization': `Bearer ${user.token}` }
+                    }
+                );
                 const data = await response.json();
                 if (data.status === 'success') {
                     setAuditStats(data.data);
@@ -74,35 +138,22 @@ const SystemHealthDashboard = ({ socket }) => {
             }
         };
 
-        const interval = setInterval(() => {
-            fetchSystemHealth();
-            fetchAuditTrail();
-            fetchAuditStatistics();
-        }, 5000);
-
+        // Initial fetch
         fetchSystemHealth();
         fetchAuditTrail();
         fetchAuditStatistics();
 
-        if (socket) {
-            socket.on('systemHealthUpdate', setHealthData);
-
-            socket.on('userActionAudit', (newAction) => {
-                setAuditData(prev => [newAction, ...prev.slice(0, 49)]);
-            });
-
-            socket.emit('join', 'admin_dashboard');
-        }
+        // ✅ FIX #3: Increased polling interval from 5s to 10s
+        const interval = setInterval(() => {
+            fetchSystemHealth();
+            fetchAuditTrail();
+            fetchAuditStatistics();
+        }, 10000); // 10 seconds instead of 5
 
         return () => {
             clearInterval(interval);
-            if (socket) {
-                socket.off('systemHealthUpdate');
-                socket.off('userActionAudit');
-                socket.emit('leave', 'admin_dashboard');
-            }
         };
-    }, [socket, user.token, auditFilter, auditTimeframe]);
+    }, [user?.token, auditFilter, auditTimeframe]); // Dependencies for data fetching only
 
     const formatTimestamp = (timestamp) => {
         return new Date(timestamp).toLocaleString();
@@ -110,19 +161,46 @@ const SystemHealthDashboard = ({ socket }) => {
 
     const getActionIcon = (actionType) => {
         switch (actionType) {
-            case 'TEMPERATURE_SET': return '🌡️';
-            case 'HUMIDITY_SET': return '💧';
-            case 'AIRFLOW_SET': return '💨';
-            default: return '⚙️';
+            case 'TEMPERATURE_SET':
+                return '🌡️';
+            case 'HUMIDITY_SET':
+                return '💧';
+            case 'AIRFLOW_SET':
+                return '💨';
+            case 'fan_speed_change':
+                return '🌀';
+            default:
+                return '⚙️';
         }
     };
 
     const getActionColor = (actionType) => {
         switch (actionType) {
-            case 'TEMPERATURE_SET': return '#f72585';
-            case 'HUMIDITY_SET': return '#4361ee';
-            case 'AIRFLOW_SET': return '#4cc9f0';
-            default: return '#6c757d';
+            case 'TEMPERATURE_SET':
+                return '#f72585';
+            case 'HUMIDITY_SET':
+                return '#4361ee';
+            case 'AIRFLOW_SET':
+                return '#4cc9f0';
+            case 'fan_speed_change':
+                return '#06b6d4';
+            default:
+                return '#6c757d';
+        }
+    };
+
+    const getUnitSuffix = (actionType) => {
+        switch (actionType) {
+            case 'TEMPERATURE_SET':
+                return '°C';
+            case 'HUMIDITY_SET':
+                return '%';
+            case 'AIRFLOW_SET':
+                return ' m/s';
+            case 'fan_speed_change':
+                return '%';
+            default:
+                return '';
         }
     };
 
@@ -150,15 +228,6 @@ const SystemHealthDashboard = ({ socket }) => {
         }
 
         return pages;
-    };
-
-    const getUnitSuffix = (actionType) => {
-        switch (actionType) {
-            case 'TEMPERATURE_SET': return '°C';
-            case 'HUMIDITY_SET': return '%';
-            case 'AIRFLOW_SET': return 'm/s';
-            default: return '';
-        }
     };
 
     if (loading) {
@@ -300,14 +369,26 @@ const SystemHealthDashboard = ({ socket }) => {
                 </div>
             </div>
 
-            {/* User Action Audit Trail Section */}
-            <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-6">
+            {/* User Action Audit Trail Section - REFINED STANDARD SIZE */}
+            <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 p-6">
                     <div className="flex items-center justify-between flex-wrap gap-4">
-                        <div>
-                            <h3 className="text-2xl font-bold text-white mb-1">{t('User Action Audit Trail')}</h3>
-                            <p className="text-indigo-100 text-sm">{t('Real-time monitoring of user temperature changes')}</p>
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-white/20 backdrop-blur-lg rounded-lg flex items-center justify-center text-xl shadow-lg">
+                                📋
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-white tracking-tight">
+                                    {t('User Action Audit Trail')}
+                                </h3>
+                                <p className="text-indigo-100 text-xs font-medium">
+                                    {t('Real-time monitoring of user control changes')}
+                                </p>
+                            </div>
                         </div>
+
+                        {/* Filters */}
                         <div className="flex gap-2">
                             <select
                                 value={auditFilter}
@@ -315,12 +396,13 @@ const SystemHealthDashboard = ({ socket }) => {
                                     setAuditFilter(e.target.value);
                                     setCurrentPage(1);
                                 }}
-                                className="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50"
+                                className="px-3 py-2 text-sm bg-white/95 backdrop-blur-sm rounded-lg border border-white/20 text-gray-700 font-medium shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-white/50 transition-all cursor-pointer"
                             >
-                                <option value="ALL" className="text-gray-800">{t('All Actions')}</option>
-                                <option value="TEMPERATURE_SET" className="text-gray-800">{t('Temperature Changes')}</option>
-                                <option value="HUMIDITY_SET" className="text-gray-800">{t('Humidity Changes')}</option>
-                                <option value="AIRFLOW_SET" className="text-gray-800">{t('Airflow Changes')}</option>
+                                <option value="ALL">🔍 {t('All Actions')}</option>
+                                <option value="TEMPERATURE_SET">🌡️ {t('Temperature')}</option>
+                                <option value="HUMIDITY_SET">💧 {t('Humidity')}</option>
+                                <option value="AIRFLOW_SET">💨 {t('Airflow')}</option>
+                                <option value="fan_speed_change">🌀 {t('Fan Speed')}</option>
                             </select>
                             <select
                                 value={auditTimeframe}
@@ -328,11 +410,11 @@ const SystemHealthDashboard = ({ socket }) => {
                                     setAuditTimeframe(e.target.value);
                                     setCurrentPage(1);
                                 }}
-                                className="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50"
+                                className="px-3 py-2 text-sm bg-white/20 backdrop-blur-sm text-white font-medium rounded-lg border border-white/30 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-white/50 transition-all cursor-pointer"
                             >
-                                <option value="today" className="text-gray-800">{t('Today')}</option>
-                                <option value="week" className="text-gray-800">{t('This Week')}</option>
-                                <option value="month" className="text-gray-800">{t('This Month')}</option>
+                                <option value="today" className="text-gray-800">📅 {t('Today')}</option>
+                                <option value="week" className="text-gray-800">📆 {t('This Week')}</option>
+                                <option value="month" className="text-gray-800">📊 {t('This Month')}</option>
                             </select>
                         </div>
                     </div>
@@ -341,98 +423,169 @@ const SystemHealthDashboard = ({ socket }) => {
                 <div className="p-6">
                     {auditData.length > 0 ? (
                         <>
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="text-sm text-gray-600">
-                                    {t('Showing')} <span className="font-semibold text-gray-800">{indexOfFirstItem + 1}</span> {t('to')}{' '}
-                                    <span className="font-semibold text-gray-800">{Math.min(indexOfLastItem, auditData.length)}</span> {t('of')}{' '}
-                                    <span className="font-semibold text-gray-800">{auditData.length}</span> {t('results')}
+                            {/* Results Info Bar */}
+                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                                <div className="px-3 py-1.5 bg-indigo-50 rounded-md border border-indigo-100">
+                                    <span className="text-xs font-semibold text-indigo-600">
+                                        {t('Showing')} {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, auditData.length)} {t('of')} {auditData.length}
+                                    </span>
                                 </div>
-                                <select
-                                    value={itemsPerPage}
-                                    onChange={(e) => {
-                                        setItemsPerPage(Number(e.target.value));
-                                        setCurrentPage(1);
-                                    }}
-                                    className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-                                >
-                                    <option value={5}>5 {t('per page')}</option>
-                                    <option value={10}>10 {t('per page')}</option>
-                                    <option value={20}>20 {t('per page')}</option>
-                                    <option value={50}>50 {t('per page')}</option>
-                                </select>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-gray-500 font-medium">{t('Per page')}:</span>
+                                    <select
+                                        value={itemsPerPage}
+                                        onChange={(e) => {
+                                            setItemsPerPage(Number(e.target.value));
+                                            setCurrentPage(1);
+                                        }}
+                                        className="px-3 py-1.5 text-xs font-semibold border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none hover:border-purple-300 transition-colors cursor-pointer bg-white"
+                                    >
+                                        <option value={5}>5</option>
+                                        <option value={10}>10</option>
+                                        <option value={20}>20</option>
+                                        <option value={50}>50</option>
+                                    </select>
+                                </div>
                             </div>
 
+                            {/* Audit Items */}
                             <div className="space-y-3 mb-6">
                                 {currentItems.map((action, index) => (
                                     <div
-                                        key={index}
-                                        className="flex items-start gap-4 p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border-l-4 transition-colors"
-                                        style={{ borderLeftColor: getActionColor(action.action_type) }}
+                                        key={action.id || index}
+                                        className="group bg-gray-50 hover:bg-white rounded-lg border border-gray-200 hover:border-gray-300 p-4 transition-all duration-200 hover:shadow-md"
+                                        style={{
+                                            borderLeftWidth: '4px',
+                                            borderLeftColor: getActionColor(action.action_type)
+                                        }}
                                     >
-                                        <div
-                                            className="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0"
-                                            style={{
-                                                backgroundColor: `${getActionColor(action.action_type)}20`,
-                                                color: getActionColor(action.action_type)
-                                            }}
-                                        >
-                                            {getActionIcon(action.action_type)}
-                                        </div>
-
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                                                <span className="font-bold text-gray-800">{action.username}</span>
-                                                <span className="text-gray-600">{action.action_description}</span>
-                                                <span
-                                                    className="font-bold text-lg"
-                                                    style={{ color: getActionColor(action.action_type) }}
-                                                >
-                                                    {action.old_value !== null && `${action.old_value} → `}
-                                                    {action.new_value}{getUnitSuffix(action.action_type)}
+                                        <div className="flex items-start gap-3">
+                                            {/* Action Icon */}
+                                            <div
+                                                className="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0 shadow-sm"
+                                                style={{
+                                                    backgroundColor: `${getActionColor(action.action_type)}15`,
+                                                    border: `2px solid ${getActionColor(action.action_type)}30`
+                                                }}
+                                            >
+                                                <span style={{ color: getActionColor(action.action_type) }}>
+                                                    {getActionIcon(action.action_type)}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                                                <span className="flex items-center gap-1">
-                                                    <span>📍</span>
-                                                    {action.location}
-                                                </span>
-                                                <span className="flex items-center gap-1">
-                                                    <span>🕒</span>
-                                                    {formatTimestamp(action.created_at)}
-                                                </span>
-                                            </div>
-                                        </div>
 
-                                        <div className="flex items-center flex-shrink-0">
-                                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                            {/* Content */}
+                                            <div className="flex-1 min-w-0">
+                                                {/* User and Action */}
+                                                <div className="flex items-center justify-between gap-3 mb-2">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        {/* User Badge */}
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-md shadow-sm">
+                                                            <span className="text-white text-xs">👤</span>
+                                                            <span className="font-bold text-white text-sm">
+                                                                {action.username}
+                                                            </span>
+                                                        </span>
+
+                                                        {/* Action Description */}
+                                                        <span className="text-gray-700 font-medium text-sm">
+                                                            {action.action_description}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Live Indicator */}
+                                                    <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 rounded-full border border-green-200">
+                                                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                                                        <span className="text-xs font-semibold text-green-700">LIVE</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Value Change */}
+                                                <div className="flex items-center gap-2 mb-3 p-2.5 bg-white rounded-md border border-gray-200 shadow-sm">
+                                                    {action.old_value !== null && action.old_value !== undefined && (
+                                                        <>
+                                                            <span className="px-2.5 py-1 bg-gray-100 rounded text-gray-600 font-semibold text-sm">
+                                                                {action.old_value}{getUnitSuffix(action.action_type)}
+                                                            </span>
+                                                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                            </svg>
+                                                        </>
+                                                    )}
+                                                    <span
+                                                        className="px-3 py-1 rounded-md shadow-sm font-bold text-base"
+                                                        style={{
+                                                            backgroundColor: `${getActionColor(action.action_type)}20`,
+                                                            color: getActionColor(action.action_type),
+                                                            border: `1.5px solid ${getActionColor(action.action_type)}40`
+                                                        }}
+                                                    >
+                                                        {action.new_value}{getUnitSuffix(action.action_type)}
+                                                    </span>
+                                                </div>
+
+                                                {/* Room and Timestamp */}
+                                                <div className="flex items-center gap-3 flex-wrap">
+                                                    {/* Room Badge */}
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-md shadow-sm">
+                                                        <span className="text-white text-xs">📍</span>
+                                                        <span className="font-bold text-white text-xs">
+                                                            {action.location}
+                                                        </span>
+                                                    </span>
+
+                                                    {/* Timestamp */}
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-md">
+                                                        <span className="text-gray-600 text-xs">🕒</span>
+                                                        <span className="font-semibold text-gray-700 text-xs">
+                                                            {formatTimestamp(action.created_at)}
+                                                        </span>
+                                                    </span>
+
+                                                    {/* Action Type Tag */}
+                                                    <span
+                                                        className="px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide"
+                                                        style={{
+                                                            backgroundColor: `${getActionColor(action.action_type)}15`,
+                                                            color: getActionColor(action.action_type),
+                                                            border: `1px solid ${getActionColor(action.action_type)}30`
+                                                        }}
+                                                    >
+                                                        {action.action_type.replace('_', ' ')}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
 
+                            {/* Pagination */}
                             {totalPages > 1 && (
-                                <div className="flex items-center justify-center gap-2">
+                                <div className="flex items-center justify-center gap-2 pt-4 border-t border-gray-200">
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                         disabled={currentPage === 1}
-                                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="group flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-700 bg-white border border-gray-300 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
                                     >
+                                        <svg className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                        </svg>
                                         {t('Previous')}
                                     </button>
 
                                     <div className="flex items-center gap-1">
                                         {getPageNumbers().map((page, index) => (
                                             page === '...' ? (
-                                                <span key={`ellipsis-${index}`} className="px-3 py-2 text-gray-400">
+                                                <span key={`ellipsis-${index}`} className="px-2 py-1 text-gray-400 font-bold text-xs">
                                                     ...
                                                 </span>
                                             ) : (
                                                 <button
                                                     key={page}
                                                     onClick={() => setCurrentPage(page)}
-                                                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${currentPage === page
-                                                        ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md'
-                                                        : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                                                    className={`min-w-[32px] px-3 py-2 text-xs font-bold rounded-lg transition-all ${currentPage === page
+                                                            ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-md scale-105'
+                                                            : 'text-gray-700 bg-white border border-gray-300 hover:border-indigo-300 hover:bg-indigo-50'
                                                         }`}
                                                 >
                                                     {page}
@@ -444,22 +597,36 @@ const SystemHealthDashboard = ({ socket }) => {
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                         disabled={currentPage === totalPages}
-                                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="group flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-700 bg-white border border-gray-300 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
                                     >
                                         {t('Next')}
+                                        <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
                                     </button>
                                 </div>
                             )}
                         </>
                     ) : (
-                        <div className="flex flex-col items-center justify-center py-16 text-center">
-                            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-4xl mb-4">
-                                📋
+                        /* Empty State */
+                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                            <div className="relative mb-4">
+                                <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center text-4xl shadow-lg">
+                                    📋
+                                </div>
+                                <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full flex items-center justify-center text-lg shadow-md">
+                                    ✨
+                                </div>
                             </div>
-                            <h4 className="text-xl font-bold text-gray-800 mb-2">{t('No user actions recorded')}</h4>
-                            <p className="text-gray-600 max-w-md">
-                                {t('Temperature changes will appear here')}
+                            <h4 className="text-lg font-bold text-gray-800 mb-2">
+                                {t('No user actions recorded')}
+                            </h4>
+                            <p className="text-gray-600 text-sm max-w-md leading-relaxed mb-4">
+                                {t('Control changes will appear here in real-time')}
                             </p>
+                            <div className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-semibold rounded-lg shadow-md">
+                                {t('Waiting for actions...')}
+                            </div>
                         </div>
                     )}
                 </div>
