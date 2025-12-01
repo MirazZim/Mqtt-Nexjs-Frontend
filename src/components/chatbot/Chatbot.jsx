@@ -4,22 +4,76 @@ import { FiSend, FiMessageSquare } from "react-icons/fi";
 import { BsRobot } from "react-icons/bs";
 import { IoPersonCircleOutline } from "react-icons/io5";
 import ReactMarkdown from 'react-markdown';
+import { v4 as uuidv4 } from 'uuid'; // Install: npm install uuid
 
 const ChatBot = () => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [sessionId, setSessionId] = useState(null);
     const chatBoxRef = useRef(null);
 
-    // Auto-scroll to bottom when new messages arrive
+    // n8n Configuration
+    const N8N_CONFIG = {
+        webhookUrl: 'http://192.168.88.60:5678/webhook/285e5d0b-ffcf-44e8-a80c-0683966b78a4/chat',
+        chatInputKey: 'chatInput',      // Default key n8n expects
+        chatSessionKey: 'sessionId',     // Default session key
+        enableStreaming: false,          // Set true if you enable streaming in Chat Trigger
+    };
+
+    // Initialize session on mount
+    useEffect(() => {
+        const storedSessionId = localStorage.getItem('n8n_chat_session');
+        if (storedSessionId) {
+            setSessionId(storedSessionId);
+            // Optionally load previous session
+            // loadPreviousSession(storedSessionId);
+        } else {
+            const newSessionId = uuidv4();
+            setSessionId(newSessionId);
+            localStorage.setItem('n8n_chat_session', newSessionId);
+        }
+    }, []);
+
+    // Auto-scroll to bottom
     useEffect(() => {
         if (chatBoxRef.current) {
             chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
         }
     }, [messages]);
 
+    // Load previous session (optional)
+    const loadPreviousSession = async (sid) => {
+        try {
+            const response = await fetch(N8N_CONFIG.webhookUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "loadPreviousSession",
+                    [N8N_CONFIG.chatSessionKey]: sid,
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Process previous messages if returned
+                if (data?.data) {
+                    const previousMessages = data.data.map((msg, idx) => ({
+                        sender: msg.id.includes("HumanMessage") ? "user" : "bot",
+                        text: msg.kwargs?.content || msg.text || "",
+                        isMarkdown: true,
+                    }));
+                    setMessages(previousMessages);
+                }
+            }
+        } catch (err) {
+            console.error('Failed to load previous session:', err);
+        }
+    };
+
+    // Send message to n8n
     const sendMessage = async () => {
-        if (!input.trim()) return;
+        if (!input.trim() || !sessionId) return;
 
         const userMsg = { sender: "user", text: input };
         setMessages((prev) => [...prev, userMsg]);
@@ -27,32 +81,109 @@ const ChatBot = () => {
         setIsLoading(true);
 
         try {
-            const response = await fetch("http://192.168.88.60:5678/webhook/ultra-x-sake2", {
+            const payload = {
+                action: "sendMessage",
+                [N8N_CONFIG.chatInputKey]: input,
+                [N8N_CONFIG.chatSessionKey]: sessionId,
+                // Add metadata if needed
+                // metadata: { userId: "user123", context: "sake brewing" }
+            };
+
+            const response = await fetch(N8N_CONFIG.webhookUrl, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: input }),
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": N8N_CONFIG.enableStreaming ? "text/plain" : "application/json",
+                },
+                body: JSON.stringify(payload),
             });
 
-            const data = await response.json();
-
-            // ✅ FIXED: Properly extract reply from JSON
-            let reply = data.output || data.reply || data.message || JSON.stringify(data);
-
-            // Clean JSON wrapper if present
-            if (typeof reply === 'string') {
-                // Remove { "reply": " wrapper
-                reply = reply.replace(/^\s*\{\s*"reply"\s*:\s*"/, "");
-                // Remove " } wrapper
-                reply = reply.replace(/"\s*\}\s*$/, "");
-                // Unescape newlines and special characters
-                reply = reply
-                    .replace(/\\n/g, '\n')
-                    .replace(/\\"/g, '"')
-                    .replace(/\\\*/g, '*')
-                    .replace(/\\t/g, '\t');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            setMessages((prev) => [...prev, { sender: "bot", text: reply, isMarkdown: true }]);
+            let botReply = "";
+
+            if (N8N_CONFIG.enableStreaming) {
+                // Handle streaming response
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = "";
+
+                const botMsg = { sender: "bot", text: "", isMarkdown: true };
+                setMessages((prev) => [...prev, botMsg]);
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || "";
+
+                    for (const line of lines) {
+                        if (line.trim()) {
+                            try {
+                                const chunk = JSON.parse(line);
+                                if (chunk.type === "item" && chunk.content) {
+                                    botReply += chunk.content;
+                                    setMessages((prev) => {
+                                        const updated = [...prev];
+                                        updated[updated.length - 1] = {
+                                            ...updated[updated.length - 1],
+                                            text: botReply
+                                        };
+                                        return updated;
+                                    });
+                                }
+                            } catch (e) {
+                                // Not JSON, treat as plain text
+                                botReply += line;
+                                setMessages((prev) => {
+                                    const updated = [...prev];
+                                    updated[updated.length - 1] = {
+                                        ...updated[updated.length - 1],
+                                        text: botReply
+                                    };
+                                    return updated;
+                                });
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Handle non-streaming JSON response
+                const data = await response.json();
+
+                // Extract reply from n8n response
+                botReply = data.output || data.text || data.message || data.reply || "";
+
+                // If reply is JSON string, parse it
+                if (typeof botReply === 'string' && botReply.trim().startsWith('{')) {
+                    try {
+                        const parsed = JSON.parse(botReply);
+                        botReply = parsed.reply || parsed.output || parsed.text || botReply;
+                    } catch (e) {
+                        // Keep original if parsing fails
+                    }
+                }
+
+                // Clean escape characters
+                if (typeof botReply === 'string') {
+                    botReply = botReply
+                        .replace(/^\s*\{\s*"reply"\s*:\s*"/, "")
+                        .replace(/"\s*\}\s*$/, "")
+                        .replace(/\\n/g, '\n')
+                        .replace(/\\"/g, '"')
+                        .replace(/\\\*/g, '*')
+                        .replace(/\\t/g, '\t');
+                }
+
+                setMessages((prev) => [
+                    ...prev,
+                    { sender: "bot", text: botReply, isMarkdown: true }
+                ]);
+            }
 
         } catch (err) {
             console.error('Chatbot error:', err);
@@ -72,6 +203,13 @@ const ChatBot = () => {
         }
     };
 
+    const startNewSession = () => {
+        const newSessionId = uuidv4();
+        setSessionId(newSessionId);
+        localStorage.setItem('n8n_chat_session', newSessionId);
+        setMessages([]);
+    };
+
     return (
         <div className="w-full max-w-2xl mx-auto mt-8 rounded-2xl shadow-2xl overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200">
             {/* Header */}
@@ -79,11 +217,17 @@ const ChatBot = () => {
                 <div className="bg-white/20 backdrop-blur-sm p-2 rounded-xl">
                     <BsRobot className="text-white text-2xl" />
                 </div>
-                <div>
-                    <h2 className="text-white text-xl font-bold tracking-tight">Sake Assistant</h2>
-                    <p className="text-blue-100 text-sm">Always here to help</p>
+                <div className="flex-1">
+                    <h2 className="text-white text-xl font-bold tracking-tight">Froppy AI</h2>
+                    <p className="text-blue-100 text-sm">Sake Brewing Assistant</p>
                 </div>
-                <div className="ml-auto">
+                <button
+                    onClick={startNewSession}
+                    className="text-white/80 hover:text-white text-xs underline"
+                >
+                    New Chat
+                </button>
+                <div>
                     <span className="flex items-center gap-2 text-white/90 text-xs">
                         <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                         Online
@@ -99,8 +243,8 @@ const ChatBot = () => {
                 {messages.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full text-center">
                         <FiMessageSquare className="text-slate-300 text-6xl mb-4" />
-                        <p className="text-slate-400 font-medium">Start a conversation</p>
-                        <p className="text-slate-300 text-sm mt-2">Ask me anything about your system</p>
+                        <p className="text-slate-400 font-medium">Hello I am Froppy ! How can I help you ?</p>
+                        <p className="text-slate-300 text-sm mt-2">Ask me about sake brewing fermentation</p>
                     </div>
                 )}
 
@@ -131,7 +275,6 @@ const ChatBot = () => {
                                 : "bg-white text-slate-800 border border-slate-200 rounded-tl-sm"
                                 }`}
                         >
-                            {/* ✅ FIXED: Wrap ReactMarkdown in div with styling */}
                             {msg.isMarkdown && msg.sender === "bot" ? (
                                 <div className="markdown-content text-sm leading-relaxed">
                                     <ReactMarkdown
