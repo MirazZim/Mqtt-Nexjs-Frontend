@@ -35,7 +35,7 @@ const EnvironmentChart = ({ selectedLocation }) => {
     const [lastUpdate, setLastUpdate] = useState(null);
 
     // ✅ NEW: Multi-chart state
-    const [viewMode, setViewMode] = useState('single'); // 'single' or 'multi'
+    const [viewMode, setViewMode] = useState('multi'); // 'single' or 'multi'
     const [activeSensorTypes, setActiveSensorTypes] = useState(new Set(['temperature']));
 
     // ✅ NEW: Store measurements for each sensor type
