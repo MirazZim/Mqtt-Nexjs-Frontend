@@ -5,6 +5,8 @@ import { BsRobot } from "react-icons/bs";
 import { IoPersonCircleOutline } from "react-icons/io5";
 import ReactMarkdown from 'react-markdown';
 import { v4 as uuidv4 } from 'uuid'; // Install: npm install uuid
+import { usePathname } from 'next/navigation';
+import { useTranslation } from '../../app/i18n/client.js';
 
 const ChatBot = () => {
     const [messages, setMessages] = useState([]);
@@ -12,6 +14,10 @@ const ChatBot = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [sessionId, setSessionId] = useState(null);
     const chatBoxRef = useRef(null);
+
+    const pathname = usePathname();
+    const lng = pathname.split("/")[1];
+    const { t } = useTranslation(lng, "chatbot");
 
     // n8n Configuration
     const N8N_CONFIG = {
@@ -218,19 +224,19 @@ const ChatBot = () => {
                     <BsRobot className="text-white text-2xl" />
                 </div>
                 <div className="flex-1">
-                    <h2 className="text-white text-xl font-bold tracking-tight">Froppy AI</h2>
-                    <p className="text-blue-100 text-sm">Sake Brewing Assistant</p>
+                    <h2 className="text-white text-xl font-bold tracking-tight">{t("Froppy AI")}</h2>
+                    <p className="text-blue-100 text-sm">{t("Sake Brewing Assistant")}</p>
                 </div>
                 <button
                     onClick={startNewSession}
                     className="text-white/80 hover:text-white text-xs underline"
                 >
-                    New Chat
+                    {t("New Chat")}
                 </button>
                 <div>
                     <span className="flex items-center gap-2 text-white/90 text-xs">
                         <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                        Online
+                        {t("Online")}
                     </span>
                 </div>
             </div>
@@ -243,8 +249,8 @@ const ChatBot = () => {
                 {messages.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full text-center">
                         <FiMessageSquare className="text-slate-300 text-6xl mb-4" />
-                        <p className="text-slate-400 font-medium">Hello I am Froppy ! How can I help you ?</p>
-                        <p className="text-slate-300 text-sm mt-2">Ask me about sake brewing fermentation</p>
+                        <p className="text-slate-400 font-medium">{t("Hello I am Froppy ! How can I help you ?")}</p>
+                        <p className="text-slate-300 text-sm mt-2">{t("Ask me about sake brewing fermentation")}</p>
                     </div>
                 )}
 
@@ -346,7 +352,7 @@ const ChatBot = () => {
                                 e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                             }}
                             onKeyPress={handleKeyPress}
-                            placeholder="Ask Froppy something..."
+                            placeholder={t("Ask Froppy something...")}
                             rows={1}
                             disabled={isLoading}
                             style={{
