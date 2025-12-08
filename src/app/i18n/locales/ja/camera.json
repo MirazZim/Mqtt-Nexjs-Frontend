@@ -9,11 +9,5 @@
     "Capture Now": "今すぐキャプチャ",
     "Stop Auto Save": "自動保存を停止",
     "Start Auto Save": "自動保存を開始",
-    "Auto-saving every 5 seconds...": "📸 5秒ごとに自動保存中...",
-    "s ago": "秒前",
-    "m ago": "分前",
-    "h ago": "時間前",
-    "detected in": "で検出されました",
-    "Image saved": "画像保存完了",
-    "Error saving image": "画像保存エラー"
+    "Auto-saving every 5 seconds...": "📸 5秒ごとに自動保存中..."
 }

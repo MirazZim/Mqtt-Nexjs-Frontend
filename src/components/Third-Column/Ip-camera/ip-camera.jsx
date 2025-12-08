@@ -170,18 +170,20 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
                         <FaVideo className="text-white text-sm" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-800">AI Camera Monitor</h3>
+                        <h3 className="text-sm font-semibold text-gray-800">{t("AI Camera Monitor")}</h3>
                         <p className="text-xs text-gray-500">{selectedLocation}</p>
                     </div>
                 </div>
+
 
                 <div className="flex items-center gap-2">
                     {/* Status Badge */}
                     <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${socketConnected ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
                         }`}>
                         <FaCircle className="text-[6px]" />
-                        <span className="text-xs font-medium">{socketConnected ? 'Connected' : 'Offline'}</span>
+                        <span className="text-xs font-medium">{socketConnected ? t("Connected") : t("Offline")}</span>
                     </div>
+
 
                     {/* Notification Bell */}
                     <div className="relative" ref={notificationDropdownRef}>
@@ -197,17 +199,18 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
                             )}
                         </button>
 
+
                         {/* Dropdown */}
                         {showNotifications && (
                             <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-2xl border border-gray-200 z-[100] max-h-[500px] overflow-hidden animate-slideDown">
                                 <div className="flex items-center justify-between p-3 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
                                     <div className="flex items-center gap-2">
                                         <FaBell className="text-blue-500 text-sm" />
-                                        <h4 className="text-sm font-semibold text-gray-800">Recent Detections</h4>
+                                        <h4 className="text-sm font-semibold text-gray-800">{t("Recent Detections")}</h4>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-xs text-gray-500 bg-white px-2 py-0.5 rounded-full">
-                                            {detections.length} total
+                                            {detections.length} {t("total")}
                                         </span>
                                         <button
                                             onClick={() => setShowNotifications(false)}
@@ -217,6 +220,7 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
                                         </button>
                                     </div>
                                 </div>
+
 
                                 <div className="overflow-y-auto max-h-[400px] custom-scrollbar">
                                     {detections.length > 0 ? (
@@ -247,8 +251,8 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
                                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                                                 <FaBell className="text-gray-400 text-2xl" />
                                             </div>
-                                            <p className="text-sm font-medium text-gray-600">No detections yet</p>
-                                            <p className="text-xs text-gray-500 mt-1">AI is monitoring your space</p>
+                                            <p className="text-sm font-medium text-gray-600">{t("No detections yet")}</p>
+                                            <p className="text-xs text-gray-500 mt-1">{t("AI is monitoring your space")}</p>
                                         </div>
                                     )}
                                 </div>
@@ -257,6 +261,7 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
                     </div>
                 </div>
             </div>
+
 
             {/* Latest Detection Banner */}
             {latestDetection && (
@@ -275,6 +280,7 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
                 </div>
             )}
 
+
             {/* Camera Feed */}
             <div className="relative bg-black">
                 <iframe
@@ -286,6 +292,7 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
                 />
             </div>
 
+
             {/* Controls */}
             <div className="p-3 bg-gray-50 border-t border-gray-200">
                 <div className="grid grid-cols-2 gap-2">
@@ -295,8 +302,9 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
                         className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors"
                     >
                         <FaCamera />
-                        <span>Capture Now</span>
+                        <span>{t("Capture Now")}</span>
                     </button>
+
 
                     {/* ✅ Auto Save Toggle Button (your code) */}
                     <button
@@ -307,16 +315,18 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
                             }`}
                     >
                         <FaCircle className={`text-[6px] ${autoSave ? 'animate-pulse' : ''}`} />
-                        <span>{autoSave ? 'Stop Auto Save' : 'Start Auto Save'}</span>
+                        <span>{autoSave ? t("Stop Auto Save") : t("Start Auto Save")}</span>
                     </button>
                 </div>
 
+
                 {autoSave && (
                     <p className="text-xs text-blue-600 text-center mt-2 font-medium">
-                        📸 Auto-saving every 5 seconds...
+                        {t("Auto-saving every 5 seconds...")}
                     </p>
                 )}
             </div>
+
 
             {/* Custom Styles */}
             <style jsx>{`
@@ -351,6 +361,7 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
                 }
             `}</style>
         </div>
+
     );
 };
 
