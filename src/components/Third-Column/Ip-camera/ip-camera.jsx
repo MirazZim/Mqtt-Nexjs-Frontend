@@ -202,8 +202,8 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
 
                         {/* Dropdown */}
                         {showNotifications && (
-                            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-2xl border border-gray-200 z-[100] max-h-[500px] overflow-hidden animate-slideDown">
-                                <div className="flex items-center justify-between p-3 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+                            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-2xl border border-gray-200 z-100 max-h-[500px] overflow-hidden animate-slideDown">
+                                <div className="flex items-center justify-between p-3 border-b border-gray-200 bg-linear-to-r from-blue-50 to-purple-50">
                                     <div className="flex items-center gap-2">
                                         <FaBell className="text-blue-500 text-sm" />
                                         <h4 className="text-sm font-semibold text-gray-800">{t("Recent Detections")}</h4>
@@ -228,7 +228,7 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
                                             {detections.map((detection) => (
                                                 <div
                                                     key={detection.id}
-                                                    className="p-3 bg-gradient-to-r from-gray-50 to-blue-50 hover:from-blue-50 hover:to-purple-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-all cursor-pointer group"
+                                                    className="p-3 bg-linear-to-r from-gray-50 to-blue-50 hover:from-blue-50 hover:to-purple-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-all cursor-pointer group"
                                                 >
                                                     <div className="flex items-start gap-2">
                                                         <div className="p-1.5 bg-yellow-400 rounded-lg group-hover:scale-110 transition-transform">
@@ -265,7 +265,7 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
 
             {/* Latest Detection Banner */}
             {latestDetection && (
-                <div className="p-2.5 bg-gradient-to-r from-yellow-50 via-orange-50 to-yellow-50 border-b border-orange-200">
+                <div className="p-2.5 bg-linear-to-r from-yellow-50 via-orange-50 to-yellow-50 border-b border-orange-200">
                     <div className="flex items-center gap-2">
                         <div className="p-1.5 bg-orange-400 rounded-lg">
                             <FaBell className="text-white text-xs animate-bounce" />

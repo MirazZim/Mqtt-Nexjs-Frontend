@@ -119,14 +119,31 @@ const DeviceStatus = ({ selectedLocation }) => {
         });
 
         socket.on('environmentUpdate', (data) => {
+            // ✅ ADD THIS DEBUGGING
+            console.log('🔍 environmentUpdate received:', {
+                incomingData: data,
+                dataLocation: data.location,
+                dataUserId: data.userId,
+                dataUserIdType: typeof data.userId,
+                expectedLocation: selectedLocation,
+                expectedUserId: user.id,
+                expectedUserIdType: typeof user.id,
+                locationMatch: data.location === selectedLocation,
+                userIdMatch: data.userId === user.id,
+                strictMatch: data.userId === user.id && data.location === selectedLocation
+            });
+
             if (data.location === selectedLocation && data.userId === user.id) {
+                console.log('✅ Condition matched - updating sensor status');
                 setSensorStatus({
                     active: true,
                     lastDataReceived: new Date(),
-                    statusKey: 'Receiving Data' // ✅ Store key
+                    statusKey: 'Receiving Data'
                 });
                 setConnectionStatusKey('Broker & Sensors Connected');
                 setSensorTimeout();
+            } else {
+                console.log('❌ Condition NOT matched - sensor status NOT updated');
             }
         });
 
@@ -212,8 +229,8 @@ const DeviceStatus = ({ selectedLocation }) => {
             <div className="space-y-2">
                 {/* Broker Status Card */}
                 <div className={`rounded-lg p-2 border transition-all duration-300 ${brokerStatus.connected
-                        ? 'bg-green-50 border-green-200'
-                        : 'bg-red-50 border-red-200'
+                    ? 'bg-green-50 border-green-200'
+                    : 'bg-red-50 border-red-200'
                     }`}>
                     <div className="flex items-start gap-2">
                         <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${brokerStatus.connected ? 'bg-green-100' : 'bg-red-100'
@@ -226,8 +243,8 @@ const DeviceStatus = ({ selectedLocation }) => {
                             <div className="flex items-center gap-1.5 mb-0.5">
                                 <h4 className="text-xs font-semibold text-gray-800">{t('MQTT Broker')}</h4>
                                 <span className={`inline-block w-1.5 h-1.5 rounded-full ${brokerStatus.connected
-                                        ? 'bg-green-500 animate-pulse'
-                                        : 'bg-red-500'
+                                    ? 'bg-green-500 animate-pulse'
+                                    : 'bg-red-500'
                                     }`}></span>
                             </div>
 
@@ -261,23 +278,23 @@ const DeviceStatus = ({ selectedLocation }) => {
 
                 {/* Sensor Status Card */}
                 <div className={`rounded-lg p-2 border transition-all duration-300 ${sensorStatus.active
-                        ? 'bg-blue-50 border-blue-200'
-                        : brokerStatus.connected
-                            ? 'bg-yellow-50 border-yellow-200'
-                            : 'bg-gray-50 border-gray-200'
+                    ? 'bg-blue-50 border-blue-200'
+                    : brokerStatus.connected
+                        ? 'bg-yellow-50 border-yellow-200'
+                        : 'bg-gray-50 border-gray-200'
                     }`}>
                     <div className="flex items-start gap-2">
                         <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${sensorStatus.active
-                                ? 'bg-blue-100'
-                                : brokerStatus.connected
-                                    ? 'bg-yellow-100'
-                                    : 'bg-gray-100'
+                            ? 'bg-blue-100'
+                            : brokerStatus.connected
+                                ? 'bg-yellow-100'
+                                : 'bg-gray-100'
                             }`}>
                             <FaSignal className={`text-sm ${sensorStatus.active
-                                    ? 'text-blue-600'
-                                    : brokerStatus.connected
-                                        ? 'text-yellow-600'
-                                        : 'text-gray-600'
+                                ? 'text-blue-600'
+                                : brokerStatus.connected
+                                    ? 'text-yellow-600'
+                                    : 'text-gray-600'
                                 }`} />
                         </div>
 
@@ -285,19 +302,19 @@ const DeviceStatus = ({ selectedLocation }) => {
                             <div className="flex items-center gap-1.5 mb-0.5">
                                 <h4 className="text-xs font-semibold text-gray-800">{t('Sensor Data Stream')}</h4>
                                 <span className={`inline-block w-1.5 h-1.5 rounded-full ${sensorStatus.active
-                                        ? 'bg-blue-500 animate-pulse'
-                                        : brokerStatus.connected
-                                            ? 'bg-yellow-500 animate-pulse'
-                                            : 'bg-gray-400'
+                                    ? 'bg-blue-500 animate-pulse'
+                                    : brokerStatus.connected
+                                        ? 'bg-yellow-500 animate-pulse'
+                                        : 'bg-gray-400'
                                     }`}></span>
                             </div>
 
                             {/* ✅ FIX: Translate the key at render time */}
                             <p className={`text-xs font-medium mb-1 ${sensorStatus.active
-                                    ? 'text-blue-700'
-                                    : brokerStatus.connected
-                                        ? 'text-yellow-700'
-                                        : 'text-gray-700'
+                                ? 'text-blue-700'
+                                : brokerStatus.connected
+                                    ? 'text-yellow-700'
+                                    : 'text-gray-700'
                                 }`}>
                                 {t(sensorStatus.statusKey)}
                             </p>

@@ -249,7 +249,7 @@ const ChatBot = () => {
                 {messages.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full text-center">
                         <FiMessageSquare className="text-slate-300 text-6xl mb-4" />
-                        <p className="text-slate-400 font-medium">{t("Hello I am Froppy ! How can I help you ?")}</p>
+                        <p className="text-slate-400 font-medium">{t("Hello I am Froppy! How can I help you ?")}</p>
                         <p className="text-slate-300 text-sm mt-2">{t("Ask me about sake brewing fermentation")}</p>
                     </div>
                 )}
