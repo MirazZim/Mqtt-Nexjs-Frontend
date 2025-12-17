@@ -81,7 +81,7 @@ const Dashboard = () => {
     const [showHeavyComponents, setShowHeavyComponents] = useState(false);
     const [locationsData, setLocationsData] = useState(null);
     const [isLoadingLocations, setIsLoadingLocations] = useState(false);
-
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     // Language switching function
     const changeLanguage = (newLang) => {
         const currentPath = pathname.split('/').slice(2).join('/'); // Remove language prefix
@@ -143,6 +143,17 @@ const Dashboard = () => {
         loadLocationsData();
     }, [showHeavyComponents]);
 
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (isDropdownOpen && !event.target.closest('.relative.group')) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isDropdownOpen]);
+
     // Handle delay stats updates
     useEffect(() => {
         if (!socket) return;
@@ -167,53 +178,68 @@ const Dashboard = () => {
     return (
         <div className="h-screen flex flex-col bg-gray-100 overflow-hidden w-[95vw] mx-auto rounded-lg border">
             {/* Compact Top Header */}
-            <div className="bg-gradient-to-r from-teal-700 via-teal-600 to-blue-600 px-4 py-2 flex items-center justify-between shadow-lg">
-                <h1 className="text-white text-xl font-bold tracking-wide">
+            <div className="bg-linear-to-r from-teal-700 via-teal-600 to-blue-600 px-2 md:px-3 lg:px-4 py-1.5 md:py-1.5 lg:py-2 flex items-center justify-between shadow-lg">
+                <h1 className="text-white text-sm md:text-base lg:text-xl font-bold tracking-wide">
                     {t('Sake Brewing Monitoring System')}
                 </h1>
 
-                <div className="flex items-center gap-3">
-                    {/* Eye-catching Language Switcher */}
-                    <div className="flex items-center gap-0.5 bg-white/10 backdrop-blur-lg rounded-2xl p-1.5 border border-white/20 shadow-2xl">
+                <div className="flex items-center gap-1.5 md:gap-2 lg:gap-3">
+                    {/* Eye-catching Language Switcher - Extra Small on Mobile */}
+                    <div className="flex items-center gap-0.5 bg-white/10 backdrop-blur-lg rounded-xl md:rounded-2xl lg:rounded-2xl p-0.5 md:p-1 lg:p-1.5 border border-white/20 shadow-2xl">
                         <button
                             onClick={() => changeLanguage('en')}
-                            className={`px-4 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 transform hover:scale-105 ${lng === 'en'
-                                ? 'bg-white text-cyan-600 shadow-lg shadow-cyan-500/40 ring-2 ring-white'
+                            className={`px-1.5 md:px-3 lg:px-4 py-1 md:py-2 lg:py-2.5 text-[10px] md:text-xs lg:text-sm font-bold rounded-lg md:rounded-xl lg:rounded-xl transition-all duration-300 transform hover:scale-105 ${lng === 'en'
+                                ? 'bg-white text-cyan-600 shadow-lg shadow-cyan-500/40 ring-1 md:ring-2 lg:ring-2 ring-white'
                                 : 'text-white hover:bg-cyan-500/30 hover:text-cyan-100 border border-transparent hover:border-cyan-400/50'
                                 }`}
                         >
                             EN
                         </button>
-                        <div className="w-px h-4 bg-gradient-to-b from-transparent via-white/40 to-transparent"></div>
+                        <div className="w-px h-3 md:h-4 lg:h-4 bg-linear-to-b from-transparent via-white/40 to-transparent"></div>
                         <button
                             onClick={() => changeLanguage('ja')}
-                            className={`px-4 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 transform hover:scale-105 ${lng === 'ja'
-                                ? 'bg-white text-pink-600 shadow-lg shadow-pink-500/40 ring-2 ring-white'
+                            className={`px-1.5 md:px-3 lg:px-4 py-1 md:py-2 lg:py-2.5 text-[10px] md:text-xs lg:text-sm font-bold rounded-lg md:rounded-xl lg:rounded-xl transition-all duration-300 transform hover:scale-105 ${lng === 'ja'
+                                ? 'bg-white text-pink-600 shadow-lg shadow-pink-500/40 ring-1 md:ring-2 lg:ring-2 ring-white'
                                 : 'text-white hover:bg-pink-500/30 hover:text-pink-100 border border-transparent hover:border-pink-400/50'
                                 }`}
                         >
                             日本語
                         </button>
                     </div>
-                    {/* Device Status Hover Dropdown */}
+
+                    {/* Device Status - Click for Mobile/Tablet, Hover for Desktop */}
                     <div className="relative group">
-                        <button className="flex items-center gap-2 px-3 py-1.5 text-white text-sm font-medium rounded hover:bg-teal-700 transition-colors">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            className="flex items-center gap-1 md:gap-1.5 lg:gap-2 px-2 md:px-2.5 lg:px-3 py-1 md:py-1 lg:py-1.5 text-white text-xs md:text-xs lg:text-sm font-medium rounded hover:bg-teal-700 transition-colors"
+                        >
+                            <svg className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                             {t('Device Status')}
-                            <svg className="w-3 h-3 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg
+                                className={`w-2.5 h-2.5 md:w-2.5 md:h-2.5 lg:w-3 lg:h-3 transition-transform ${isDropdownOpen ? 'rotate-180' : ''} lg:group-hover:rotate-180`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
                         </button>
 
-                        {/* Invisible bridge to maintain hover */}
-                        <div className="absolute right-0 top-full h-2 w-80 invisible group-hover:visible" />
+                        {/* Invisible bridge - Desktop only */}
+                        <div className="hidden lg:block absolute right-0 top-full h-2 w-80 invisible group-hover:visible" />
 
-                        {/* Dropdown Content - Shows on Hover */}
-                        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-2xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-                            <div className="p-3">
-                                <h3 className="text-sm font-semibold text-gray-800 mb-2 pb-2 border-b border-gray-200">{t('Device Status')}</h3>
+                        {/* Dropdown Content - Click for Mobile/Tablet, Hover for Desktop */}
+                        <div className={`
+                        absolute right-0 top-full mt-2 w-60 md:w-72 lg:w-80 bg-white rounded-lg shadow-2xl border border-gray-200 z-50 transition-all duration-300
+                        ${isDropdownOpen ? 'opacity-100 visible lg:opacity-0 lg:invisible' : 'opacity-0 invisible'}
+                        lg:group-hover:opacity-100 lg:group-hover:visible
+                    `}>
+                            <div className="p-2 md:p-2.5 lg:p-3">
+                                <h3 className="text-xs md:text-xs lg:text-sm font-semibold text-gray-800 mb-2 pb-2 border-b border-gray-200">
+                                    {t('Device Status')}
+                                </h3>
                                 <DeviceStatus selectedLocation={selectedLocation} />
                             </div>
                         </div>
@@ -221,16 +247,15 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Compact Sub-header with Device Status Dropdown */}
-            <div className="bg-teal-800 px-4 py-2 flex items-center justify-between shadow-md">
-                <div className="flex items-center gap-4">
+            {/* Compact Sub-header */}
+            <div className="bg-teal-800 px-2 md:px-3 lg:px-4 py-1.5 md:py-1.5 lg:py-2 flex items-center justify-between shadow-md">
+                <div className="flex items-center gap-2 md:gap-3 lg:gap-4">
                     <LocationSelector
                         selectedLocation={selectedLocation}
                         onLocationChange={handleLocationChange}
                     />
                 </div>
             </div>
-
             {/* Main Content Area - Fixed Height */}
             <div className="flex-1 p-2 overflow-hidden">
                 <div className="grid grid-cols-12 gap-3 h-full">
