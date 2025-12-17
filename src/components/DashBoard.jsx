@@ -185,22 +185,22 @@ const Dashboard = () => {
 
                 <div className="flex items-center gap-1.5 md:gap-2 lg:gap-3">
                     {/* Eye-catching Language Switcher - Extra Small on Mobile */}
-                    <div className="flex items-center gap-0.5 bg-white/10 backdrop-blur-lg rounded-xl md:rounded-2xl lg:rounded-2xl p-0.5 md:p-1 lg:p-1.5 border border-white/20 shadow-2xl">
+                    <div className="hidden lg:flex items-center gap-0.5 bg-white/10 backdrop-blur-lg rounded-2xl p-1.5 border border-white/20 shadow-2xl">
                         <button
                             onClick={() => changeLanguage('en')}
-                            className={`px-1.5 md:px-3 lg:px-4 py-1 md:py-2 lg:py-2.5 text-[10px] md:text-xs lg:text-sm font-bold rounded-lg md:rounded-xl lg:rounded-xl transition-all duration-300 transform hover:scale-105 ${lng === 'en'
-                                ? 'bg-white text-cyan-600 shadow-lg shadow-cyan-500/40 ring-1 md:ring-2 lg:ring-2 ring-white'
-                                : 'text-white hover:bg-cyan-500/30 hover:text-cyan-100 border border-transparent hover:border-cyan-400/50'
+                            className={`px-4 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 transform hover:scale-105 ${lng === 'en'
+                                    ? 'bg-white text-cyan-600 shadow-lg shadow-cyan-500/40 ring-2 ring-white'
+                                    : 'text-white hover:bg-cyan-500/30 hover:text-cyan-100 border border-transparent hover:border-cyan-400/50'
                                 }`}
                         >
                             EN
                         </button>
-                        <div className="w-px h-3 md:h-4 lg:h-4 bg-linear-to-b from-transparent via-white/40 to-transparent"></div>
+                        <div className="w-px h-4 bg-linear-to-b from-transparent via-white/40 to-transparent"></div>
                         <button
                             onClick={() => changeLanguage('ja')}
-                            className={`px-1.5 md:px-3 lg:px-4 py-1 md:py-2 lg:py-2.5 text-[10px] md:text-xs lg:text-sm font-bold rounded-lg md:rounded-xl lg:rounded-xl transition-all duration-300 transform hover:scale-105 ${lng === 'ja'
-                                ? 'bg-white text-pink-600 shadow-lg shadow-pink-500/40 ring-1 md:ring-2 lg:ring-2 ring-white'
-                                : 'text-white hover:bg-pink-500/30 hover:text-pink-100 border border-transparent hover:border-pink-400/50'
+                            className={`px-4 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 transform hover:scale-105 ${lng === 'ja'
+                                    ? 'bg-white text-pink-600 shadow-lg shadow-pink-500/40 ring-2 ring-white'
+                                    : 'text-white hover:bg-pink-500/30 hover:text-pink-100 border border-transparent hover:border-pink-400/50'
                                 }`}
                         >
                             日本語
