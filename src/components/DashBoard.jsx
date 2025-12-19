@@ -57,6 +57,7 @@ const Dashboard = () => {
     const { t } = useTranslation(lng, "dashboard");
     // ✅ GET BOTH socket AND user from AuthContext
     const { socket, user } = useContext(AuthContext);
+    const [activeTab, setActiveTab] = useState('left');
 
     // ✅ ADD currentRoom state
     const [currentRoom, setCurrentRoom] = useState(null);
@@ -257,12 +258,11 @@ const Dashboard = () => {
                 </div>
             </div>
             {/* Main Content Area - Fixed Height */}
-            <div className="flex-1 p-2 overflow-hidden">
-                <div className="grid grid-cols-12 gap-3 h-full">
-
-                    {/* LEFT COLUMN - Sensors & Controls (Device Status Removed) */}
+            <div className="flex-1 overflow-y-auto pb-16 pt-2">
+                {/* DESKTOP LAYOUT - Unchanged (>= 1024px) */}
+                <div className="hidden lg:grid grid-cols-12 gap-3 h-full">
+                    {/* LEFT COLUMN - Sensors & Controls */}
                     <div className="col-span-3 space-y-2 overflow-y-auto">
-
                         {/* Current Environment */}
                         <div className="bg-white rounded-lg shadow-md p-2">
                             <CurrentEnvironment selectedLocation={selectedLocation} />
@@ -281,15 +281,12 @@ const Dashboard = () => {
 
                     {/* MIDDLE COLUMN - Charts */}
                     <div className="col-span-6 space-y-2 overflow-y-auto">
-
                         <div className="col-span-9 space-y-6">
-
-                            {/* ✅ Pass roomId to FermentationResult */}
                             <FermentationResult
                                 socket={socket}
                                 selectedLocation={selectedLocation}
-
                             />
+
                             {/* Temperature Chart */}
                             <div className="bg-white rounded-lg shadow-md p-3 text-black">
                                 <div className="flex items-center justify-between">
@@ -314,11 +311,7 @@ const Dashboard = () => {
                                         </div>
                                     ) : (
                                         <ComponentLoader height={700}>
-                                            {/* <SpatialTemperatureMap
-                                                selectedLocation="sensor-room"
-                                                targetTemperature={22}
-                                                preloadedData={locationsData}
-                                            /> */}
+                                            {/* <SpatialTemperatureMap /> */}
                                         </ComponentLoader>
                                     )}
                                 </div>
@@ -335,30 +328,14 @@ const Dashboard = () => {
 
                     {/* RIGHT COLUMN - New Sensors Section */}
                     <div className="col-span-3 space-y-2 overflow-y-auto">
-
                         {/* New Sensors Card 1 */}
                         <div className="bg-white rounded-lg shadow-md p-3">
                             <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
                                 <span className="text-base">📊</span>
                                 {t('Additional Sensors')}
                             </h3>
-
                             <IPCamera selectedLocation={selectedLocation} />
-
                             <Chatbot />
-
-                            {/* <div className="space-y-2"> */}
-                            {/* Sensor Item */}
-                            {/* <div className="bg-gray-50 rounded-md p-2 border border-gray-200"> */}
-                            {/* <div className="space-y-4"> */}
-                            {/* Bowl Fan Status Component */}
-                            {/* <BowlFanStatus selectedLocation={selectedLocation} /> */}
-
-                            {/* Sonar Pump Status Component */}
-                            {/* <SonarPumpStatus selectedLocation={selectedLocation} /> */}
-                            {/* </div> */}
-                            {/* </div> */}
-                            {/* </div> */}
                         </div>
 
                         {/* New Sensors Card 2 */}
@@ -406,7 +383,209 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* MOBILE/TABLET LAYOUT - Glassy Design (< 1024px) */}
+                <div className="lg:hidden flex flex-col h-full relative bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+                    {/* Content Area - Scrollable */}
+                    <div className="flex-1 overflow-y-auto pb-24 pt-2">
+                        {/* LEFT COLUMN CONTENT - Controls */}
+                        {activeTab === 'left' && (
+                            <div className="space-y-4 tab-content px-2">
+                                {/* Current Environment */}
+                                <div className="glass-card rounded-2xl p-4">
+                                    <CurrentEnvironment selectedLocation={selectedLocation} />
+                                </div>
+
+                                {/* Environment Control */}
+                                <div className="glass-card rounded-2xl p-4">
+                                    <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                        <span className="text-2xl">🎛️</span>
+                                        <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                            {t('Environment Control')}
+                                        </span>
+                                    </h3>
+                                    <EnvironmentControl
+                                        selectedLocation={selectedLocation}
+                                        targetTemperature={targetTemperature}
+                                        setTargetTemperature={setTargetTemperature}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* MIDDLE COLUMN CONTENT - Charts */}
+                        {activeTab === 'middle' && (
+                            <div className="space-y-4 tab-content px-2">
+                                <div className="glass-card rounded-2xl p-4">
+                                    <FermentationResult
+                                        socket={socket}
+                                        selectedLocation={selectedLocation}
+                                    />
+                                </div>
+
+                                {/* Temperature Chart */}
+                                <div className="glass-card rounded-2xl p-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                                            <span className="text-2xl">🌡️</span>
+                                            <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                                                {t('Temperature')}
+                                            </span>
+                                        </h2>
+                                    </div>
+                                    <Suspense fallback={<ChartLoader />}>
+                                        <EnvironmentChart
+                                            selectedLocation={selectedLocation}
+                                            socket={socket}
+                                            type="temperature"
+                                        />
+                                    </Suspense>
+                                </div>
+
+                                {/* Spatial Temperature Map */}
+                                {showHeavyComponents ? (
+                                    <div className="glass-card rounded-2xl p-3">
+                                        {isLoadingLocations ? (
+                                            <div className="flex justify-center items-center h-[300px] text-base text-gray-700">
+                                                <i className="fas fa-spinner fa-spin mr-2"></i>
+                                                {t('Loading temperature data...')}
+                                            </div>
+                                        ) : (
+                                            <ComponentLoader height={500}>
+                                                {/* <SpatialTemperatureMap /> */}
+                                            </ComponentLoader>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="glass-card rounded-2xl h-[300px] flex justify-center items-center">
+                                        <div className="text-center text-gray-700">
+                                            <i className="fas fa-hourglass-half fa-2x mb-2"></i>
+                                            <div className="text-sm font-medium">{t('Loading advanced features...')}</div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* RIGHT COLUMN CONTENT - Sensors */}
+                        {activeTab === 'right' && (
+                            <div className="space-y-4 tab-content px-2">
+                                {/* Additional Sensors Card */}
+                                <div className="glass-card rounded-2xl p-4">
+                                    <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                        <span className="text-2xl">📊</span>
+                                        <span className="bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
+                                            {t('Additional Sensors')}
+                                        </span>
+                                    </h3>
+                                    <IPCamera selectedLocation={selectedLocation} />
+                                    <Chatbot />
+                                </div>
+
+                                {/* Power Monitoring Card */}
+                                <div className="glass-card rounded-2xl p-4">
+                                    <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                        <span className="text-2xl">⚡</span>
+                                        <span className="bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                                            {t('Power Monitoring')}
+                                        </span>
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="glass-card rounded-xl p-3 glow-effect">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-xs font-semibold text-gray-700">{t('Voltage')}</span>
+                                                <span className="inline-flex h-2.5 w-2.5 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 animate-pulse shadow-lg shadow-green-500/50"></span>
+                                            </div>
+                                            <div className="text-3xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                                220V
+                                            </div>
+                                            <div className="text-xs text-gray-600 mt-1 font-semibold">{t('Stable')}</div>
+                                        </div>
+
+                                        <div className="glass-card rounded-xl p-3 glow-effect">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-xs font-semibold text-gray-700">{t('Current')}</span>
+                                                <span className="inline-flex h-2.5 w-2.5 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 animate-pulse shadow-lg shadow-green-500/50"></span>
+                                            </div>
+                                            <div className="text-3xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                                                2.4A
+                                            </div>
+                                            <div className="text-xs text-gray-600 mt-1 font-semibold">{t('Normal')}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* System Alerts Card */}
+                                <div className="glass-card rounded-2xl p-4">
+                                    <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                        <span className="text-2xl">🔔</span>
+                                        <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                                            {t('System Alerts')}
+                                        </span>
+                                    </h3>
+                                    <div className="space-y-2">
+                                        <div className="glass-card rounded-xl p-3 border-green-300">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-green-600 text-lg font-bold">✓</span>
+                                                <span className="text-xs text-gray-700 flex-1 font-semibold">{t('All systems operational')}</span>
+                                            </div>
+                                            <div className="text-xs text-gray-500 mt-1 ml-7">{t('Updated 2 min ago')}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Bottom Navigation Bar - Compact & Extra Blurry */}
+                    <div className="fixed bottom-0 left-0 right-0 lg:hidden glass-nav z-50">
+                        <div className="flex items-center justify-around px-2 py-0.5 max-w-lg mx-auto">
+                            {/* Controls Tab */}
+                            <button
+                                onClick={() => setActiveTab('left')}
+                                className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all duration-300 transform ${activeTab === 'left'
+                                    ? 'glass-button-active text-white scale-105 -translate-y-1'
+                                    : 'glass-button text-gray-600 hover:scale-105'
+                                    }`}
+                            >
+                                <span className="text-xl mb-0.5">🎛️</span>
+                                <span className={`text-[10px] font-bold ${activeTab === 'left' ? 'text-white' : 'text-gray-700'}`}>
+                                    {t('Data Controls')}
+                                </span>
+                            </button>
+
+                            {/* Charts Tab */}
+                            <button
+                                onClick={() => setActiveTab('middle')}
+                                className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all duration-300 transform ${activeTab === 'middle'
+                                    ? 'glass-button-active text-white scale-105 -translate-y-1'
+                                    : 'glass-button text-gray-600 hover:scale-105'
+                                    }`}
+                            >
+                                <span className="text-xl mb-0.5">📈</span>
+                                <span className={`text-[10px] font-bold ${activeTab === 'middle' ? 'text-white' : 'text-gray-700'}`}>
+                                    {t('Charts')}
+                                </span>
+                            </button>
+
+                            {/* Sensors Tab */}
+                            <button
+                                onClick={() => setActiveTab('right')}
+                                className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all duration-300 transform ${activeTab === 'right'
+                                    ? 'glass-button-active text-white scale-105 -translate-y-1'
+                                    : 'glass-button text-gray-600 hover:scale-105'
+                                    }`}
+                            >
+                                <span className="text-xl mb-0.5">📊</span>
+                                <span className={`text-[10px] font-bold ${activeTab === 'right' ? 'text-white' : 'text-gray-700'}`}>
+                                    {t('AI & Camera')}
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
+
         </div>
     );
 };

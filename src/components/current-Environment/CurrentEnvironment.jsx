@@ -34,14 +34,14 @@ const CurrentEnvironment = ({ selectedLocation }) => {
         sugar_level: 35.0
     });
 
-    // Use smooth sensor hooks AFTER state declarations
-    const smoothTemp = useSmoothSensor(currentData.temperature, 300);
-    const smoothHumidity = useSmoothSensor(currentData.humidity, 300);
-    const smoothAirflow = useSmoothSensor(currentData.airflow, 300);
-    const smoothBowlTemp = useSmoothSensor(currentData.bowl_temp, 300);
-    const smoothSonarDistance = useSmoothSensor(currentData.sonar_distance, 300);
-    const smoothCO2 = useSmoothSensor(currentData.co2_level, 300);
-    const smoothSugar = useSmoothSensor(currentData.sugar_level, 300);
+    const smoothTemp = useSmoothSensor(currentData.temperature, 50);
+    const smoothHumidity = useSmoothSensor(currentData.humidity, 50);
+    const smoothBowlTemp = useSmoothSensor(currentData.bowl_temp, 50);
+    const smoothSonarDistance = useSmoothSensor(currentData.sonar_distance, 50);
+    const smoothCO2 = useSmoothSensor(currentData.co2_level, 50);
+    const smoothSugar = useSmoothSensor(currentData.sugar_level, 50);
+
+
 
     // Actuator status states
     const [actuatorStatus, setActuatorStatus] = useState({
@@ -89,6 +89,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
     const [lastUpdate, setLastUpdate] = useState(null);
     const [isConnecting, setIsConnecting] = useState(false);
 
+
+
     // Refs to prevent timeout race conditions
     const statusTimeoutRefs = useRef({
         temperature: null,
@@ -106,7 +108,17 @@ const CurrentEnvironment = ({ selectedLocation }) => {
     const maxReconnectAttempts = 2;
     const baseReconnectDelay = 1000;
 
+    const SENSOR_TIMEOUTS = {
+        temperature: 15000,     // ✅ 15 seconds (safer)
+        humidity: 15000,        // ✅ 15 seconds
+        bowl_temp: 15000,       // ✅ 15 seconds
+        sonar_distance: 15000,  // ✅ 15 seconds
+        sugar_level: 15000,     // ✅ 15 seconds
+        co2_level: 70000        // ✅ 70 seconds (keep this!)
+    };
+
     // Improved status update function
+    // ✅ NEW VERSION - Per-sensor timeout
     const updateSensorStatus = (sensorType, value) => {
         if (typeof value !== 'number') return;
 
@@ -118,12 +130,19 @@ const CurrentEnvironment = ({ selectedLocation }) => {
         // Set status to true
         setRealTimeStatus(prev => ({ ...prev, [sensorType]: true }));
 
-        // Schedule reset
+        // Get sensor-specific timeout duration
+        const timeoutDuration = SENSOR_TIMEOUTS[sensorType] || 1500; // Default 15 seconds
+
+        console.log(`✅ [${sensorType}] Sensor active, timeout in ${timeoutDuration / 1000}s`);
+
+        // Schedule reset with sensor-specific timeout
         statusTimeoutRefs.current[sensorType] = setTimeout(() => {
+            console.log(`⏰ [${sensorType}] Timeout reached - marking inactive`);
             setRealTimeStatus(prev => ({ ...prev, [sensorType]: false }));
             statusTimeoutRefs.current[sensorType] = null;
-        }, 1500);
+        }, timeoutDuration);  // ✅ Uses sensor-specific timeout!
     };
+
 
     // Safe number formatting function
     const safeToFixed = (value, digits) => {
@@ -293,16 +312,38 @@ const CurrentEnvironment = ({ selectedLocation }) => {
         }, delay);
     };
 
-    const setSensorTimeout = () => {
-        if (sensorTimeoutRef.current) {
-            clearTimeout(sensorTimeoutRef.current);
-        }
+    // ✅ ADD THIS - Automatically sync sensorActive with individual sensors
+    // ✅ IMPROVED
+    useEffect(() => {
+        // Don't check until data is loaded
+        if (loading) return;
 
-        sensorTimeoutRef.current = setTimeout(() => {
-            console.log('🔴 CurrentEnvironment sensor timeout - no data for 5 seconds');
-            setRealTimeStatus(prev => ({ ...prev, sensorActive: false }));
-        }, 5000);
-    };
+        const anySensorActive =
+            realTimeStatus.temperature ||
+            realTimeStatus.humidity ||
+            realTimeStatus.airflow ||
+            realTimeStatus.bowl_temp ||
+            realTimeStatus.sonar_distance ||
+            realTimeStatus.co2_level ||
+            realTimeStatus.sugar_level;
+
+        if (anySensorActive !== realTimeStatus.sensorActive) {
+            setRealTimeStatus(prev => ({
+                ...prev,
+                sensorActive: anySensorActive
+            }));
+        }
+    }, [
+        loading,  // ← ADD THIS DEPENDENCY
+        realTimeStatus.temperature,
+        realTimeStatus.humidity,
+        realTimeStatus.airflow,
+        realTimeStatus.bowl_temp,
+        realTimeStatus.sonar_distance,
+        realTimeStatus.co2_level,
+        realTimeStatus.sugar_level
+    ]);
+
 
     const setupRealtimeUpdates = () => {
         if (isConnecting || !selectedLocation || !user) return;
@@ -385,11 +426,9 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
                 if (fieldName && typeof value === 'number') {
                     console.log(`[CurrentEnvironment] ✅ Updating ${fieldName}: ${value}`);
-
                     setCurrentData(prev => ({ ...prev, [fieldName]: value }));
                     updateSensorStatus(fieldName, value);
-                    setSensorTimeout();
-                    setRealTimeStatus(prev => ({ ...prev, sensorActive: true }));
+                    // Removed setSensorTimeout() - useEffect handles sensorActive now
                     setLastUpdate(new Date());
                 }
             });
@@ -617,7 +656,6 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     ...prev,
                                     sensorActive: true
                                 }));
-                                setSensorTimeout();
                             } else {
                                 console.warn(`⚠️ [CurrentEnvironment] Data is old (${Math.round(timeSinceLastMeasurement / 1000)}s ago)`);
                                 setRealTimeStatus(prev => ({
@@ -728,7 +766,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
             {/* Header */}
             <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                <div className="w-7 h-7 bg-gradient-to-br from-teal-500 to-blue-500 rounded-md flex items-center justify-center text-white text-sm">
+                <div className="w-7 h-7 bg-linear-to-br from-teal-500 to-blue-500 rounded-md flex items-center justify-center text-white text-sm">
                     🌡️
                 </div>
                 <h2 className="text-lg font-bold text-gray-800">{t("Current Environment")}</h2>
@@ -760,7 +798,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
                         {/* Temperature Card - ONLY SHOW IF HAS DATA */}
                         {(currentData.temperature !== null && currentData.temperature !== undefined) && (
-                            <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-md p-2 md:p-2.5 border border-red-100 shadow-sm hover:shadow transition-shadow">
+                            <div className="bg-linear-to-br from-red-50 to-orange-50 rounded-md p-2 md:p-2.5 border border-red-100 shadow-sm hover:shadow transition-shadow">
                                 <div className="flex items-center justify-between mb-1">
                                     <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
                                         <span className="text-sm">🌡️</span>
@@ -783,7 +821,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
                         {/* Humidity Card - ONLY SHOW IF HAS DATA */}
                         {(currentData.humidity !== null && currentData.humidity !== undefined) && (
-                            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-md p-2 md:p-2.5 border border-blue-100 shadow-sm hover:shadow transition-shadow">
+                            <div className="bg-linear-to-br from-blue-50 to-cyan-50 rounded-md p-2 md:p-2.5 border border-blue-100 shadow-sm hover:shadow transition-shadow">
                                 <div className="flex items-center justify-between mb-1">
                                     <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
                                         <span className="text-sm">💧</span>
@@ -806,7 +844,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
                         {/* Bowl Temperature Card - ONLY SHOW IF HAS DATA */}
                         {(currentData.bowl_temp !== null && currentData.bowl_temp !== undefined) && (
-                            <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-md p-2 md:p-2.5 border border-amber-100 shadow-sm hover:shadow transition-shadow">
+                            <div className="bg-linear-to-br from-amber-50 to-yellow-50 rounded-md p-2 md:p-2.5 border border-amber-100 shadow-sm hover:shadow transition-shadow">
                                 <div className="flex items-center justify-between mb-1">
                                     <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
                                         <span className="text-sm">🔥</span>
@@ -829,11 +867,11 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
                         {/* Sonar/Liquid Level Card - ONLY SHOW IF HAS DATA */}
                         {(currentData.sonar_distance !== null && currentData.sonar_distance !== undefined) && (
-                            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-md p-2 md:p-2.5 border border-purple-100 shadow-sm hover:shadow transition-shadow">
+                            <div className="bg-linear-to-br from-purple-50 to-pink-50 rounded-md p-2 md:p-2.5 border border-purple-100 shadow-sm hover:shadow transition-shadow">
                                 <div className="flex items-center justify-between mb-1">
                                     <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
                                         <span className="text-sm">📏</span>
-                                        <span className="hidden sm:inline">{t('Liquid Level')}</span>
+                                        <span className="hidden sm:inline">{t('Water Level')}</span>
                                         <span className="sm:hidden">{t('Liquid')}</span>
                                     </h3>
                                     {realTimeStatus.sonar_distance && (
@@ -852,7 +890,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
                         {/* CO2 Level Card - ONLY SHOW IF HAS DATA */}
                         {(currentData.co2_level !== null && currentData.co2_level !== undefined) && (
-                            <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-md p-2 md:p-2.5 border border-green-100 shadow-sm hover:shadow transition-shadow">
+                            <div className="bg-linear-to-br from-green-50 to-teal-50 rounded-md p-2 md:p-2.5 border border-green-100 shadow-sm hover:shadow transition-shadow">
                                 <div className="flex items-center justify-between mb-1">
                                     <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
                                         <span className="text-sm">💨</span>
@@ -865,7 +903,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 </div>
                                 <div className="text-lg md:text-xl font-bold transition-colors duration-500 ease-out tabular-nums"
                                     style={{ color: getStatusColor(currentData.co2_level, setpoints.co2_level, 50) }}>
-                                    {safeToFixed(smoothCO2, 0)} ppm
+                                    {safeToFixed(smoothCO2, 2)} ppm
                                 </div>
                                 <div className="mt-1 text-9px md:text-10px text-gray-500">
                                     {t('Target:')} {setpoints.co2_level} ppm
@@ -875,7 +913,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
                         {/* Sugar Level Card - ONLY SHOW IF HAS DATA */}
                         {(currentData.sugar_level !== null && currentData.sugar_level !== undefined) && (
-                            <div className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-md p-2 md:p-2.5 border border-pink-100 shadow-sm hover:shadow transition-shadow">
+                            <div className="bg-linear-to-br from-pink-50 to-rose-50 rounded-md p-2 md:p-2.5 border border-pink-100 shadow-sm hover:shadow transition-shadow">
                                 <div className="flex items-center justify-between mb-1">
                                     <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
                                         <span className="text-sm">🍬</span>
@@ -896,72 +934,21 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                             </div>
                         )}
 
-                        {/* Airflow Card - ONLY SHOW IF HAS DATA */}
-                        {(currentData.airflow !== null && currentData.airflow !== undefined) && (
-                            <div className="bg-gradient-to-br from-sky-50 to-blue-50 rounded-md p-2 md:p-2.5 border border-sky-100 shadow-sm hover:shadow transition-shadow">
-                                <div className="flex items-center justify-between mb-1">
-                                    <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
-                                        <span className="text-sm">🌀</span>
-                                        <span className="hidden sm:inline">{t('Airflow')}</span>
-                                        <span className="sm:hidden">{t('Air')}</span>
-                                    </h3>
-                                    {realTimeStatus.airflow && (
-                                        <span className="inline-flex h-1 w-1 md:h-1.5 md:w-1.5 rounded-full bg-sky-500 animate-pulse"></span>
-                                    )}
-                                </div>
-                                <div className="text-lg md:text-xl font-bold transition-colors duration-500 ease-out tabular-nums"
-                                    style={{ color: getStatusColor(currentData.airflow, setpoints.airflow, 0.5) }}>
-                                    {safeToFixed(smoothAirflow, 1)} m/s
-                                </div>
-                                <div className="mt-1 text-9px md:text-10px text-gray-500">
-                                    {t('Target:')} {setpoints.airflow} m/s
-                                </div>
-                            </div>
-                        )}
+
 
                     </div>
 
                     {/* Status Badges Section - Only CO2 & Sugar 1x2 Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
 
-                        {/* CO2 Fermentation Status - ONLY SHOW IF CO2 SENSOR EXISTS */}
-                        {/* {(currentData.co2_level !== null && currentData.co2_level !== undefined) && (
-                            <div className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${actuatorStatus.co2Fermentation.active
-                                ? 'bg-green-50 border-2 border-green-200'
-                                : 'bg-red-50 border-2 border-red-200'
-                                }`}>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-lg">{actuatorStatus.co2Fermentation.active ? '✅' : '❌'}</span>
-                                    <div className="flex-1">
-                                        <p className="font-semibold text-gray-700 mb-0.5">{t('CO2 Monitor')}</p>
-                                        <p className="text-10px text-gray-600 leading-tight">{t(actuatorStatus.co2Fermentation.messageKey)}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        )} */}
 
-                        {/* Sugar Fermentation Status - ONLY SHOW IF SUGAR SENSOR EXISTS */}
-                        {/* {(currentData.sugar_level !== null && currentData.sugar_level !== undefined) && (
-                            <div className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${actuatorStatus.sugarFermentation.complete
-                                ? 'bg-blue-50 border-2 border-blue-200'
-                                : 'bg-gray-50 border-2 border-gray-200'
-                                }`}>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-lg">{actuatorStatus.sugarFermentation.complete ? '✅' : '⏳'}</span>
-                                    <div className="flex-1">
-                                        <p className="font-semibold text-gray-700 mb-0.5">{t('Sugar Monitor')}</p>
-                                        <p className="text-10px text-gray-600 leading-tight">{t(actuatorStatus.sugarFermentation.messageKey)}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        )} */}
 
                     </div>
                 </div>
 
             ) : (
                 /* Connection Message */
-                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-5 text-center border border-gray-200">
+                <div className="bg-linear-to-br from-gray-50 to-gray-100 rounded-lg p-5 text-center border border-gray-200">
                     <div className="inline-flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-md mb-3">
                         <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />

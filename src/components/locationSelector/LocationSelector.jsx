@@ -410,7 +410,7 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
 
-                <div className="sticky top-0 bg-gradient-to-r from-teal-600 to-teal-700 text-white p-6 z-10 rounded-t-lg">
+                <div className="sticky top-0 bg-linear-to-r from-teal-600 to-teal-700 text-white p-6 z-10 rounded-t-lg">
                     <h2 className="text-2xl font-bold mb-2">{t('Configure MQTT Topics Modal')}</h2>
                     <p className="text-teal-100 text-sm">{t('Enter MQTT topics for')} {room.location}</p>
                     <div className="mt-3 bg-teal-800 bg-opacity-50 rounded px-3 py-2">
@@ -640,7 +640,7 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
                 <div className="sticky bottom-0 bg-gray-50 border-t-2 border-gray-200 p-6 flex gap-3 rounded-b-lg">
                     <button
                         onClick={handleSave}
-                        className="flex-1 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 shadow-lg"
+                        className="flex-1 bg-linear-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 shadow-lg"
                     >
                         <FaSave />
                         {isNew ? t('Create Room & Subscribe') : t('Save & Update Subscriptions')}
@@ -673,6 +673,9 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [roomToDelete, setRoomToDelete] = useState(null);
+
+    // ✅ NEW: Mobile dropdown state
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const [sensorTypes] = useState([
         { code: 'temperature', name: 'Temperature', unit: '°C', category: 'environmental' },
@@ -990,6 +993,26 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
         );
     };
 
+    // ✅ NEW: Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (isDropdownOpen && !event.target.closest('.location-selector-wrapper')) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isDropdownOpen]);
+
+    if (loading) {
+        return (
+            <div className="bg-white rounded-lg shadow-lg p-3 md:p-4">
+                <p className="text-gray-600 text-sm md:text-base">{t('Loading locations...')}</p>
+            </div>
+        );
+    }
+
 
     const handleConfigureRoom = async (room) => {
         try {
@@ -1132,8 +1155,10 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
     }
 
     return (
-        <div className="relative group">
-            <div className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white px-5 py-3 rounded-lg cursor-pointer transition-all duration-200 flex items-center gap-3 min-w-[280px] shadow-lg">
+        <div className="relative group location-selector-wrapper">
+            <div
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="lg:pointer-events-none bg-linear-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white px-5 py-3 rounded-lg cursor-pointer transition-all duration-200 flex items-center gap-3 min-w-[280px] shadow-lg">
                 <FaMapMarkerAlt className="text-teal-200 text-xl" />
                 <div className="flex-1">
                     <div className="text-sm font-semibold">
@@ -1143,12 +1168,19 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                         {locations.find(loc => loc.location === selectedLocation)?.room_id || t('No room selected')}
                     </div>
                 </div>
-                <svg className="w-5 h-5 text-teal-200 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                    className={`w-5 h-5 text-teal-200 transition-transform ${isDropdownOpen ? 'rotate-180' : ''} lg:group-hover:rotate-180`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
             </div>
 
-            <div className="absolute top-full left-0 mt-2 w-full min-w-[350px] bg-white rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 max-h-[500px] overflow-y-auto">
+            <div className={`absolute top-full left-0 mt-2 w-full min-w-[350px] bg-white rounded-lg shadow-2xl transition-all duration-200 z-50 max-h-[500px] overflow-y-auto
+                ${isDropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}
+                lg:opacity-0 lg:invisible lg:group-hover:opacity-100 lg:group-hover:visible`}>
 
                 <div className="py-2">
                     {locations.map((loc, index) => (
