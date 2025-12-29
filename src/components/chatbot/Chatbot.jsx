@@ -224,7 +224,7 @@ const ChatBot = () => {
                     <BsRobot className="text-white text-2xl" />
                 </div>
                 <div className="flex-1">
-                    <h2 className="text-white text-xl font-bold tracking-tight">{t("Froppy AI")}</h2>
+                    <h2 className="text-white text-xl font-bold tracking-tight">{t("AI")}</h2>
                     <p className="text-blue-100 text-sm">{t("Sake Brewing Assistant")}</p>
                 </div>
                 <button
@@ -249,7 +249,7 @@ const ChatBot = () => {
                 {messages.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full text-center">
                         <FiMessageSquare className="text-slate-300 text-6xl mb-4" />
-                        <p className="text-slate-400 font-medium">{t("Hello I am Froppy! How can I help you ?")}</p>
+                        <p className="text-slate-400 font-medium">{t("Hello I am UXBD! How can I help you ?")}</p>
                         <p className="text-slate-300 text-sm mt-2">{t("Ask me about sake brewing fermentation")}</p>
                     </div>
                 )}
@@ -352,7 +352,7 @@ const ChatBot = () => {
                                 e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                             }}
                             onKeyPress={handleKeyPress}
-                            placeholder={t("Ask Froppy something...")}
+                            placeholder={t("Ask something...")}
                             rows={1}
                             disabled={isLoading}
                             style={{

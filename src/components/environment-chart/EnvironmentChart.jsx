@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { usePathname } from 'next/navigation';
 import { useTranslation } from '../../app/i18n/client.js';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.88.36:3001';
 
 const EnvironmentChart = ({ selectedLocation }) => {
     const { user, socket } = useContext(AuthContext);
@@ -36,7 +36,7 @@ const EnvironmentChart = ({ selectedLocation }) => {
 
     // ✅ NEW: Multi-chart state
     const [viewMode, setViewMode] = useState('multi'); // 'single' or 'multi'
-    const [activeSensorTypes, setActiveSensorTypes] = useState(new Set(['temperature']));
+    const [activeSensorTypes, setActiveSensorTypes] = useState(new Set(['temperature', 'humidity', 'co2_level', 'sonar_distance']));
 
     // ✅ NEW: Store measurements for each sensor type
     const [measurementsBySensor, setMeasurementsBySensor] = useState({});

@@ -34,12 +34,12 @@ const CurrentEnvironment = ({ selectedLocation }) => {
         sugar_level: 35.0
     });
 
-    const smoothTemp = useSmoothSensor(currentData.temperature, 50);
-    const smoothHumidity = useSmoothSensor(currentData.humidity, 50);
-    const smoothBowlTemp = useSmoothSensor(currentData.bowl_temp, 50);
-    const smoothSonarDistance = useSmoothSensor(currentData.sonar_distance, 50);
-    const smoothCO2 = useSmoothSensor(currentData.co2_level, 50);
-    const smoothSugar = useSmoothSensor(currentData.sugar_level, 50);
+    const smoothTemp = useSmoothSensor(currentData.temperature, 100);
+    const smoothHumidity = useSmoothSensor(currentData.humidity, 100);
+    const smoothBowlTemp = useSmoothSensor(currentData.bowl_temp, 100);
+    const smoothSonarDistance = useSmoothSensor(currentData.sonar_distance, 100);
+    const smoothCO2 = useSmoothSensor(currentData.co2_level, 100);
+    const smoothSugar = useSmoothSensor(currentData.sugar_level, 100);
 
 
 
