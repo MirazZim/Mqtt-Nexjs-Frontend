@@ -123,17 +123,30 @@ const DeviceStatus = ({ selectedLocation }) => {
             console.log('🔍 environmentUpdate received:', {
                 incomingData: data,
                 dataLocation: data.location,
+                dataRoomCode: data.roomCode,
+                dataRoomId: data.roomId,
                 dataUserId: data.userId,
-                dataUserIdType: typeof data.userId,
                 expectedLocation: selectedLocation,
-                expectedUserId: user.id,
-                expectedUserIdType: typeof user.id,
-                locationMatch: data.location === selectedLocation,
-                userIdMatch: data.userId === user.id,
-                strictMatch: data.userId === user.id && data.location === selectedLocation
+                expectedUserId: user.id
             });
 
-            if (data.location === selectedLocation && data.userId === user.id) {
+            // Check for room match using multiple possible fields
+            const roomMatches = 
+                data.location === selectedLocation ||
+                data.roomCode === selectedLocation ||
+                data.roomId === selectedLocation ||
+                String(data.location) === String(selectedLocation) ||
+                String(data.roomCode) === String(selectedLocation) ||
+                String(data.roomId) === String(selectedLocation);
+
+            // User match is optional - some events may not include userId
+            const userMatches = !data.userId || data.userId === user.id || String(data.userId) === String(user.id);
+
+            // If no room info at all, accept the event (we're already in the correct room via joinLocation)
+            const hasRoomInfo = data.location || data.roomCode || data.roomId;
+            const shouldProcess = hasRoomInfo ? (roomMatches && userMatches) : true;
+
+            if (shouldProcess) {
                 console.log('✅ Condition matched - updating sensor status');
                 setSensorStatus({
                     active: true,
@@ -143,7 +156,28 @@ const DeviceStatus = ({ selectedLocation }) => {
                 setConnectionStatusKey('Broker & Sensors Connected');
                 setSensorTimeout();
             } else {
-                console.log('❌ Condition NOT matched - sensor status NOT updated');
+                console.log('❌ Condition NOT matched - sensor status NOT updated', { roomMatches, userMatches, hasRoomInfo });
+            }
+        });
+
+        // ✅ ALSO LISTEN TO sensorUpdate EVENT
+        socket.on('sensorUpdate', (data) => {
+            const roomMatches = 
+                data.location === selectedLocation ||
+                data.roomCode === selectedLocation ||
+                data.roomId === selectedLocation ||
+                String(data.location) === String(selectedLocation) ||
+                String(data.roomCode) === String(selectedLocation) ||
+                String(data.roomId) === String(selectedLocation);
+
+            if (roomMatches) {
+                setSensorStatus({
+                    active: true,
+                    lastDataReceived: new Date(),
+                    statusKey: 'Receiving Data'
+                });
+                setConnectionStatusKey('Broker & Sensors Connected');
+                setSensorTimeout();
             }
         });
 

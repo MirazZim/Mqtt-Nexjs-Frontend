@@ -361,7 +361,12 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                 setRealTimeStatus(prev => ({ ...prev, connected: true }));
                 setIsConnecting(false);
 
-                // JOIN LOCATION-SPECIFIC ROOM
+                // JOIN USER-SPECIFIC ROOM (matches backend emission pattern)
+                const userRoom = `user_${user.id}_${selectedLocation}`;
+                socketConnection.emit('joinRoom', userRoom);
+                console.log(`[CurrentEnvironment] Joined user room: ${userRoom}`);
+
+                // JOIN LOCATION-SPECIFIC ROOM (for backward compatibility)
                 socketConnection.emit('joinLocation', selectedLocation);
                 console.log(`[CurrentEnvironment] Joined location: ${selectedLocation}`);
 
@@ -394,7 +399,15 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
             // ✅ UNIFIED SENSOR HANDLER - Handles all sensor types
             socketConnection.on('sensorUpdate', (data) => {
-                console.log('[CurrentEnvironment] sensorUpdate:', data);
+                console.log('[CurrentEnvironment] sensorUpdate received:', {
+                    sensorType: data.sensorType,
+                    value: data.value,
+                    roomCode: data.roomCode,
+                    roomId: data.roomId,
+                    location: data.location,
+                    timestamp: data.timestamp,
+                    expectedLocation: selectedLocation
+                });
 
                 // Room filtering with type coercion
                 const roomMatches =
@@ -405,7 +418,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                     String(data.roomId) === String(selectedLocation);
 
                 if (!roomMatches) {
-                    console.log(`[CurrentEnvironment] Ignoring sensor from room: ${data.roomCode || data.roomId}`);
+                    console.log(`[CurrentEnvironment] ❌ Ignoring sensor from room: ${data.roomCode || data.roomId || data.location} (expected: ${selectedLocation})`);
                     return;
                 }
 
@@ -425,10 +438,57 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                 const fieldName = sensorTypeMap[sensorType];
 
                 if (fieldName && typeof value === 'number') {
-                    console.log(`[CurrentEnvironment] ✅ Updating ${fieldName}: ${value}`);
+                    console.log(`[CurrentEnvironment] ✅ Updating ${fieldName}: ${value} at ${new Date().toISOString()}`);
                     setCurrentData(prev => ({ ...prev, [fieldName]: value }));
                     updateSensorStatus(fieldName, value);
                     // Removed setSensorTimeout() - useEffect handles sensorActive now
+                    setLastUpdate(new Date());
+                } else {
+                    console.warn(`[CurrentEnvironment] ⚠️ Invalid sensor data - type: ${sensorType}, value: ${value}, fieldName: ${fieldName}`);
+                }
+            });
+
+            // ✅ ALSO LISTEN TO environmentUpdate EVENT
+            socketConnection.on('environmentUpdate', (data) => {
+                console.log('[CurrentEnvironment] environmentUpdate received:', data);
+
+                // Room filtering - environmentUpdate may not have room info, so accept if we have sensor data
+                const hasRoomInfo = data.roomCode || data.roomId || data.location;
+                
+                if (hasRoomInfo) {
+                    const roomMatches =
+                        data.roomCode == selectedLocation ||
+                        data.roomId == selectedLocation ||
+                        data.location == selectedLocation ||
+                        String(data.roomCode) === String(selectedLocation) ||
+                        String(data.roomId) === String(selectedLocation);
+
+                    if (!roomMatches) {
+                        console.log(`[CurrentEnvironment] ❌ Ignoring environmentUpdate from room: ${data.roomCode || data.roomId || data.location}`);
+                        return;
+                    }
+                }
+                // If no room info, assume it's for us since we're in the correct room
+
+                // Handle multiple sensor values in one update
+                const updates = {};
+                if (typeof data.temperature === 'number') updates.temperature = data.temperature;
+                if (typeof data.humidity === 'number') updates.humidity = data.humidity;
+                if (typeof data.airflow === 'number') updates.airflow = data.airflow;
+                if (typeof data.bowl_temp === 'number') updates.bowl_temp = data.bowl_temp;
+                if (typeof data.sonar_distance === 'number') updates.sonar_distance = data.sonar_distance;
+                if (typeof data.co2_level === 'number') updates.co2_level = data.co2_level;
+                if (typeof data.sugar_level === 'number') updates.sugar_level = data.sugar_level;
+
+                if (Object.keys(updates).length > 0) {
+                    console.log(`[CurrentEnvironment] ✅ Batch updating sensors:`, updates);
+                    setCurrentData(prev => ({ ...prev, ...updates }));
+                    
+                    // Update status for each sensor
+                    Object.entries(updates).forEach(([key, value]) => {
+                        updateSensorStatus(key, value);
+                    });
+                    
                     setLastUpdate(new Date());
                 }
             });

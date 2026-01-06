@@ -162,10 +162,11 @@ const EnvironmentControl = ({ selectedLocation }) => {
 
                 if (response.ok) {
                     const data = await response.json();
+                    console.log(data)
                     if (data.status === 'success' && data.data) {
                         const currentSpeed = data.data.currentSpeed;
-                        setFanKnobValue(currentSpeed);
-                        setFanSpeed(currentSpeed);
+                        setFanKnobValue(currentSpeed ?? 0);
+                        setFanSpeed(currentSpeed ?? 0);
                         console.log(`✅ Initial fan speed loaded: ${currentSpeed}%`);
                     }
                 }

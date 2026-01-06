@@ -219,12 +219,26 @@ const EnvironmentChart = ({ selectedLocation }) => {
 
     // ✅ NEW: Real-time updates for all active sensors
     useEffect(() => {
-        if (!socket || Object.keys(currentSensors).length === 0 || !selectedLocation) return;
+        if (!socket || Object.keys(currentSensors).length === 0 || !selectedLocation || !user) return;
+
+        // JOIN USER-SPECIFIC ROOM (matches backend emission pattern)
+        const userRoom = `user_${user.id}_${selectedLocation}`;
+        socket.emit('joinRoom', userRoom);
+        console.log(`[EnvironmentChart] Joined user room: ${userRoom}`);
+
+        // JOIN LOCATION-SPECIFIC ROOM (for chartData events)
+        const locationRoom = `location_${selectedLocation}`;
+        socket.emit('joinRoom', locationRoom);
+        console.log(`[EnvironmentChart] Joined location room: ${locationRoom}`);
 
         socket.emit('joinLocation', selectedLocation);
 
         Object.values(currentSensors).forEach(sensor => {
             socket.emit('joinSensor', sensor.id);
+            // JOIN SENSOR-SPECIFIC ROOM
+            const sensorRoom = `sensor_${sensor.id}`;
+            socket.emit('joinRoom', sensorRoom);
+            console.log(`[EnvironmentChart] Joined sensor room: ${sensorRoom}`);
         });
 
         const handleSensorData = (data) => {
@@ -272,16 +286,24 @@ const EnvironmentChart = ({ selectedLocation }) => {
         socket.on('newMeasurement', handleSensorData);
 
         return () => {
+            if (user) {
+                const userRoom = `user_${user.id}_${selectedLocation}`;
+                socket.emit('leaveRoom', userRoom);
+                const locationRoom = `location_${selectedLocation}`;
+                socket.emit('leaveRoom', locationRoom);
+            }
             socket.emit('leaveLocation', selectedLocation);
             Object.values(currentSensors).forEach(sensor => {
                 socket.emit('leaveSensor', sensor.id);
+                const sensorRoom = `sensor_${sensor.id}`;
+                socket.emit('leaveRoom', sensorRoom);
             });
             socket.off('sensorData', handleSensorData);
             socket.off('sensorUpdate', handleSensorData);
             socket.off('environmentUpdate', handleSensorData);
             socket.off('newMeasurement', handleSensorData);
         };
-    }, [socket, currentSensors, selectedPeriod, selectedLocation]);
+    }, [socket, currentSensors, selectedPeriod, selectedLocation, user]);
 
     // ✅ NEW: Toggle sensor type
     const toggleSensorType = useCallback((sensorType) => {
@@ -379,8 +401,8 @@ const EnvironmentChart = ({ selectedLocation }) => {
                         <span className="text-xs text-gray-500">({currentSensors[sensorType].sensor_name})</span>
                     )}
                 </div>
-                <div className="h-[300px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
+                <div className="h-[300px] w-full min-w-[200px]">
+                    <ResponsiveContainer width="100%" height="100%" debounce={50}>
                         <ChartComponent data={processedData.chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                             <XAxis
