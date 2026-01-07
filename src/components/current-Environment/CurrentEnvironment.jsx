@@ -24,6 +24,17 @@ const CurrentEnvironment = ({ selectedLocation }) => {
         sugar_level: null
     });
 
+    // ✅ Per-sensor timestamps for modern display
+    const [sensorTimestamps, setSensorTimestamps] = useState({
+        temperature: null,
+        humidity: null,
+        airflow: null,
+        bowl_temp: null,
+        sonar_distance: null,
+        co2_level: null,
+        sugar_level: null
+    });
+
     const [setpoints, setSetpoints] = useState({
         temperature: 22.0,
         humidity: 55.0,
@@ -147,6 +158,30 @@ const CurrentEnvironment = ({ selectedLocation }) => {
     // Safe number formatting function
     const safeToFixed = (value, digits) => {
         return (typeof value === 'number' && !isNaN(value)) ? value.toFixed(digits) : 'N/A';
+    };
+
+    // ✅ State to trigger re-render for relative time updates
+    const [, setTimeTick] = useState(0);
+
+    // ✅ Update relative timestamps every 5 seconds for modern live feel
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setTimeTick(tick => tick + 1);
+        }, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // ✅ Modern relative time formatter for sensor timestamps
+    const formatRelativeTime = (timestamp) => {
+        if (!timestamp) return null;
+        const now = new Date();
+        const diff = Math.floor((now - timestamp) / 1000); // seconds
+
+        if (diff < 5) return 'just now';
+        if (diff < 60) return `${diff}s ago`;
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        return timestamp.toLocaleTimeString();
     };
 
     // ESP Control function
@@ -440,8 +475,8 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                 if (fieldName && typeof value === 'number') {
                     console.log(`[CurrentEnvironment] ✅ Updating ${fieldName}: ${value} at ${new Date().toISOString()}`);
                     setCurrentData(prev => ({ ...prev, [fieldName]: value }));
+                    setSensorTimestamps(prev => ({ ...prev, [fieldName]: new Date() }));
                     updateSensorStatus(fieldName, value);
-                    // Removed setSensorTimeout() - useEffect handles sensorActive now
                     setLastUpdate(new Date());
                 } else {
                     console.warn(`[CurrentEnvironment] ⚠️ Invalid sensor data - type: ${sensorType}, value: ${value}, fieldName: ${fieldName}`);
@@ -454,7 +489,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
                 // Room filtering - environmentUpdate may not have room info, so accept if we have sensor data
                 const hasRoomInfo = data.roomCode || data.roomId || data.location;
-                
+
                 if (hasRoomInfo) {
                     const roomMatches =
                         data.roomCode == selectedLocation ||
@@ -483,13 +518,21 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                 if (Object.keys(updates).length > 0) {
                     console.log(`[CurrentEnvironment] ✅ Batch updating sensors:`, updates);
                     setCurrentData(prev => ({ ...prev, ...updates }));
-                    
+
+                    // Update timestamps for each sensor
+                    const now = new Date();
+                    const timestampUpdates = {};
+                    Object.keys(updates).forEach(key => {
+                        timestampUpdates[key] = now;
+                    });
+                    setSensorTimestamps(prev => ({ ...prev, ...timestampUpdates }));
+
                     // Update status for each sensor
                     Object.entries(updates).forEach(([key, value]) => {
                         updateSensorStatus(key, value);
                     });
-                    
-                    setLastUpdate(new Date());
+
+                    setLastUpdate(now);
                 }
             });
 
@@ -873,8 +916,16 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     style={{ color: getStatusColor(currentData.temperature, setpoints.temperature, 0.5) }}>
                                     {safeToFixed(smoothTemp, 1)}°C
                                 </div>
-                                <div className="mt-1 text-9px md:text-10px text-gray-500">
-                                    {t('Target:')} {setpoints.temperature}°C
+                                <div className="mt-1 flex items-center justify-between">
+                                    <span className="text-9px md:text-10px text-gray-500">{t('Target:')} {setpoints.temperature}°C</span>
+                                    {sensorTimestamps.temperature && (
+                                        <span className="text-[8px] md:text-9px text-gray-400 flex items-center gap-0.5">
+                                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {formatRelativeTime(sensorTimestamps.temperature)}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -896,8 +947,16 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     style={{ color: getStatusColor(currentData.humidity, setpoints.humidity, 2.0) }}>
                                     {safeToFixed(smoothHumidity, 1)}%
                                 </div>
-                                <div className="mt-1 text-9px md:text-10px text-gray-500">
-                                    {t('Target:')} {setpoints.humidity}%
+                                <div className="mt-1 flex items-center justify-between">
+                                    <span className="text-9px md:text-10px text-gray-500">{t('Target:')} {setpoints.humidity}%</span>
+                                    {sensorTimestamps.humidity && (
+                                        <span className="text-[8px] md:text-9px text-gray-400 flex items-center gap-0.5">
+                                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {formatRelativeTime(sensorTimestamps.humidity)}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -919,8 +978,16 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     style={{ color: getStatusColor(currentData.bowl_temp, setpoints.bowl_temp, 3) }}>
                                     {safeToFixed(smoothBowlTemp, 1)}°C
                                 </div>
-                                <div className="mt-1 text-9px md:text-10px text-gray-500">
-                                    {t('Target:')} {setpoints.bowl_temp}°C
+                                <div className="mt-1 flex items-center justify-between">
+                                    <span className="text-9px md:text-10px text-gray-500">{t('Target:')} {setpoints.bowl_temp}°C</span>
+                                    {sensorTimestamps.bowl_temp && (
+                                        <span className="text-[8px] md:text-9px text-gray-400 flex items-center gap-0.5">
+                                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {formatRelativeTime(sensorTimestamps.bowl_temp)}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -942,8 +1009,16 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     style={{ color: getStatusColor(currentData.sonar_distance, setpoints.sonar_distance, 5) }}>
                                     {safeToFixed(smoothSonarDistance, 1)} cm
                                 </div>
-                                <div className="mt-1 text-9px md:text-10px text-gray-500">
-                                    {t('Target:')} {setpoints.sonar_distance} cm
+                                <div className="mt-1 flex items-center justify-between">
+                                    <span className="text-9px md:text-10px text-gray-500">{t('Target:')} {setpoints.sonar_distance} cm</span>
+                                    {sensorTimestamps.sonar_distance && (
+                                        <span className="text-[8px] md:text-9px text-gray-400 flex items-center gap-0.5">
+                                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {formatRelativeTime(sensorTimestamps.sonar_distance)}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -965,8 +1040,16 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     style={{ color: getStatusColor(currentData.co2_level, setpoints.co2_level, 50) }}>
                                     {safeToFixed(smoothCO2, 2)} ppm
                                 </div>
-                                <div className="mt-1 text-9px md:text-10px text-gray-500">
-                                    {t('Target:')} {setpoints.co2_level} ppm
+                                <div className="mt-1 flex items-center justify-between">
+                                    <span className="text-9px md:text-10px text-gray-500">{t('Target:')} {setpoints.co2_level} ppm</span>
+                                    {sensorTimestamps.co2_level && (
+                                        <span className="text-[8px] md:text-9px text-gray-400 flex items-center gap-0.5">
+                                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {formatRelativeTime(sensorTimestamps.co2_level)}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -988,8 +1071,16 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     style={{ color: getStatusColor(currentData.sugar_level, setpoints.sugar_level, 5) }}>
                                     {safeToFixed(smoothSugar, 1)} g/L
                                 </div>
-                                <div className="mt-1 text-9px md:text-10px text-gray-500">
-                                    {t('Target:')} {setpoints.sugar_level} g/L
+                                <div className="mt-1 flex items-center justify-between">
+                                    <span className="text-9px md:text-10px text-gray-500">{t('Target:')} {setpoints.sugar_level} g/L</span>
+                                    {sensorTimestamps.sugar_level && (
+                                        <span className="text-[8px] md:text-9px text-gray-400 flex items-center gap-0.5">
+                                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {formatRelativeTime(sensorTimestamps.sugar_level)}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         )}
