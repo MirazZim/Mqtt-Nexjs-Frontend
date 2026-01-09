@@ -162,23 +162,23 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300">
             {/* Compact Header */}
-            <div className="flex items-center justify-between p-3 border-b border-gray-200">
+            <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2">
                     <div className="p-1.5 bg-blue-500 rounded-lg">
                         <FaVideo className="text-white text-sm" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-800">{t("AI Camera Monitor")}</h3>
-                        <p className="text-xs text-gray-500">{selectedLocation}</p>
+                        <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">{t("AI Camera Monitor")}</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{selectedLocation}</p>
                     </div>
                 </div>
 
 
                 <div className="flex items-center gap-2">
                     {/* Status Badge */}
-                    <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${socketConnected ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+                    <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${socketConnected ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400'
                         }`}>
                         <FaCircle className="text-[6px]" />
                         <span className="text-xs font-medium">{socketConnected ? t("Connected") : t("Offline")}</span>
@@ -189,9 +189,9 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
                     <div className="relative" ref={notificationDropdownRef}>
                         <button
                             onClick={handleNotificationClick}
-                            className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                         >
-                            <FaBell className={`text-gray-600 text-base ${unreadCount > 0 ? 'animate-bounce' : ''}`} />
+                            <FaBell className={`text-gray-600 dark:text-gray-300 text-base ${unreadCount > 0 ? 'animate-bounce' : ''}`} />
                             {unreadCount > 0 && (
                                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center animate-pulse">
                                     {unreadCount > 9 ? '9+' : unreadCount}
@@ -202,21 +202,21 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
 
                         {/* Dropdown */}
                         {showNotifications && (
-                            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-2xl border border-gray-200 z-100 max-h-[500px] overflow-hidden animate-slideDown">
-                                <div className="flex items-center justify-between p-3 border-b border-gray-200 bg-linear-to-r from-blue-50 to-purple-50">
+                            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 z-100 max-h-[500px] overflow-hidden animate-slideDown">
+                                <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700 bg-linear-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30">
                                     <div className="flex items-center gap-2">
-                                        <FaBell className="text-blue-500 text-sm" />
-                                        <h4 className="text-sm font-semibold text-gray-800">{t("Recent Detections")}</h4>
+                                        <FaBell className="text-blue-500 dark:text-blue-400 text-sm" />
+                                        <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200">{t("Recent Detections")}</h4>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-500 bg-white px-2 py-0.5 rounded-full">
+                                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700 px-2 py-0.5 rounded-full">
                                             {detections.length} {t("total")}
                                         </span>
                                         <button
                                             onClick={() => setShowNotifications(false)}
-                                            className="p-1 hover:bg-white rounded transition-colors"
+                                            className="p-1 hover:bg-white dark:hover:bg-gray-700 rounded transition-colors"
                                         >
-                                            <FaTimes className="text-gray-400 text-xs" />
+                                            <FaTimes className="text-gray-400 dark:text-gray-500 text-xs" />
                                         </button>
                                     </div>
                                 </div>
@@ -228,17 +228,17 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
                                             {detections.map((detection) => (
                                                 <div
                                                     key={detection.id}
-                                                    className="p-3 bg-linear-to-r from-gray-50 to-blue-50 hover:from-blue-50 hover:to-purple-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-all cursor-pointer group"
+                                                    className="p-3 bg-linear-to-r from-gray-50 to-blue-50 dark:from-gray-700 dark:to-blue-900/30 hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-900/30 dark:hover:to-purple-900/30 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 transition-all cursor-pointer group"
                                                 >
                                                     <div className="flex items-start gap-2">
                                                         <div className="p-1.5 bg-yellow-400 rounded-lg group-hover:scale-110 transition-transform">
                                                             <FaBell className="text-white text-xs" />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-xs text-gray-800 font-medium leading-tight">
+                                                            <p className="text-xs text-gray-800 dark:text-gray-200 font-medium leading-tight">
                                                                 {detection.message}
                                                             </p>
-                                                            <p className="text-xs text-gray-500 mt-1">
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                                                 {timeAgo(detection.timestamp)}
                                                             </p>
                                                         </div>
@@ -248,11 +248,11 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
                                         </div>
                                     ) : (
                                         <div className="p-8 text-center">
-                                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                <FaBell className="text-gray-400 text-2xl" />
+                                            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                <FaBell className="text-gray-400 dark:text-gray-500 text-2xl" />
                                             </div>
-                                            <p className="text-sm font-medium text-gray-600">{t("No detections yet")}</p>
-                                            <p className="text-xs text-gray-500 mt-1">{t("AI is monitoring your space")}</p>
+                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">{t("No detections yet")}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("AI is monitoring your space")}</p>
                                         </div>
                                     )}
                                 </div>
@@ -265,16 +265,16 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
 
             {/* Latest Detection Banner */}
             {latestDetection && (
-                <div className="p-2.5 bg-linear-to-r from-yellow-50 via-orange-50 to-yellow-50 border-b border-orange-200">
+                <div className="p-2.5 bg-linear-to-r from-yellow-50 via-orange-50 to-yellow-50 dark:from-yellow-900/30 dark:via-orange-900/30 dark:to-yellow-900/30 border-b border-orange-200 dark:border-orange-700">
                     <div className="flex items-center gap-2">
                         <div className="p-1.5 bg-orange-400 rounded-lg">
                             <FaBell className="text-white text-xs animate-bounce" />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-orange-800 truncate">
+                            <p className="text-xs font-semibold text-orange-800 dark:text-orange-300 truncate">
                                 {latestDetection.message}
                             </p>
-                            <p className="text-xs text-orange-600">{timeAgo(latestDetection.timestamp)}</p>
+                            <p className="text-xs text-orange-600 dark:text-orange-400">{timeAgo(latestDetection.timestamp)}</p>
                         </div>
                     </div>
                 </div>
@@ -294,7 +294,7 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
 
 
             {/* Controls */}
-            <div className="p-3 bg-gray-50 border-t border-gray-200">
+            <div className="p-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700">
                 <div className="grid grid-cols-2 gap-2">
                     {/* ✅ Capture Now Button (your code) */}
                     <button
@@ -321,7 +321,7 @@ const IPCamera = ({ selectedLocation, roomCode }) => {
 
 
                 {autoSave && (
-                    <p className="text-xs text-blue-600 text-center mt-2 font-medium">
+                    <p className="text-xs text-blue-600 dark:text-blue-400 text-center mt-2 font-medium">
                         {t("Auto-saving every 5 seconds...")}
                     </p>
                 )}

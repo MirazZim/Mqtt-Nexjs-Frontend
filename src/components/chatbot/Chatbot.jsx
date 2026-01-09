@@ -217,9 +217,9 @@ const ChatBot = () => {
     };
 
     return (
-        <div className="w-full max-w-2xl mx-auto mt-8 rounded-2xl shadow-2xl overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200">
+        <div className="w-full max-w-2xl mx-auto mt-8 rounded-2xl shadow-2xl overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 border border-slate-200 dark:border-gray-700 transition-colors duration-300">
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center gap-3 shadow-lg">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 px-6 py-4 flex items-center gap-3 shadow-lg">
                 <div className="bg-white/20 backdrop-blur-sm p-2 rounded-xl">
                     <BsRobot className="text-white text-2xl" />
                 </div>
@@ -244,13 +244,13 @@ const ChatBot = () => {
             {/* Chat Messages */}
             <div
                 ref={chatBoxRef}
-                className="h-[450px] overflow-y-auto px-6 py-4 space-y-4 bg-gradient-to-b from-slate-50 to-white scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent"
+                className="h-[450px] overflow-y-auto px-6 py-4 space-y-4 bg-gradient-to-b from-slate-50 to-white dark:from-gray-800 dark:to-gray-900 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
             >
                 {messages.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full text-center">
-                        <FiMessageSquare className="text-slate-300 text-6xl mb-4" />
-                        <p className="text-slate-400 font-medium">{t("Hello I am UXBD! How can I help you ?")}</p>
-                        <p className="text-slate-300 text-sm mt-2">{t("Ask me about sake brewing fermentation")}</p>
+                        <FiMessageSquare className="text-slate-300 dark:text-gray-600 text-6xl mb-4" />
+                        <p className="text-slate-400 dark:text-gray-400 font-medium">{t("Hello I am UXBD! How can I help you ?")}</p>
+                        <p className="text-slate-300 dark:text-gray-500 text-sm mt-2">{t("Ask me about sake brewing fermentation")}</p>
                     </div>
                 )}
 
@@ -278,30 +278,30 @@ const ChatBot = () => {
                         <div
                             className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg ${msg.sender === "user"
                                 ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-tr-sm"
-                                : "bg-white text-slate-800 border border-slate-200 rounded-tl-sm"
+                                : "bg-white dark:bg-gray-700 text-slate-800 dark:text-gray-200 border border-slate-200 dark:border-gray-600 rounded-tl-sm"
                                 }`}
                         >
                             {msg.isMarkdown && msg.sender === "bot" ? (
                                 <div className="markdown-content text-sm leading-relaxed">
                                     <ReactMarkdown
                                         components={{
-                                            h1: ({ node, ...props }) => <h1 className="text-xl font-bold text-slate-800 mb-3 mt-4 first:mt-0" {...props} />,
-                                            h2: ({ node, ...props }) => <h2 className="text-lg font-bold text-slate-800 mb-2 mt-4 first:mt-0" {...props} />,
-                                            h3: ({ node, ...props }) => <h3 className="text-base font-bold text-slate-800 mb-2 mt-3 first:mt-0" {...props} />,
-                                            p: ({ node, ...props }) => <p className="text-slate-700 mb-2 leading-relaxed" {...props} />,
+                                            h1: ({ node, ...props }) => <h1 className="text-xl font-bold text-slate-800 dark:text-gray-200 mb-3 mt-4 first:mt-0" {...props} />,
+                                            h2: ({ node, ...props }) => <h2 className="text-lg font-bold text-slate-800 dark:text-gray-200 mb-2 mt-4 first:mt-0" {...props} />,
+                                            h3: ({ node, ...props }) => <h3 className="text-base font-bold text-slate-800 dark:text-gray-200 mb-2 mt-3 first:mt-0" {...props} />,
+                                            p: ({ node, ...props }) => <p className="text-slate-700 dark:text-gray-300 mb-2 leading-relaxed" {...props} />,
                                             ul: ({ node, ...props }) => <ul className="list-disc pl-5 my-2 space-y-1" {...props} />,
                                             ol: ({ node, ...props }) => <ol className="list-decimal pl-5 my-2 space-y-1" {...props} />,
-                                            li: ({ node, ...props }) => <li className="text-slate-700 leading-relaxed" {...props} />,
-                                            strong: ({ node, ...props }) => <strong className="font-semibold text-slate-900" {...props} />,
-                                            em: ({ node, ...props }) => <em className="italic text-slate-700" {...props} />,
+                                            li: ({ node, ...props }) => <li className="text-slate-700 dark:text-gray-300 leading-relaxed" {...props} />,
+                                            strong: ({ node, ...props }) => <strong className="font-semibold text-slate-900 dark:text-gray-100" {...props} />,
+                                            em: ({ node, ...props }) => <em className="italic text-slate-700 dark:text-gray-300" {...props} />,
                                             code: ({ node, inline, ...props }) =>
                                                 inline ? (
-                                                    <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono text-slate-800" {...props} />
+                                                    <code className="bg-slate-100 dark:bg-gray-600 px-1.5 py-0.5 rounded text-xs font-mono text-slate-800 dark:text-gray-200" {...props} />
                                                 ) : (
-                                                    <code className="block bg-slate-100 p-3 rounded-lg text-xs font-mono text-slate-800 my-2 overflow-x-auto" {...props} />
+                                                    <code className="block bg-slate-100 dark:bg-gray-600 p-3 rounded-lg text-xs font-mono text-slate-800 dark:text-gray-200 my-2 overflow-x-auto" {...props} />
                                                 ),
-                                            blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-slate-300 pl-4 italic text-slate-600 my-2" {...props} />,
-                                            a: ({ node, ...props }) => <a className="text-blue-600 hover:text-blue-700 underline" {...props} />,
+                                            blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-slate-300 dark:border-gray-500 pl-4 italic text-slate-600 dark:text-gray-400 my-2" {...props} />,
+                                            a: ({ node, ...props }) => <a className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline" {...props} />,
                                         }}
                                     >
                                         {msg.text}
@@ -322,11 +322,11 @@ const ChatBot = () => {
                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-md">
                             <BsRobot className="text-white text-xl" />
                         </div>
-                        <div className="bg-white px-5 py-3 rounded-2xl rounded-tl-sm border border-slate-200 shadow-md">
+                        <div className="bg-white dark:bg-gray-700 px-5 py-3 rounded-2xl rounded-tl-sm border border-slate-200 dark:border-gray-600 shadow-md">
                             <div className="flex gap-1.5">
-                                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-                                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-                                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+                                <span className="w-2 h-2 bg-slate-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                                <span className="w-2 h-2 bg-slate-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                                <span className="w-2 h-2 bg-slate-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
                             </div>
                         </div>
                     </div>
@@ -334,7 +334,7 @@ const ChatBot = () => {
             </div>
 
             {/* Input Area */}
-            <div className="bg-white border-t border-slate-200 px-6 py-4">
+            <div className="bg-white dark:bg-gray-800 border-t border-slate-200 dark:border-gray-700 px-6 py-4">
                 <div className="flex items-center gap-3">
                     <div className="flex-1 relative">
                         <textarea
@@ -344,7 +344,7 @@ const ChatBot = () => {
                                     el.style.height = Math.min(el.scrollHeight, 120) + 'px';
                                 }
                             }}
-                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none resize-none transition-all duration-200 text-slate-800 placeholder-slate-400 shadow-sm scrollbar-thin scrollbar-thumb-slate-300"
+                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/30 outline-none resize-none transition-all duration-200 text-slate-800 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 shadow-sm scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-gray-600"
                             value={input}
                             onChange={(e) => {
                                 setInput(e.target.value);
@@ -365,7 +365,7 @@ const ChatBot = () => {
                     <button
                         className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 shadow-lg ${input.trim() && !isLoading
                             ? "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white hover:shadow-xl transform hover:scale-105 active:scale-95"
-                            : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                            : "bg-slate-200 dark:bg-gray-600 text-slate-400 dark:text-gray-400 cursor-not-allowed"
                             }`}
                         onClick={sendMessage}
                         disabled={!input.trim() || isLoading}

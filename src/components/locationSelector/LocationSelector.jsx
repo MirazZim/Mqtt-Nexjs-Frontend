@@ -1148,8 +1148,8 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
 
     if (loading) {
         return (
-            <div className="bg-white rounded-lg shadow-lg p-4">
-                <p className="text-gray-600">{t('Loading locations...')}</p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4">
+                <p className="text-gray-600 dark:text-gray-400">{t('Loading locations...')}</p>
             </div>
         );
     }
@@ -1158,18 +1158,18 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
         <div className="relative group location-selector-wrapper">
             <div
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="lg:pointer-events-none bg-linear-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white px-5 py-3 rounded-lg cursor-pointer transition-all duration-200 flex items-center gap-3 min-w-[280px] shadow-lg">
-                <FaMapMarkerAlt className="text-teal-200 text-xl" />
+                className="lg:pointer-events-none bg-linear-to-r from-teal-600 to-teal-700 dark:from-gray-700 dark:to-gray-800 hover:from-teal-700 hover:to-teal-800 dark:hover:from-gray-600 dark:hover:to-gray-700 text-white px-5 py-3 rounded-lg cursor-pointer transition-all duration-200 flex items-center gap-3 min-w-[280px] shadow-lg">
+                <FaMapMarkerAlt className="text-teal-200 dark:text-gray-400 text-xl" />
                 <div className="flex-1">
                     <div className="text-sm font-semibold">
                         {locations.find(loc => loc.location === selectedLocation)?.location || t('Select Location')}
                     </div>
-                    <div className="text-xs text-teal-200">
+                    <div className="text-xs text-teal-200 dark:text-gray-400">
                         {locations.find(loc => loc.location === selectedLocation)?.room_id || t('No room selected')}
                     </div>
                 </div>
                 <svg
-                    className={`w-5 h-5 text-teal-200 transition-transform ${isDropdownOpen ? 'rotate-180' : ''} lg:group-hover:rotate-180`}
+                    className={`w-5 h-5 text-teal-200 dark:text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''} lg:group-hover:rotate-180`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -1178,7 +1178,7 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                 </svg>
             </div>
 
-            <div className={`absolute top-full left-0 mt-2 w-full min-w-[350px] bg-white rounded-lg shadow-2xl transition-all duration-200 z-50 max-h-[500px] overflow-y-auto
+            <div className={`absolute top-full left-0 mt-2 w-full min-w-[350px] bg-white dark:bg-gray-800 rounded-lg shadow-2xl transition-all duration-200 z-50 max-h-[500px] overflow-y-auto border dark:border-gray-700
                 ${isDropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}
                 lg:opacity-0 lg:invisible lg:group-hover:opacity-100 lg:group-hover:visible`}>
 
@@ -1186,26 +1186,26 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                     {locations.map((loc, index) => (
                         <div
                             key={`${loc.location}-${index}`}
-                            className={`group/item px-4 py-3 hover:bg-teal-50 transition-colors border-l-4 ${selectedLocation === loc.location
-                                ? 'border-teal-600 bg-teal-50'
+                            className={`group/item px-4 py-3 hover:bg-teal-50 dark:hover:bg-gray-700 transition-colors border-l-4 ${selectedLocation === loc.location
+                                ? 'border-teal-600 bg-teal-50 dark:bg-gray-700'
                                 : 'border-transparent'
                                 }`}
                         >
                             <div className="flex items-start gap-3">
-                                <FaMapMarkerAlt className={`mt-1 ${selectedLocation === loc.location ? 'text-teal-600' : 'text-gray-400'
+                                <FaMapMarkerAlt className={`mt-1 ${selectedLocation === loc.location ? 'text-teal-600 dark:text-teal-400' : 'text-gray-400 dark:text-gray-500'
                                     }`} />
 
                                 <div className="flex-1 cursor-pointer" onClick={() => onLocationChange(loc.location)}>
                                     <div className="flex items-center justify-between">
-                                        <span className={`font-medium ${selectedLocation === loc.location ? 'text-teal-700' : 'text-gray-800'
+                                        <span className={`font-medium ${selectedLocation === loc.location ? 'text-teal-700 dark:text-teal-400' : 'text-gray-800 dark:text-gray-200'
                                             }`}>
                                             {loc.location}
                                         </span>
-                                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                                        <span className="text-xs bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
                                             {loc.measurement_count || 0}
                                         </span>
                                     </div>
-                                    <div className="text-xs text-gray-500 mt-1">
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                         {t('Room ID')}: {loc.room_id}
                                     </div>
                                 </div>
@@ -1216,20 +1216,20 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                                             e.stopPropagation();
                                             handleConfigureRoom(loc);
                                         }}
-                                        className="p-2 hover:bg-teal-100 rounded-lg transition-colors"
+                                        className="p-2 hover:bg-teal-100 dark:hover:bg-teal-900/30 rounded-lg transition-colors"
                                         title={t('Configure MQTT Topics')}
                                     >
-                                        <FaCog className="text-teal-600 text-sm" />
+                                        <FaCog className="text-teal-600 dark:text-teal-400 text-sm" />
                                     </button>
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleDeleteRoom(loc.room_id, loc.location);
                                         }}
-                                        className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                                        className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                                         title={t('Delete Room')}
                                     >
-                                        <FaTrash className="text-red-600 text-sm" />
+                                        <FaTrash className="text-red-600 dark:text-red-400 text-sm" />
                                     </button>
                                 </div>
                             </div>
@@ -1237,17 +1237,17 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                     ))}
                 </div>
 
-                <div className="border-t border-gray-200"></div>
+                <div className="border-t border-gray-200 dark:border-gray-700"></div>
 
                 {isAdding ? (
-                    <div className="p-4 bg-gray-50">
+                    <div className="p-4 bg-gray-50 dark:bg-gray-700/50">
                         <input
                             type="text"
                             value={newLocationName}
                             onChange={(e) => setNewLocationName(e.target.value)}
                             placeholder={t('Enter room name (e.g., Fermentation Tank 1)')}
                             maxLength={50}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-sm"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200"
                             onKeyPress={(e) => e.key === 'Enter' && handleCreateRoomClick()}
                             autoFocus
                         />
@@ -1259,7 +1259,7 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                                 {t('Next: Configure MQTT →')}
                             </button>
                             <button
-                                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-colors"
+                                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition-colors"
                                 onClick={() => {
                                     setIsAdding(false);
                                     setNewLocationName('');
@@ -1271,7 +1271,7 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                     </div>
                 ) : (
                     <button
-                        className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 text-teal-600 font-medium"
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 text-teal-600 dark:text-teal-400 font-medium"
                         onClick={() => setIsAdding(true)}
                     >
                         <FaPlus className="text-sm" />

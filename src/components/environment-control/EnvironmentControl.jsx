@@ -1259,24 +1259,24 @@ const EnvironmentControl = ({ selectedLocation }) => {
             {/* Fan Speed Control - Fully Dynamic */}
             {isLoadingActuators ? (
                 // Loading State
-                <div className="bg-white rounded-lg md:rounded-xl border border-gray-100 p-8 flex items-center justify-center">
+                <div className="bg-white dark:bg-gray-800 rounded-lg md:rounded-xl border border-gray-100 dark:border-gray-700 p-8 flex items-center justify-center">
                     <div className="flex flex-col items-center gap-2">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
-                        <div className="text-sm text-gray-500">{t('Loading actuators...')}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{t('Loading actuators...')}</div>
                     </div>
                 </div>
             ) : !fanSpeedActuator ? (
                 // No Actuator Found State
-                <div className="bg-white rounded-lg md:rounded-xl border border-gray-100 hover:border-gray-200 transition-all duration-300 overflow-hidden">
+                <div className="bg-white dark:bg-gray-800 rounded-lg md:rounded-xl border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-300 overflow-hidden">
                     <div className="p-8">
                         <div className="text-center">
-                            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
-                                <FaWind className="text-gray-400 text-xl" />
+                            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                                <FaWind className="text-gray-400 dark:text-gray-500 text-xl" />
                             </div>
-                            <h3 className="text-sm font-medium text-gray-700 mb-1">
+                            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 {t('Fan Speed Control Not Available')}
                             </h3>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
                                 {t('This room does not have a fan speed controller configured')}
                             </p>
                         </div>
@@ -1284,7 +1284,7 @@ const EnvironmentControl = ({ selectedLocation }) => {
                 </div>
             ) : (
                 // Fan Speed Control Card - Knob Style
-                <div className="bg-white rounded-lg md:rounded-xl border border-gray-100 hover:border-gray-200 transition-all duration-300 overflow-hidden">
+                <div className="bg-white dark:bg-gray-800 rounded-lg md:rounded-xl border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-300 overflow-hidden">
                     <div className="p-3 md:p-5">
                         {/* Card Header - Dynamic */}
                         <div className="flex items-start justify-between mb-3 md:mb-4">
@@ -1293,33 +1293,33 @@ const EnvironmentControl = ({ selectedLocation }) => {
                                     <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center">
                                         <FaWind className="text-white text-sm md:text-base" />
                                     </div>
-                                    <h3 className="text-sm md:text-base font-medium text-gray-900">
+                                    <h3 className="text-sm md:text-base font-medium text-gray-900 dark:text-gray-100">
                                         {fanSpeedActuator.actuator_name}
                                     </h3>
                                 </div>
                                 {/* Show topic for debugging/info */}
-                                <div className="text-[10px] text-gray-400 ml-9">
+                                <div className="text-[10px] text-gray-400 dark:text-gray-500 ml-9">
                                     {fanSpeedActuator.mqtt_topic}
                                 </div>
                             </div>
 
                             {/* Status Indicator */}
                             <div className={`px-2 py-1 md:px-2.5 md:py-1.5 rounded-full text-[10px] md:text-xs font-medium ${fanKnobValue > 0
-                                ? 'bg-cyan-50 text-cyan-700'
-                                : 'bg-gray-100 text-gray-500'
+                                ? 'bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                                 }`}>
                                 {fanKnobValue > 0 ? `${fanKnobValue}%` : t('Off')}
                             </div>
                         </div>
 
                         {/* Current Speed Display */}
-                        <div className="mb-3 md:mb-4 pb-3 md:pb-4 border-b border-gray-50">
+                        <div className="mb-3 md:mb-4 pb-3 md:pb-4 border-b border-gray-50 dark:border-gray-700">
                             <div className="flex items-center justify-between text-xs md:text-sm">
-                                <span className="text-gray-500">{t('Current Speed')}</span>
-                                <span className="font-medium text-gray-900">{fanKnobValue}%</span>
+                                <span className="text-gray-500 dark:text-gray-400">{t('Current Speed')}</span>
+                                <span className="font-medium text-gray-900 dark:text-gray-100">{fanKnobValue}%</span>
                             </div>
                             <div className="mt-1.5">
-                                <div className="h-0.5 md:h-1 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="h-0.5 md:h-1 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                                     <div
                                         className="h-full bg-gradient-to-r from-blue-400 to-cyan-500 transition-all duration-500"
                                         style={{ width: `${fanKnobValue}%` }}
@@ -1339,7 +1339,7 @@ const EnvironmentControl = ({ selectedLocation }) => {
                                         cy="80"
                                         r="70"
                                         fill="none"
-                                        stroke="#f3f4f6"
+                                        className="stroke-gray-200 dark:stroke-gray-700"
                                         strokeWidth="2"
                                     />
 
@@ -1368,7 +1368,7 @@ const EnvironmentControl = ({ selectedLocation }) => {
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <div
                                         ref={fanKnobRef}
-                                        className={`relative w-24 h-24 md:w-28 md:h-28 rounded-full bg-white shadow-lg cursor-grab active:cursor-grabbing transition-all duration-200 ${fanIsDragging ? 'scale-105 shadow-xl' : ''
+                                        className={`relative w-24 h-24 md:w-28 md:h-28 rounded-full bg-white dark:bg-gray-700 shadow-lg cursor-grab active:cursor-grabbing transition-all duration-200 ${fanIsDragging ? 'scale-105 shadow-xl' : ''
                                             } ${fanIsHovering ? 'shadow-xl' : ''} ${!realTimeStatus.connected || !realTimeStatus.sensorActive ? 'opacity-40 cursor-not-allowed' : ''
                                             }`}
                                         style={{
@@ -1384,8 +1384,8 @@ const EnvironmentControl = ({ selectedLocation }) => {
 
                                         {/* Center value */}
                                         <div className="absolute inset-0 flex items-center justify-center flex-col">
-                                            <span className="text-xl md:text-2xl font-light text-gray-900">{fanKnobValue}</span>
-                                            <span className="text-[9px] md:text-xs text-gray-400 uppercase tracking-wider">%</span>
+                                            <span className="text-xl md:text-2xl font-light text-gray-900 dark:text-gray-100">{fanKnobValue}</span>
+                                            <span className="text-[9px] md:text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider">%</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1396,7 +1396,7 @@ const EnvironmentControl = ({ selectedLocation }) => {
                                 <button
                                     onClick={() => handleFanValueChange({ target: { value: fanKnobValue - 5 } })}
                                     disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                    className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gray-50 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-gray-600"
+                                    className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-gray-600 dark:text-gray-300"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
@@ -1410,13 +1410,13 @@ const EnvironmentControl = ({ selectedLocation }) => {
                                     value={fanKnobValue}
                                     onChange={handleFanValueChange}
                                     disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                    className="w-16 md:w-18 px-3 py-1.5 md:py-2 text-center text-base md:text-lg font-light bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                    className="w-16 md:w-18 px-3 py-1.5 md:py-2 text-center text-base md:text-lg font-light bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-gray-900 dark:text-gray-100"
                                 />
 
                                 <button
                                     onClick={() => handleFanValueChange({ target: { value: fanKnobValue + 5 } })}
                                     disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                    className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gray-50 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-gray-600"
+                                    className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-gray-600 dark:text-gray-300"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1429,28 +1429,28 @@ const EnvironmentControl = ({ selectedLocation }) => {
                                 <button
                                     onClick={() => handleFanValueChange({ target: { value: 0 } })}
                                     disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                    className="px-3 py-1.5 text-xs font-medium bg-gray-50 hover:bg-gray-100 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="px-3 py-1.5 text-xs font-medium bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >
                                     {t('OFF')}
                                 </button>
                                 <button
                                     onClick={() => handleFanValueChange({ target: { value: 25 } })}
                                     disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                    className="px-3 py-1.5 text-xs font-medium bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="px-3 py-1.5 text-xs font-medium bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-400 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >
                                     {t('LOW')} (25%)
                                 </button>
                                 <button
                                     onClick={() => handleFanValueChange({ target: { value: 50 } })}
                                     disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                    className="px-3 py-1.5 text-xs font-medium bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="px-3 py-1.5 text-xs font-medium bg-cyan-50 dark:bg-cyan-900/30 hover:bg-cyan-100 dark:hover:bg-cyan-900/50 text-cyan-700 dark:text-cyan-400 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >
                                     {t('MEDIUM')} (50%)
                                 </button>
                                 <button
                                     onClick={() => handleFanValueChange({ target: { value: 100 } })}
                                     disabled={!realTimeStatus.connected || !realTimeStatus.sensorActive}
-                                    className="px-3 py-1.5 text-xs font-medium bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="px-3 py-1.5 text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >
                                     {t('HIGH')} (100%)
                                 </button>
@@ -1459,8 +1459,8 @@ const EnvironmentControl = ({ selectedLocation }) => {
                             {/* Status Message */}
                             {fanPublishStatus && (
                                 <div className={`text-[10px] md:text-xs px-3 py-1.5 rounded-full ${fanPublishStatus.includes('✅')
-                                    ? 'bg-cyan-50 text-cyan-700'
-                                    : 'bg-red-50 text-red-700'
+                                    ? 'bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400'
+                                    : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                                     }`}>
                                     {fanPublishStatus}
                                 </div>

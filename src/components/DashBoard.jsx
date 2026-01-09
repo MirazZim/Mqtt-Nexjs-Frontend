@@ -83,6 +83,28 @@ const Dashboard = () => {
     const [locationsData, setLocationsData] = useState(null);
     const [isLoadingLocations, setIsLoadingLocations] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const savedMode = localStorage.getItem('darkMode');
+            return savedMode === 'true';
+        }
+        return false;
+    });
+
+    // Apply dark mode class to document
+    useEffect(() => {
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        localStorage.setItem('darkMode', isDarkMode.toString());
+    }, [isDarkMode]);
+
+    const toggleDarkMode = () => {
+        setIsDarkMode(prev => !prev);
+    };
+
     // Language switching function
     const changeLanguage = (newLang) => {
         const currentPath = pathname.split('/').slice(2).join('/'); // Remove language prefix
@@ -177,20 +199,37 @@ const Dashboard = () => {
     };
 
     return (
-        <div className="h-screen flex flex-col bg-gray-100 overflow-hidden w-[95vw] mx-auto rounded-lg border">
+        <div className="h-screen flex flex-col bg-gray-100 dark:bg-gray-900 overflow-hidden w-[95vw] mx-auto rounded-lg border dark:border-gray-700 transition-colors duration-300">
             {/* Compact Top Header */}
-            <div className="bg-linear-to-r from-teal-700 via-teal-600 to-blue-600 px-2 md:px-3 lg:px-4 py-1.5 md:py-1.5 lg:py-2 flex items-center justify-between shadow-lg">
+            <div className="bg-linear-to-r from-teal-700 via-teal-600 to-blue-600 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 px-2 md:px-3 lg:px-4 py-1.5 md:py-1.5 lg:py-2 flex items-center justify-between shadow-lg transition-colors duration-300">
                 <h1 className="text-white text-sm md:text-base lg:text-xl font-bold tracking-wide">
                     {t('Sake Brewing Monitoring System')}
                 </h1>
 
                 <div className="flex items-center gap-1.5 md:gap-2 lg:gap-3">
+                    {/* Dark/Light Mode Toggle */}
+                    <button
+                        onClick={toggleDarkMode}
+                        className="flex items-center justify-center w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-105 active:scale-95"
+                        aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                    >
+                        {isDarkMode ? (
+                            <svg className="w-4 h-4 md:w-5 md:h-5 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                            </svg>
+                        ) : (
+                            <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                            </svg>
+                        )}
+                    </button>
+
                     {/* Eye-catching Language Switcher - Extra Small on Mobile */}
                     <div className="hidden lg:flex items-center gap-0.5 bg-white/10 backdrop-blur-lg rounded-2xl p-1.5 border border-white/20 shadow-2xl">
                         <button
                             onClick={() => changeLanguage('en')}
                             className={`px-4 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 transform hover:scale-105 ${lng === 'en'
-                                ? 'bg-white text-cyan-600 shadow-lg shadow-cyan-500/40 ring-2 ring-white'
+                                ? 'bg-white text-cyan-600 shadow-lg shadow-cyan-500/40 ring-2 ring-white dark:bg-gray-200 dark:text-cyan-700'
                                 : 'text-white hover:bg-cyan-500/30 hover:text-cyan-100 border border-transparent hover:border-cyan-400/50'
                                 }`}
                         >
@@ -200,7 +239,7 @@ const Dashboard = () => {
                         <button
                             onClick={() => changeLanguage('ja')}
                             className={`px-4 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 transform hover:scale-105 ${lng === 'ja'
-                                ? 'bg-white text-pink-600 shadow-lg shadow-pink-500/40 ring-2 ring-white'
+                                ? 'bg-white text-pink-600 shadow-lg shadow-pink-500/40 ring-2 ring-white dark:bg-gray-200 dark:text-pink-700'
                                 : 'text-white hover:bg-pink-500/30 hover:text-pink-100 border border-transparent hover:border-pink-400/50'
                                 }`}
                         >
@@ -212,7 +251,7 @@ const Dashboard = () => {
                     <div className="relative group">
                         <button
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                            className="flex items-center gap-1 md:gap-1.5 lg:gap-2 px-2 md:px-2.5 lg:px-3 py-1 md:py-1 lg:py-1.5 text-white text-xs md:text-xs lg:text-sm font-medium rounded hover:bg-teal-700 transition-colors"
+                            className="flex items-center gap-1 md:gap-1.5 lg:gap-2 px-2 md:px-2.5 lg:px-3 py-1 md:py-1 lg:py-1.5 text-white text-xs md:text-xs lg:text-sm font-medium rounded hover:bg-teal-700 dark:hover:bg-gray-600 transition-colors"
                         >
                             <svg className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -233,12 +272,12 @@ const Dashboard = () => {
 
                         {/* Dropdown Content - Click for Mobile/Tablet, Hover for Desktop */}
                         <div className={`
-                        absolute right-0 top-full mt-2 w-60 md:w-72 lg:w-80 bg-white rounded-lg shadow-2xl border border-gray-200 z-50 transition-all duration-300
+                        absolute right-0 top-full mt-2 w-60 md:w-72 lg:w-80 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 z-50 transition-all duration-300
                         ${isDropdownOpen ? 'opacity-100 visible lg:opacity-0 lg:invisible' : 'opacity-0 invisible'}
                         lg:group-hover:opacity-100 lg:group-hover:visible
                     `}>
                             <div className="p-2 md:p-2.5 lg:p-3">
-                                <h3 className="text-xs md:text-xs lg:text-sm font-semibold text-gray-800 mb-2 pb-2 border-b border-gray-200">
+                                <h3 className="text-xs md:text-xs lg:text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 pb-2 border-b border-gray-200 dark:border-gray-700">
                                     {t('Device Status')}
                                 </h3>
                                 <DeviceStatus selectedLocation={selectedLocation} />
@@ -249,7 +288,7 @@ const Dashboard = () => {
             </div>
 
             {/* Compact Sub-header */}
-            <div className="bg-teal-800 px-2 md:px-3 lg:px-4 py-1.5 md:py-1.5 lg:py-2 flex items-center justify-between shadow-md">
+            <div className="bg-teal-800 dark:bg-gray-800 px-2 md:px-3 lg:px-4 py-1.5 md:py-1.5 lg:py-2 flex items-center justify-between shadow-md transition-colors duration-300">
                 <div className="flex items-center gap-2 md:gap-3 lg:gap-4">
                     <LocationSelector
                         selectedLocation={selectedLocation}
@@ -264,13 +303,13 @@ const Dashboard = () => {
                     {/* LEFT COLUMN - Sensors & Controls */}
                     <div className="col-span-3 space-y-2 overflow-y-auto">
                         {/* Current Environment */}
-                        <div className="bg-white rounded-lg shadow-md p-2">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-2 transition-colors duration-300">
                             <CurrentEnvironment selectedLocation={selectedLocation} />
                         </div>
 
                         {/* Environment Control */}
-                        <div className="bg-white rounded-lg shadow-md p-3">
-                            <h3 className="text-sm font-semibold text-gray-800 mb-2">{t('Environment Control')}</h3>
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 transition-colors duration-300">
+                            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">{t('Environment Control')}</h3>
                             <EnvironmentControl
                                 selectedLocation={selectedLocation}
                                 targetTemperature={targetTemperature}
@@ -288,9 +327,9 @@ const Dashboard = () => {
                             />
 
                             {/* Temperature Chart */}
-                            <div className="bg-white rounded-lg shadow-md p-3 text-black">
+                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 text-black dark:text-white transition-colors duration-300">
                                 <div className="flex items-center justify-between">
-                                    <h2 className="text-base font-semibold text-gray-800">{t('Temperature')}</h2>
+                                    <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">{t('Temperature')}</h2>
                                 </div>
                                 <Suspense fallback={<ChartLoader />}>
                                     <EnvironmentChart
@@ -303,9 +342,9 @@ const Dashboard = () => {
 
                             {/* Spatial Temperature Map */}
                             {showHeavyComponents ? (
-                                <div className="bg-white rounded-lg shadow-md p-1">
+                                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-1 transition-colors duration-300">
                                     {isLoadingLocations ? (
-                                        <div className="flex justify-center items-center h-[400px] text-base text-gray-600 bg-gray-50 rounded-lg">
+                                        <div className="flex justify-center items-center h-[400px] text-base text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                             <i className="fas fa-spinner fa-spin mr-2"></i>
                                             {t('Loading temperature data...')}
                                         </div>
@@ -316,8 +355,8 @@ const Dashboard = () => {
                                     )}
                                 </div>
                             ) : (
-                                <div className="bg-gray-50 rounded-lg shadow-md h-[400px] flex justify-center items-center">
-                                    <div className="text-center text-gray-600">
+                                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow-md h-[400px] flex justify-center items-center transition-colors duration-300">
+                                    <div className="text-center text-gray-600 dark:text-gray-400">
                                         <i className="fas fa-hourglass-half fa-2x mb-2"></i>
                                         <div>{t('Loading advanced features...')}</div>
                                     </div>
@@ -329,8 +368,8 @@ const Dashboard = () => {
                     {/* RIGHT COLUMN - New Sensors Section */}
                     <div className="col-span-3 space-y-2 overflow-y-auto">
                         {/* New Sensors Card 1 */}
-                        <div className="bg-white rounded-lg shadow-md p-3">
-                            <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 transition-colors duration-300">
+                            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
                                 <span className="text-base">📊</span>
                                 {t('Additional Sensors')}
                             </h3>
@@ -339,45 +378,45 @@ const Dashboard = () => {
                         </div>
 
                         {/* New Sensors Card 2 */}
-                        <div className="bg-white rounded-lg shadow-md p-3">
-                            <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 transition-colors duration-300">
+                            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
                                 <span className="text-base">⚡</span>
                                 {t('Power Monitoring')}
                             </h3>
                             <div className="space-y-2">
-                                <div className="bg-gray-50 rounded-md p-2 border border-gray-200">
+                                <div className="bg-gray-50 dark:bg-gray-700 rounded-md p-2 border border-gray-200 dark:border-gray-600">
                                     <div className="flex items-center justify-between mb-1">
-                                        <span className="text-xs font-medium text-gray-700">{t('Voltage')}</span>
+                                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{t('Voltage')}</span>
                                         <span className="inline-flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
                                     </div>
-                                    <div className="text-lg font-bold text-purple-600">220V</div>
-                                    <div className="text-xs text-gray-500 mt-1">{t('Stable')}</div>
+                                    <div className="text-lg font-bold text-purple-600 dark:text-purple-400">220V</div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('Stable')}</div>
                                 </div>
 
-                                <div className="bg-gray-50 rounded-md p-2 border border-gray-200">
+                                <div className="bg-gray-50 dark:bg-gray-700 rounded-md p-2 border border-gray-200 dark:border-gray-600">
                                     <div className="flex items-center justify-between mb-1">
-                                        <span className="text-xs font-medium text-gray-700">{t('Current')}</span>
+                                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{t('Current')}</span>
                                         <span className="inline-flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
                                     </div>
-                                    <div className="text-lg font-bold text-orange-600">2.4A</div>
-                                    <div className="text-xs text-gray-500 mt-1">{t('Normal')}</div>
+                                    <div className="text-lg font-bold text-orange-600 dark:text-orange-400">2.4A</div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('Normal')}</div>
                                 </div>
                             </div>
                         </div>
 
                         {/* New Sensors Card 3 */}
-                        <div className="bg-white rounded-lg shadow-md p-3">
-                            <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 transition-colors duration-300">
+                            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
                                 <span className="text-base">🔔</span>
                                 {t('System Alerts')}
                             </h3>
                             <div className="space-y-1.5">
-                                <div className="bg-green-50 border border-green-200 rounded-md p-2">
+                                <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-md p-2">
                                     <div className="flex items-center gap-1.5">
-                                        <span className="text-green-600 text-xs">✓</span>
-                                        <span className="text-xs text-gray-700">{t('All systems operational')}</span>
+                                        <span className="text-green-600 dark:text-green-400 text-xs">✓</span>
+                                        <span className="text-xs text-gray-700 dark:text-gray-300">{t('All systems operational')}</span>
                                     </div>
-                                    <div className="text-xs text-gray-500 mt-0.5">{t('Updated 2 min ago')}</div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('Updated 2 min ago')}</div>
                                 </div>
                             </div>
                         </div>
@@ -385,22 +424,22 @@ const Dashboard = () => {
                 </div>
 
                 {/* MOBILE/TABLET LAYOUT - Glassy Design (< 1024px) */}
-                <div className="lg:hidden flex flex-col h-full relative bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+                <div className="lg:hidden flex flex-col h-full relative bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
                     {/* Content Area - Scrollable */}
                     <div className="flex-1 overflow-y-auto pb-24 pt-2">
                         {/* LEFT COLUMN CONTENT - Controls */}
                         {activeTab === 'left' && (
                             <div className="space-y-4 tab-content px-2">
                                 {/* Current Environment */}
-                                <div className="glass-card rounded-2xl p-4">
+                                <div className="glass-card dark:glass-card-dark rounded-2xl p-4">
                                     <CurrentEnvironment selectedLocation={selectedLocation} />
                                 </div>
 
                                 {/* Environment Control */}
-                                <div className="glass-card rounded-2xl p-4">
-                                    <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                <div className="glass-card dark:glass-card-dark rounded-2xl p-4">
+                                    <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
                                         <span className="text-2xl">🎛️</span>
-                                        <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                        <span className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
                                             {t('Environment Control')}
                                         </span>
                                     </h3>
@@ -416,7 +455,7 @@ const Dashboard = () => {
                         {/* MIDDLE COLUMN CONTENT - Charts */}
                         {activeTab === 'middle' && (
                             <div className="space-y-4 tab-content px-2">
-                                <div className="glass-card rounded-2xl p-4">
+                                <div className="glass-card dark:glass-card-dark rounded-2xl p-4">
                                     <FermentationResult
                                         socket={socket}
                                         selectedLocation={selectedLocation}
@@ -424,11 +463,11 @@ const Dashboard = () => {
                                 </div>
 
                                 {/* Temperature Chart */}
-                                <div className="glass-card rounded-2xl p-4">
+                                <div className="glass-card dark:glass-card-dark rounded-2xl p-4">
                                     <div className="flex items-center justify-between mb-3">
-                                        <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                                        <h2 className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                                             <span className="text-2xl">🌡️</span>
-                                            <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                                            <span className="bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-400 dark:to-red-400 bg-clip-text text-transparent">
                                                 {t('Temperature')}
                                             </span>
                                         </h2>
@@ -444,9 +483,9 @@ const Dashboard = () => {
 
                                 {/* Spatial Temperature Map */}
                                 {showHeavyComponents ? (
-                                    <div className="glass-card rounded-2xl p-3">
+                                    <div className="glass-card dark:glass-card-dark rounded-2xl p-3">
                                         {isLoadingLocations ? (
-                                            <div className="flex justify-center items-center h-[300px] text-base text-gray-700">
+                                            <div className="flex justify-center items-center h-[300px] text-base text-gray-700 dark:text-gray-300">
                                                 <i className="fas fa-spinner fa-spin mr-2"></i>
                                                 {t('Loading temperature data...')}
                                             </div>
@@ -457,8 +496,8 @@ const Dashboard = () => {
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="glass-card rounded-2xl h-[300px] flex justify-center items-center">
-                                        <div className="text-center text-gray-700">
+                                    <div className="glass-card dark:glass-card-dark rounded-2xl h-[300px] flex justify-center items-center">
+                                        <div className="text-center text-gray-700 dark:text-gray-300">
                                             <i className="fas fa-hourglass-half fa-2x mb-2"></i>
                                             <div className="text-sm font-medium">{t('Loading advanced features...')}</div>
                                         </div>
@@ -471,10 +510,10 @@ const Dashboard = () => {
                         {activeTab === 'right' && (
                             <div className="space-y-4 tab-content px-2">
                                 {/* Additional Sensors Card */}
-                                <div className="glass-card rounded-2xl p-4">
-                                    <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                <div className="glass-card dark:glass-card-dark rounded-2xl p-4">
+                                    <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
                                         <span className="text-2xl">📊</span>
-                                        <span className="bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
+                                        <span className="bg-gradient-to-r from-green-600 to-teal-600 dark:from-green-400 dark:to-teal-400 bg-clip-text text-transparent">
                                             {t('Additional Sensors')}
                                         </span>
                                     </h3>
@@ -483,53 +522,53 @@ const Dashboard = () => {
                                 </div>
 
                                 {/* Power Monitoring Card */}
-                                <div className="glass-card rounded-2xl p-4">
-                                    <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <div className="glass-card dark:glass-card-dark rounded-2xl p-4">
+                                    <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
                                         <span className="text-2xl">⚡</span>
-                                        <span className="bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                                        <span className="bg-gradient-to-r from-yellow-600 to-orange-600 dark:from-yellow-400 dark:to-orange-400 bg-clip-text text-transparent">
                                             {t('Power Monitoring')}
                                         </span>
                                     </h3>
                                     <div className="grid grid-cols-2 gap-3">
-                                        <div className="glass-card rounded-xl p-3 glow-effect">
+                                        <div className="glass-card dark:glass-card-dark rounded-xl p-3 glow-effect">
                                             <div className="flex items-center justify-between mb-2">
-                                                <span className="text-xs font-semibold text-gray-700">{t('Voltage')}</span>
+                                                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{t('Voltage')}</span>
                                                 <span className="inline-flex h-2.5 w-2.5 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 animate-pulse shadow-lg shadow-green-500/50"></span>
                                             </div>
-                                            <div className="text-3xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                            <div className="text-3xl font-black bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
                                                 220V
                                             </div>
-                                            <div className="text-xs text-gray-600 mt-1 font-semibold">{t('Stable')}</div>
+                                            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 font-semibold">{t('Stable')}</div>
                                         </div>
 
-                                        <div className="glass-card rounded-xl p-3 glow-effect">
+                                        <div className="glass-card dark:glass-card-dark rounded-xl p-3 glow-effect">
                                             <div className="flex items-center justify-between mb-2">
-                                                <span className="text-xs font-semibold text-gray-700">{t('Current')}</span>
+                                                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{t('Current')}</span>
                                                 <span className="inline-flex h-2.5 w-2.5 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 animate-pulse shadow-lg shadow-green-500/50"></span>
                                             </div>
-                                            <div className="text-3xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                                            <div className="text-3xl font-black bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-400 dark:to-red-400 bg-clip-text text-transparent">
                                                 2.4A
                                             </div>
-                                            <div className="text-xs text-gray-600 mt-1 font-semibold">{t('Normal')}</div>
+                                            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 font-semibold">{t('Normal')}</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* System Alerts Card */}
-                                <div className="glass-card rounded-2xl p-4">
-                                    <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                <div className="glass-card dark:glass-card-dark rounded-2xl p-4">
+                                    <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
                                         <span className="text-2xl">🔔</span>
-                                        <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                                        <span className="bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent">
                                             {t('System Alerts')}
                                         </span>
                                     </h3>
                                     <div className="space-y-2">
-                                        <div className="glass-card rounded-xl p-3 border-green-300">
+                                        <div className="glass-card dark:glass-card-dark rounded-xl p-3 border-green-300 dark:border-green-700">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-green-600 text-lg font-bold">✓</span>
-                                                <span className="text-xs text-gray-700 flex-1 font-semibold">{t('All systems operational')}</span>
+                                                <span className="text-green-600 dark:text-green-400 text-lg font-bold">✓</span>
+                                                <span className="text-xs text-gray-700 dark:text-gray-300 flex-1 font-semibold">{t('All systems operational')}</span>
                                             </div>
-                                            <div className="text-xs text-gray-500 mt-1 ml-7">{t('Updated 2 min ago')}</div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-7">{t('Updated 2 min ago')}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -538,18 +577,18 @@ const Dashboard = () => {
                     </div>
 
                     {/* Bottom Navigation Bar - Compact & Extra Blurry */}
-                    <div className="fixed bottom-0 left-0 right-0 lg:hidden glass-nav z-50">
+                    <div className="fixed bottom-0 left-0 right-0 lg:hidden glass-nav dark:glass-nav-dark z-50">
                         <div className="flex items-center justify-around px-2 py-0.5 max-w-lg mx-auto">
                             {/* Controls Tab */}
                             <button
                                 onClick={() => setActiveTab('left')}
                                 className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all duration-300 transform ${activeTab === 'left'
                                     ? 'glass-button-active text-white scale-105 -translate-y-1'
-                                    : 'glass-button text-gray-600 hover:scale-105'
+                                    : 'glass-button dark:glass-button-dark text-gray-600 dark:text-gray-300 hover:scale-105'
                                     }`}
                             >
                                 <span className="text-xl mb-0.5">🎛️</span>
-                                <span className={`text-[10px] font-bold ${activeTab === 'left' ? 'text-white' : 'text-gray-700'}`}>
+                                <span className={`text-[10px] font-bold ${activeTab === 'left' ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`}>
                                     {t('Data Controls')}
                                 </span>
                             </button>
@@ -559,11 +598,11 @@ const Dashboard = () => {
                                 onClick={() => setActiveTab('middle')}
                                 className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all duration-300 transform ${activeTab === 'middle'
                                     ? 'glass-button-active text-white scale-105 -translate-y-1'
-                                    : 'glass-button text-gray-600 hover:scale-105'
+                                    : 'glass-button dark:glass-button-dark text-gray-600 dark:text-gray-300 hover:scale-105'
                                     }`}
                             >
                                 <span className="text-xl mb-0.5">📈</span>
-                                <span className={`text-[10px] font-bold ${activeTab === 'middle' ? 'text-white' : 'text-gray-700'}`}>
+                                <span className={`text-[10px] font-bold ${activeTab === 'middle' ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`}>
                                     {t('Charts')}
                                 </span>
                             </button>
@@ -573,11 +612,11 @@ const Dashboard = () => {
                                 onClick={() => setActiveTab('right')}
                                 className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all duration-300 transform ${activeTab === 'right'
                                     ? 'glass-button-active text-white scale-105 -translate-y-1'
-                                    : 'glass-button text-gray-600 hover:scale-105'
+                                    : 'glass-button dark:glass-button-dark text-gray-600 dark:text-gray-300 hover:scale-105'
                                     }`}
                             >
                                 <span className="text-xl mb-0.5">📊</span>
-                                <span className={`text-[10px] font-bold ${activeTab === 'right' ? 'text-white' : 'text-gray-700'}`}>
+                                <span className={`text-[10px] font-bold ${activeTab === 'right' ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`}>
                                     {t('AI & Camera')}
                                 </span>
                             </button>
