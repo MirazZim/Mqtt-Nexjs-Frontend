@@ -979,9 +979,9 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     {safeToFixed(smoothBowlTemp, 1)}°C
                                 </div>
                                 <div className="mt-1 flex items-center justify-between">
-                                    <span className="text-9px md:text-10px text-gray-500">{t('Target:')} {setpoints.bowl_temp}°C</span>
+                                    <span className="text-9px md:text-10px text-gray-500 dark:text-gray-400">{t('Target:')} {setpoints.bowl_temp}°C</span>
                                     {sensorTimestamps.bowl_temp && (
-                                        <span className="text-[12px] md:text-9px text-gray-400 flex items-center gap-0.5">
+                                        <span className="text-[12px] md:text-9px text-gray-400 dark:text-gray-500 flex items-center gap-0.5">
                                             <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
@@ -994,9 +994,9 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
                         {/* Sonar/Liquid Level Card - ONLY SHOW IF HAS DATA */}
                         {(currentData.sonar_distance !== null && currentData.sonar_distance !== undefined) && (
-                            <div className="bg-linear-to-br from-purple-50 to-pink-50 rounded-md p-2 md:p-2.5 border border-purple-100 shadow-sm hover:shadow transition-shadow">
+                            <div className="bg-linear-to-br from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-md p-2 md:p-2.5 border border-purple-100 dark:border-purple-800 shadow-sm hover:shadow transition-shadow">
                                 <div className="flex items-center justify-between mb-1">
-                                    <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
+                                    <h3 className="text-10px md:text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1">
                                         <span className="text-sm">📏</span>
                                         <span className="hidden sm:inline">{t('Water Level')}</span>
                                         <span className="sm:hidden">{t('Liquid')}</span>
@@ -1010,9 +1010,9 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     {safeToFixed(smoothSonarDistance, 1)} cm
                                 </div>
                                 <div className="mt-1 flex items-center justify-between">
-                                    <span className="text-9px md:text-10px text-gray-500">{t('Target:')} {setpoints.sonar_distance} cm</span>
+                                    <span className="text-9px md:text-10px text-gray-500 dark:text-gray-400">{t('Target:')} {setpoints.sonar_distance} cm</span>
                                     {sensorTimestamps.sonar_distance && (
-                                        <span className="text-[12px] md:text-9px text-gray-400 flex items-center gap-0.5">
+                                        <span className="text-[12px] md:text-9px text-gray-400 dark:text-gray-500 flex items-center gap-0.5">
                                             <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
@@ -1025,9 +1025,9 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
                         {/* CO2 Level Card - ONLY SHOW IF HAS DATA */}
                         {(currentData.co2_level !== null && currentData.co2_level !== undefined) && (
-                            <div className="bg-linear-to-br from-green-50 to-teal-50 rounded-md p-2 md:p-2.5 border border-green-100 shadow-sm hover:shadow transition-shadow">
+                            <div className="bg-linear-to-br from-green-50 to-teal-50 dark:from-green-900/30 dark:to-teal-900/30 rounded-md p-2 md:p-2.5 border border-green-100 dark:border-green-800 shadow-sm hover:shadow transition-shadow">
                                 <div className="flex items-center justify-between mb-1">
-                                    <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
+                                    <h3 className="text-10px md:text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1">
                                         <span className="text-sm">💨</span>
                                         <span className="hidden sm:inline">{t('CO2 Level')}</span>
                                         <span className="sm:hidden">{t('CO2')}</span>
@@ -1041,9 +1041,9 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     {safeToFixed(smoothCO2, 2)} ppm
                                 </div>
                                 <div className="mt-1 flex items-center justify-between">
-                                    <span className="text-9px md:text-10px text-gray-500">{t('Target:')} {setpoints.co2_level} ppm</span>
+                                    <span className="text-9px md:text-10px text-gray-500 dark:text-gray-400">{t('Target:')} {setpoints.co2_level} ppm</span>
                                     {sensorTimestamps.co2_level && (
-                                        <span className="text-[12px] md:text-9px text-gray-400 flex items-center gap-0.5">
+                                        <span className="text-[12px] md:text-9px text-gray-400 dark:text-gray-500 flex items-center gap-0.5">
                                             <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
@@ -1056,9 +1056,9 @@ const CurrentEnvironment = ({ selectedLocation }) => {
 
                         {/* Sugar Level Card - ONLY SHOW IF HAS DATA */}
                         {(currentData.sugar_level !== null && currentData.sugar_level !== undefined) && (
-                            <div className="bg-linear-to-br from-pink-50 to-rose-50 rounded-md p-2 md:p-2.5 border border-pink-100 shadow-sm hover:shadow transition-shadow">
+                            <div className="bg-linear-to-br from-pink-50 to-rose-50 dark:from-pink-900/30 dark:to-rose-900/30 rounded-md p-2 md:p-2.5 border border-pink-100 dark:border-pink-800 shadow-sm hover:shadow transition-shadow">
                                 <div className="flex items-center justify-between mb-1">
-                                    <h3 className="text-10px md:text-xs font-semibold text-gray-700 flex items-center gap-1">
+                                    <h3 className="text-10px md:text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1">
                                         <span className="text-sm">🍬</span>
                                         <span className="hidden sm:inline">{t('Sugar Level')}</span>
                                         <span className="sm:hidden">{t('Sugar')}</span>
@@ -1072,9 +1072,9 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                     {safeToFixed(smoothSugar, 1)} g/L
                                 </div>
                                 <div className="mt-1 flex items-center justify-between">
-                                    <span className="text-9px md:text-10px text-gray-500">{t('Target:')} {setpoints.sugar_level} g/L</span>
+                                    <span className="text-9px md:text-10px text-gray-500 dark:text-gray-400">{t('Target:')} {setpoints.sugar_level} g/L</span>
                                     {sensorTimestamps.sugar_level && (
-                                        <span className="text-[12px] md:text-9px text-gray-400 flex items-center gap-0.5">
+                                        <span className="text-[12px] md:text-9px text-gray-400 dark:text-gray-500 flex items-center gap-0.5">
                                             <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>

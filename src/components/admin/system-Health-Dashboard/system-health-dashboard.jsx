@@ -633,7 +633,7 @@ const SystemHealthDashboard = ({ socket }) => {
             </div>
 
             {/* MQTT Activity Summary */}
-            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
                 <div className="bg-gradient-to-r from-cyan-500 to-blue-500 p-6">
                     <h3 className="text-2xl font-bold text-white mb-1">{t('MQTT Activity Summary')}</h3>
                     <p className="text-cyan-100 text-sm">{t('Real-time message statistics')}</p>
@@ -642,46 +642,46 @@ const SystemHealthDashboard = ({ socket }) => {
                 <div className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {/* Connections */}
-                        <div className="flex items-center gap-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                        <div className="flex items-center gap-4 p-4 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
                             <div className="w-14 h-14 bg-green-500 rounded-lg flex items-center justify-center text-2xl text-white">
                                 🔗
                             </div>
                             <div>
-                                <div className="text-3xl font-bold text-green-700">{healthData?.mqtt.connect || 0}</div>
-                                <div className="text-sm text-green-600">{t('Connections')}</div>
+                                <div className="text-3xl font-bold text-green-700 dark:text-green-400">{healthData?.mqtt.connect || 0}</div>
+                                <div className="text-sm text-green-600 dark:text-green-500">{t('Connections')}</div>
                             </div>
                         </div>
 
                         {/* Publications */}
-                        <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center gap-4 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
                             <div className="w-14 h-14 bg-blue-500 rounded-lg flex items-center justify-center text-2xl text-white">
                                 📤
                             </div>
                             <div>
-                                <div className="text-3xl font-bold text-blue-700">{healthData?.mqtt.publish || 0}</div>
-                                <div className="text-sm text-blue-600">{t('Publications')}</div>
+                                <div className="text-3xl font-bold text-blue-700 dark:text-blue-400">{healthData?.mqtt.publish || 0}</div>
+                                <div className="text-sm text-blue-600 dark:text-blue-500">{t('Publications')}</div>
                             </div>
                         </div>
 
                         {/* Subscriptions */}
-                        <div className="flex items-center gap-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                        <div className="flex items-center gap-4 p-4 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-200 dark:border-purple-800">
                             <div className="w-14 h-14 bg-purple-500 rounded-lg flex items-center justify-center text-2xl text-white">
                                 📥
                             </div>
                             <div>
-                                <div className="text-3xl font-bold text-purple-700">{healthData?.mqtt.subscribe || 0}</div>
-                                <div className="text-sm text-purple-600">{t('Subscriptions')}</div>
+                                <div className="text-3xl font-bold text-purple-700 dark:text-purple-400">{healthData?.mqtt.subscribe || 0}</div>
+                                <div className="text-sm text-purple-600 dark:text-purple-500">{t('Subscriptions')}</div>
                             </div>
                         </div>
 
                         {/* Disconnections */}
-                        <div className="flex items-center gap-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
+                        <div className="flex items-center gap-4 p-4 bg-orange-50 dark:bg-orange-900/30 rounded-lg border border-orange-200 dark:border-orange-800">
                             <div className="w-14 h-14 bg-orange-500 rounded-lg flex items-center justify-center text-2xl text-white">
                                 🔌
                             </div>
                             <div>
-                                <div className="text-3xl font-bold text-orange-700">{healthData?.mqtt.disconnect || 0}</div>
-                                <div className="text-sm text-orange-600">{t('Disconnections')}</div>
+                                <div className="text-3xl font-bold text-orange-700 dark:text-orange-400">{healthData?.mqtt.disconnect || 0}</div>
+                                <div className="text-sm text-orange-600 dark:text-orange-500">{t('Disconnections')}</div>
                             </div>
                         </div>
                     </div>

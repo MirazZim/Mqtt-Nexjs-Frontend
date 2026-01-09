@@ -239,7 +239,7 @@ const UserManagement = () => {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white rounded-xl shadow-md overflow-hidden">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
                     <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-4">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">
@@ -253,7 +253,7 @@ const UserManagement = () => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-md overflow-hidden">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
                     <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-4">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">
@@ -269,7 +269,7 @@ const UserManagement = () => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-md overflow-hidden">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
                     <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-4">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">
@@ -287,47 +287,47 @@ const UserManagement = () => {
             </div>
 
             {/* Create New User */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-1">{t('Create New User')}</h3>
-                <p className="text-sm text-gray-600 mb-6">{t('Add a new user to the system')}</p>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-1">{t('Create New User')}</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">{t('Add a new user to the system')}</p>
 
                 <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             {t('Username')}
                         </label>
                         <input
                             type="text"
                             value={newUser.username}
                             onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                             placeholder={t('Enter username')}
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             {t('Password')}
                         </label>
                         <input
                             type="password"
                             value={newUser.password}
                             onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                             placeholder={t('Enter password')}
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             {t('Role')}
                         </label>
                         <select
                             value={newUser.role}
                             onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                         >
                             <option value="user">{t('User')}</option>
                             <option value="admin">{t('Admin')}</option>
@@ -335,7 +335,7 @@ const UserManagement = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             {t('Desired Temp')}
                         </label>
                         <input
@@ -343,7 +343,7 @@ const UserManagement = () => {
                             step="0.1"
                             value={newUser.desired_temperature}
                             onChange={(e) => setNewUser({ ...newUser, desired_temperature: parseFloat(e.target.value) })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                         />
                     </div>
 

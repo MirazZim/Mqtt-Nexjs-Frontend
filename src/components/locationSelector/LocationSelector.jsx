@@ -520,26 +520,26 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
                     {/* Actuator Topics Section */}
                     <div>
                         <div className="flex items-center gap-2 mb-4">
-                            <h3 className="text-lg font-semibold text-gray-800">{t('Actuator Topics')}</h3>
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('Actuator Topics')}</h3>
                             {isLoadingActuators ? (
-                                <span className="text-sm text-gray-500 flex items-center gap-2">
+                                <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                                     <span className="animate-spin">⏳</span>
                                     {t('Loading actuators...')}
                                 </span>
                             ) : (
-                                <span className="text-sm text-gray-500">({actuatorTypes.length} {t('actuators')})</span>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">({actuatorTypes.length} {t('actuators')})</span>
                             )}
                         </div>
 
                         {isLoadingActuators ? (
-                            <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                            <div className="bg-white dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
                                 <span className="animate-spin text-3xl">⏳</span>
-                                <p className="text-gray-600 mt-3">{t('Loading actuator types...')}</p>
+                                <p className="text-gray-600 dark:text-gray-400 mt-3">{t('Loading actuator types...')}</p>
                             </div>
                         ) : actuatorTypes.length === 0 ? (
-                            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 text-center">
-                                <p className="text-yellow-800 font-medium">{t('No actuator types available')}</p>
-                                <p className="text-sm text-yellow-600 mt-1">{t('Contact administrator to add actuator types')}</p>
+                            <div className="bg-yellow-50 dark:bg-yellow-900/30 border-2 border-yellow-200 dark:border-yellow-700 rounded-lg p-6 text-center">
+                                <p className="text-yellow-800 dark:text-yellow-300 font-medium">{t('No actuator types available')}</p>
+                                <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-1">{t('Contact administrator to add actuator types')}</p>
                             </div>
                         ) : (
                             <div className="space-y-3">
@@ -548,20 +548,20 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
                                     const currentTopic = actuatorTopics[actuator.code] || '';
 
                                     return (
-                                        <div key={actuator.code} className={`bg-gray-50 border-2 rounded-lg p-4 transition-all ${hasError ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-teal-300'}`}>
+                                        <div key={actuator.code} className={`bg-gray-50 dark:bg-gray-700/50 border-2 rounded-lg p-4 transition-all ${hasError ? 'border-red-300 dark:border-red-500 bg-red-50 dark:bg-red-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-teal-300 dark:hover:border-teal-500'}`}>
                                             <div className="flex items-center justify-between mb-3">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-xl">{actuator.icon}</span>
                                                     <div>
-                                                        <div className="font-medium text-gray-800 flex items-center gap-2">
+                                                        <div className="font-medium text-gray-800 dark:text-gray-200 flex items-center gap-2">
                                                             {actuator.name}
                                                             {getTopicStatusIcon('actuator', actuator.code)}
                                                         </div>
-                                                        <div className="text-xs text-gray-500">{t('Control device')} • {t('Type:')} {actuator.code}</div>
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400">{t('Control device')} • {t('Type:')} {actuator.code}</div>
                                                     </div>
                                                 </div>
                                                 {copiedTopic === currentTopic && (
-                                                    <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                                                    <span className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
                                                         <FaCheck /> {t('Copied!')}
                                                     </span>
                                                 )}
@@ -569,21 +569,21 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
 
                                             <div className="flex gap-2">
                                                 <div className="flex-1">
-                                                    <label className="block text-xs text-gray-600 mb-1 font-medium">
+                                                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
                                                         {t('MQTT Topic')} <span className="text-red-500">*</span>
                                                     </label>
                                                     <input
                                                         type="text"
                                                         value={currentTopic}
                                                         onChange={(e) => handleTopicChange('actuator', actuator.code, e.target.value)}
-                                                        className={`w-full px-3 py-2 border-2 rounded-lg outline-none text-sm font-mono transition-all ${hasError
-                                                            ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-                                                            : 'border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200'
+                                                        className={`w-full px-3 py-2 border-2 rounded-lg outline-none text-sm font-mono transition-all bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 ${hasError
+                                                            ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-800'
+                                                            : 'border-gray-300 dark:border-gray-600 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-800'
                                                             }`}
                                                         placeholder={`e.g., ${actuator.code}`}
                                                     />
                                                     {hasError && (
-                                                        <div className="mt-1 text-xs text-red-600">
+                                                        <div className="mt-1 text-xs text-red-600 dark:text-red-400">
                                                             {validationErrors[`actuator_${actuator.code}`].map((err, idx) => (
                                                                 <div key={idx}>• {err}</div>
                                                             ))}
@@ -593,24 +593,24 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
                                                 <div className="flex flex-col gap-1 mt-6">
                                                     <button
                                                         onClick={() => handleCopyTopic(currentTopic)}
-                                                        className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                                                        className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                                                         title={t('Copy topic')}
                                                     >
-                                                        <FaCopy className="text-gray-600" />
+                                                        <FaCopy className="text-gray-600 dark:text-gray-400" />
                                                     </button>
                                                     <button
                                                         onClick={() => testMQTTConnection(currentTopic, 'actuator', actuator.code)}
                                                         disabled={testingTopics[`actuator_${actuator.code}`] || hasError}
-                                                        className="p-2 hover:bg-teal-100 rounded-lg transition-colors disabled:opacity-50"
+                                                        className="p-2 hover:bg-teal-100 dark:hover:bg-teal-900/30 rounded-lg transition-colors disabled:opacity-50"
                                                         title={t('Test connection')}
                                                     >
-                                                        <FaPlug className="text-teal-600" />
+                                                        <FaPlug className="text-teal-600 dark:text-teal-400" />
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            <div className="mt-2 text-xs text-gray-500">
-                                                {t('Example:')} <code className="bg-gray-200 px-2 py-0.5 rounded">{actuator.code}</code> or <code className="bg-gray-200 px-2 py-0.5 rounded">control/{actuator.code}</code>
+                                            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                                {t('Example:')} <code className="bg-gray-200 dark:bg-gray-600 px-2 py-0.5 rounded">{actuator.code}</code> or <code className="bg-gray-200 dark:bg-gray-600 px-2 py-0.5 rounded">control/{actuator.code}</code>
                                             </div>
 
                                             <TestResultBadge type="actuator" code={actuator.code} />
@@ -625,9 +625,9 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
                     </div>
 
                     {/* Important Notes Section */}
-                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4">
-                        <h4 className="font-semibold text-yellow-800 mb-2">{t('Important Notes')}</h4>
-                        <ul className="text-sm text-yellow-700 space-y-1">
+                    <div className="bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-500 p-4">
+                        <h4 className="font-semibold text-yellow-800 dark:text-yellow-300 mb-2">{t('Important Notes')}</h4>
+                        <ul className="text-sm text-yellow-700 dark:text-yellow-400 space-y-1">
                             <li>{t('Topics must match exactly what your sensors publish to')}</li>
                             <li>{t('System will automatically subscribe to these topics')}</li>
                             <li>{t('Data will start flowing immediately after saving')}</li>
@@ -637,7 +637,7 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="sticky bottom-0 bg-gray-50 border-t-2 border-gray-200 p-6 flex gap-3 rounded-b-lg">
+                <div className="sticky bottom-0 bg-gray-50 dark:bg-gray-700/50 border-t-2 border-gray-200 dark:border-gray-600 p-6 flex gap-3 rounded-b-lg">
                     <button
                         onClick={handleSave}
                         className="flex-1 bg-linear-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 shadow-lg"
@@ -647,7 +647,7 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
                     </button>
                     <button
                         onClick={onClose}
-                        className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition-colors"
+                        className="px-6 py-3 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-lg font-semibold transition-colors"
                     >
                         {t('Cancel')}
                     </button>
