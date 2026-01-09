@@ -919,7 +919,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 <div className="mt-1 flex items-center justify-between">
                                     <span className="text-9px md:text-10px text-gray-500">{t('Target:')} {setpoints.temperature}°C</span>
                                     {sensorTimestamps.temperature && (
-                                        <span className="text-[8px] md:text-9px text-gray-400 flex items-center gap-0.5">
+                                        <span className="text-[12px] md:text-9px text-gray-400 flex items-center gap-0.5">
                                             <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
@@ -950,7 +950,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 <div className="mt-1 flex items-center justify-between">
                                     <span className="text-9px md:text-10px text-gray-500">{t('Target:')} {setpoints.humidity}%</span>
                                     {sensorTimestamps.humidity && (
-                                        <span className="text-[8px] md:text-9px text-gray-400 flex items-center gap-0.5">
+                                        <span className="text-[12px] md:text-9px text-gray-400 flex items-center gap-0.5">
                                             <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
@@ -981,7 +981,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 <div className="mt-1 flex items-center justify-between">
                                     <span className="text-9px md:text-10px text-gray-500">{t('Target:')} {setpoints.bowl_temp}°C</span>
                                     {sensorTimestamps.bowl_temp && (
-                                        <span className="text-[8px] md:text-9px text-gray-400 flex items-center gap-0.5">
+                                        <span className="text-[12px] md:text-9px text-gray-400 flex items-center gap-0.5">
                                             <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
@@ -1012,7 +1012,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 <div className="mt-1 flex items-center justify-between">
                                     <span className="text-9px md:text-10px text-gray-500">{t('Target:')} {setpoints.sonar_distance} cm</span>
                                     {sensorTimestamps.sonar_distance && (
-                                        <span className="text-[8px] md:text-9px text-gray-400 flex items-center gap-0.5">
+                                        <span className="text-[12px] md:text-9px text-gray-400 flex items-center gap-0.5">
                                             <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
@@ -1043,7 +1043,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 <div className="mt-1 flex items-center justify-between">
                                     <span className="text-9px md:text-10px text-gray-500">{t('Target:')} {setpoints.co2_level} ppm</span>
                                     {sensorTimestamps.co2_level && (
-                                        <span className="text-[8px] md:text-9px text-gray-400 flex items-center gap-0.5">
+                                        <span className="text-[12px] md:text-9px text-gray-400 flex items-center gap-0.5">
                                             <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
@@ -1074,7 +1074,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                                 <div className="mt-1 flex items-center justify-between">
                                     <span className="text-9px md:text-10px text-gray-500">{t('Target:')} {setpoints.sugar_level} g/L</span>
                                     {sensorTimestamps.sugar_level && (
-                                        <span className="text-[8px] md:text-9px text-gray-400 flex items-center gap-0.5">
+                                        <span className="text-[12px] md:text-9px text-gray-400 flex items-center gap-0.5">
                                             <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>

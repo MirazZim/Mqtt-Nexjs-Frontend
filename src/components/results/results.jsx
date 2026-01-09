@@ -147,42 +147,42 @@ const ActuatorCard = React.memo(({ actuatorType, actuator, formatActuatorType, f
     const formattedTime = useMemo(() => formatTimestamp(actuator?.timestamp), [actuator?.timestamp]);
 
     return (
-        <div className={`bg-gradient-to-br ${display.bgColor} rounded-lg p-3 border-2 ${display.borderColor} shadow-sm hover:shadow-md transition-all`}>
-            <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                    <div className={`w-7 h-7 ${display.iconBg} rounded-full flex items-center justify-center text-sm`}>
+        <div className={`bg-gradient-to-br ${display.bgColor} rounded-lg p-2.5 sm:p-3 md:p-4 border-2 ${display.borderColor} shadow-sm hover:shadow-md active:shadow-lg transition-all touch-manipulation`}>
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                    <div className={`w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 ${display.iconBg} rounded-full flex items-center justify-center text-xs sm:text-sm md:text-base flex-shrink-0`}>
                         {display.icon}
                     </div>
-                    <div>
-                        <h4 className="text-xs font-bold text-gray-800">
+                    <div className="min-w-0 flex-1">
+                        <h4 className="text-[11px] sm:text-xs md:text-sm font-bold text-gray-800 truncate">
                             {actuator.actuatorName || formatActuatorType(actuatorType)}
                         </h4>
                         {actuator.topic && (
-                            <span className="text-[10px] text-gray-500">Topic: {actuator.topic}</span>
+                            <span className="text-[9px] sm:text-[10px] text-gray-500 truncate block">Topic: {actuator.topic}</span>
                         )}
                     </div>
                 </div>
-                <span className={`inline-flex h-2 w-2 rounded-full ${display.dotColor} animate-pulse`}></span>
+                <span className={`inline-flex h-2 w-2 rounded-full ${display.dotColor} animate-pulse flex-shrink-0 ml-1`}></span>
             </div>
-            <div className="flex items-center gap-2 mb-2">
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${display.textColor} ${display.iconBg}`}>
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 flex-wrap">
+                <span className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold ${display.textColor} ${display.iconBg}`}>
                     {display.statusLabel}
                 </span>
                 {actuator.rawState && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-gray-200 text-gray-600">
+                    <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono bg-gray-200 text-gray-600">
                         {actuator.rawState}
                     </span>
                 )}
             </div>
-            <div className={`${display.textColor} text-sm font-medium mb-2 leading-relaxed`}>
+            <div className={`${display.textColor} text-xs sm:text-sm font-medium mb-1.5 sm:mb-2 leading-relaxed line-clamp-2 sm:line-clamp-none`}>
                 {actuator.message || `Status: ${actuator.state}`}
             </div>
             {formattedTime && (
-                <div className="pt-2 border-t border-gray-200/50 flex items-center gap-1.5 text-[10px] text-gray-500">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="pt-1.5 sm:pt-2 border-t border-gray-200/50 flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] text-gray-500">
+                    <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span>{formattedTime}</span>
+                    <span className="truncate">{formattedTime}</span>
                 </div>
             )}
         </div>
@@ -283,15 +283,15 @@ const FermentationResult = ({ socket, selectedLocation }) => {
             });
 
             // Update legacy resultStatus for specific actuator types
-            if (data.actuatorType === 'results' || 
-                data.actuatorType === 'sugar_fermentation_status' || 
+            if (data.actuatorType === 'results' ||
+                data.actuatorType === 'sugar_fermentation_status' ||
                 data.topic === 'sugarT') {
                 setResultStatus(prev => {
                     const newMessage = data.message || data.state || 'Status received';
                     const newStatus = data.state || 'UNKNOWN';
-                    const newIsActive = data.state === 'ACTIVE' || data.state === 'ON' || 
-                                       data.state === 'ONGOING' || data.rawState === 'FFO';
-                    
+                    const newIsActive = data.state === 'ACTIVE' || data.state === 'ON' ||
+                        data.state === 'ONGOING' || data.rawState === 'FFO';
+
                     // Only update if changed
                     if (prev.message === newMessage && prev.status === newStatus && prev.isActive === newIsActive) {
                         return prev;
@@ -314,9 +314,9 @@ const FermentationResult = ({ socket, selectedLocation }) => {
     }, [socket, selectedLocation]);
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4 px-1 sm:px-0">
             {hasActuators && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                     {actuatorEntries.map(([actuatorType, actuator]) => (
                         <ActuatorCard
                             key={actuatorType}
@@ -330,27 +330,27 @@ const FermentationResult = ({ socket, selectedLocation }) => {
             )}
 
             {!hasActuators && (
-                <div className={`bg-gradient-to-br ${statusDisplay.bgColor} rounded-lg p-4 border-2 ${statusDisplay.borderColor} shadow-sm hover:shadow-md transition-all`}>
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                            <div className={`w-8 h-8 ${statusDisplay.iconBg} rounded-full flex items-center justify-center text-lg`}>
+                <div className={`bg-gradient-to-br ${statusDisplay.bgColor} rounded-lg p-3 sm:p-4 md:p-5 border-2 ${statusDisplay.borderColor} shadow-sm hover:shadow-md active:shadow-lg transition-all touch-manipulation`}>
+                    <div className="flex items-center justify-between mb-2 sm:mb-3">
+                        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                            <div className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 ${statusDisplay.iconBg} rounded-full flex items-center justify-center text-base sm:text-lg flex-shrink-0`}>
                                 {statusDisplay.icon}
                             </div>
-                            <h3 className="text-sm font-bold text-gray-800">{t('Fermentation Status')}</h3>
+                            <h3 className="text-xs sm:text-sm md:text-base font-bold text-gray-800 truncate">{t('Fermentation Status')}</h3>
                         </div>
                         {resultStatus.lastUpdate && (
-                            <span className={`inline-flex h-2 w-2 rounded-full ${statusDisplay.dotColor} animate-pulse`}></span>
+                            <span className={`inline-flex h-2 w-2 rounded-full ${statusDisplay.dotColor} animate-pulse flex-shrink-0 ml-1`}></span>
                         )}
                     </div>
-                    <div className={`${statusDisplay.textColor} text-base font-semibold mb-3 leading-relaxed`}>
+                    <div className={`${statusDisplay.textColor} text-sm sm:text-base font-semibold mb-2 sm:mb-3 leading-relaxed`}>
                         {resultStatus.message}
                     </div>
                     {resultStatus.lastUpdate && (
-                        <div className="pt-2 border-t border-gray-200/50 flex items-center gap-1.5 text-[10px] text-gray-500">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="pt-1.5 sm:pt-2 border-t border-gray-200/50 flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] text-gray-500">
+                            <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span>{t('Updated:')} {resultStatus.lastUpdate.toLocaleTimeString()}</span>
+                            <span className="truncate">{t('Updated:')} {resultStatus.lastUpdate.toLocaleTimeString()}</span>
                         </div>
                     )}
                 </div>
