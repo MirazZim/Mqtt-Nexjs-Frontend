@@ -27,12 +27,12 @@ const DeleteConfirmModal = ({ room, onConfirm, onCancel, t }) => {
 
     return (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onCancel}>
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
 
                 {/* Header */}
-                <div className="bg-red-600 text-white p-6 rounded-t-lg">
+                <div className="bg-red-600 dark:bg-red-700 text-white p-6 rounded-t-lg">
                     <div className="flex items-center gap-3">
-                        <div className="bg-red-700 p-3 rounded-full">
+                        <div className="bg-red-700 dark:bg-red-800 p-3 rounded-full">
                             <FaExclamation className="text-2xl" />
                         </div>
                         <div>
@@ -45,12 +45,12 @@ const DeleteConfirmModal = ({ room, onConfirm, onCancel, t }) => {
                 {/* Body */}
                 <div className="p-6">
                     <div className="mb-4">
-                        <p className="text-gray-700 mb-2">
-                            {t('You are about to delete')} <span className="font-bold text-red-600">"{room.location}"</span>
+                        <p className="text-gray-700 dark:text-gray-300 mb-2">
+                            {t('You are about to delete')} <span className="font-bold text-red-600 dark:text-red-400">"{room.location}"</span>
                         </p>
-                        <div className="bg-red-50 border-l-4 border-red-500 p-3 mt-3">
-                            <p className="text-sm text-red-800 font-semibold mb-2">{t('This will permanently:')}</p>
-                            <ul className="text-sm text-red-700 space-y-1">
+                        <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-3 mt-3">
+                            <p className="text-sm text-red-800 dark:text-red-300 font-semibold mb-2">{t('This will permanently:')}</p>
+                            <ul className="text-sm text-red-700 dark:text-red-400 space-y-1">
                                 <li>{t('Deactivate all sensors and actuators')}</li>
                                 <li>{t('Unsubscribe from all MQTT topics')}</li>
                                 <li>{t('Remove all room configurations')}</li>
@@ -60,14 +60,14 @@ const DeleteConfirmModal = ({ room, onConfirm, onCancel, t }) => {
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            {t('Type')} <span className="font-mono bg-gray-100 px-2 py-1 rounded text-red-600">{room.location}</span> {t('to confirm:')}
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {t('Type')} <span className="font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-red-600 dark:text-red-400">{room.location}</span> {t('to confirm:')}
                         </label>
                         <input
                             type="text"
                             value={confirmText}
                             onChange={(e) => setConfirmText(e.target.value)}
-                            className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none"
+                            className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-800 outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                             placeholder={t('Enter room name')}
                             autoFocus
                         />
@@ -75,11 +75,11 @@ const DeleteConfirmModal = ({ room, onConfirm, onCancel, t }) => {
                 </div>
 
                 {/* Footer */}
-                <div className="bg-gray-50 p-6 rounded-b-lg flex gap-3">
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-b-lg flex gap-3">
                     <button
                         onClick={handleConfirm}
                         disabled={confirmText !== room.location || isDeleting}
-                        className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                        className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
                     >
                         {isDeleting ? (
                             <>
@@ -96,7 +96,7 @@ const DeleteConfirmModal = ({ room, onConfirm, onCancel, t }) => {
                     <button
                         onClick={onCancel}
                         disabled={isDeleting}
-                        className="px-6 py-3 bg-gray-200 hover:bg-gray-300 disabled:opacity-50 text-gray-700 rounded-lg font-semibold transition-colors"
+                        className="px-6 py-3 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50 text-gray-700 dark:text-gray-200 rounded-lg font-semibold transition-colors"
                     >
                         {t('Cancel')}
                     </button>
@@ -349,10 +349,10 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
             return <span className="animate-spin">⏳</span>;
         }
         if (status === 'success') {
-            return <FaCheckCircle className="text-green-600" />;
+            return <FaCheckCircle className="text-green-600 dark:text-green-400" />;
         }
         if (status === 'error') {
-            return <FaExclamationTriangle className="text-red-600" />;
+            return <FaExclamationTriangle className="text-red-600 dark:text-red-400" />;
         }
         return null;
     };
@@ -367,22 +367,22 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
 
         if (status === 'success' && testData) {
             return (
-                <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg">
                     <div className="flex items-center gap-2 mb-1">
-                        <FaCheckCircle className="text-green-600 text-sm" />
-                        <span className="text-xs font-semibold text-green-800">
+                        <FaCheckCircle className="text-green-600 dark:text-green-400 text-sm" />
+                        <span className="text-xs font-semibold text-green-800 dark:text-green-300">
                             Last Test: Success
                         </span>
-                        <span className="text-xs text-green-600">
+                        <span className="text-xs text-green-600 dark:text-green-400">
                             ({testData.dataType})
                         </span>
                     </div>
-                    <div className="bg-green-100 rounded p-2 mt-1">
-                        <pre className="text-xs text-green-800 overflow-x-auto max-h-20">
+                    <div className="bg-green-100 dark:bg-green-800/50 rounded p-2 mt-1">
+                        <pre className="text-xs text-green-800 dark:text-green-200 overflow-x-auto max-h-20">
                             {JSON.stringify(testData.data, null, 2)}
                         </pre>
                     </div>
-                    <div className="text-xs text-green-600 mt-1">
+                    <div className="text-xs text-green-600 dark:text-green-400 mt-1">
                         {new Date(testData.timestamp).toLocaleString()}
                     </div>
                 </div>
@@ -391,10 +391,10 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
 
         if (status === 'error') {
             return (
-                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg">
                     <div className="flex items-center gap-2">
-                        <FaExclamationTriangle className="text-red-600 text-sm" />
-                        <span className="text-xs font-semibold text-red-800">
+                        <FaExclamationTriangle className="text-red-600 dark:text-red-400 text-sm" />
+                        <span className="text-xs font-semibold text-red-800 dark:text-red-300">
                             No data received
                         </span>
                     </div>
@@ -408,9 +408,9 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
 
     return (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
 
-                <div className="sticky top-0 bg-linear-to-r from-teal-600 to-teal-700 text-white p-6 z-10 rounded-t-lg">
+                <div className="sticky top-0 bg-linear-to-r from-teal-600 to-teal-700 dark:from-teal-700 dark:to-teal-800 text-white p-6 z-10 rounded-t-lg">
                     <h2 className="text-2xl font-bold mb-2">{t('Configure MQTT Topics Modal')}</h2>
                     <p className="text-teal-100 text-sm">{t('Enter MQTT topics for')} {room.location}</p>
                     <div className="mt-3 bg-teal-800 bg-opacity-50 rounded px-3 py-2">
@@ -420,15 +420,15 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
 
                 <div className="p-6 space-y-6">
 
-                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 p-4">
                         <div className="flex items-start gap-3">
-                            <div className="text-blue-600 text-xl">💡</div>
+                            <div className="text-blue-600 dark:text-blue-400 text-xl">💡</div>
                             <div>
-                                <h4 className="font-semibold text-blue-800 mb-1">{t('Quick Setup Guide')}</h4>
-                                <ul className="text-sm text-blue-700 space-y-1">
+                                <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-1">{t('Quick Setup Guide')}</h4>
+                                <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
                                     <li>{t('Enter the MQTT topic that your sensor publishes to')}</li>
                                     <li>{t('Topics are case-sensitive and unique identifiers')}</li>
-                                    <li>{t('Use simple names like:')} <code className="bg-blue-100 px-1 rounded">ESP</code>, <code className="bg-blue-100 px-1 rounded">ESP2</code>, <code className="bg-blue-100 px-1 rounded">bowl</code></li>
+                                    <li>{t('Use simple names like:')} <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">ESP</code>, <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">ESP2</code>, <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">bowl</code></li>
                                     <li>{t('System will automatically subscribe and start receiving data')}</li>
                                 </ul>
                             </div>
@@ -438,8 +438,8 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
                     {/* Sensor Topics Section */}
                     <div>
                         <div className="flex items-center gap-2 mb-4">
-                            <h3 className="text-lg font-semibold text-gray-800">{t('Sensor Topics')}</h3>
-                            <span className="text-sm text-gray-500">({sensorTypes.length} {t('sensors')})</span>
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('Sensor Topics')}</h3>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">({sensorTypes.length} {t('sensors')})</span>
                         </div>
 
                         <div className="space-y-3">
@@ -448,17 +448,17 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
                                 const currentTopic = sensorTopics[sensor.code] || '';
 
                                 return (
-                                    <div key={sensor.code} className={`bg-gray-50 border-2 rounded-lg p-4 transition-all ${hasError ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-teal-300'}`}>
+                                    <div key={sensor.code} className={`bg-gray-50 dark:bg-gray-700/50 border-2 rounded-lg p-4 transition-all ${hasError ? 'border-red-300 dark:border-red-500 bg-red-50 dark:bg-red-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-teal-300 dark:hover:border-teal-500'}`}>
                                         <div className="flex items-center justify-between mb-3">
                                             <div>
-                                                <div className="font-medium text-gray-800 flex items-center gap-2">
+                                                <div className="font-medium text-gray-800 dark:text-gray-200 flex items-center gap-2">
                                                     {sensor.name}
                                                     {getTopicStatusIcon('sensor', sensor.code)}
                                                 </div>
-                                                <div className="text-xs text-gray-500">{t('Unit:')} {sensor.unit} • {t('Type:')} {sensor.code}</div>
+                                                <div className="text-xs text-gray-500 dark:text-gray-400">{t('Unit:')} {sensor.unit} • {t('Type:')} {sensor.code}</div>
                                             </div>
                                             {copiedTopic === currentTopic && (
-                                                <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                                                <span className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
                                                     <FaCheck /> {t('Copied!')}
                                                 </span>
                                             )}
@@ -466,21 +466,21 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
 
                                         <div className="flex gap-2">
                                             <div className="flex-1">
-                                                <label className="block text-xs text-gray-600 mb-1 font-medium">
+                                                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
                                                     {t('MQTT Topic')} <span className="text-red-500">*</span>
                                                 </label>
                                                 <input
                                                     type="text"
                                                     value={currentTopic}
                                                     onChange={(e) => handleTopicChange('sensor', sensor.code, e.target.value)}
-                                                    className={`w-full px-3 py-2 border-2 rounded-lg outline-none text-sm font-mono transition-all ${hasError
-                                                        ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-                                                        : 'border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200'
+                                                    className={`w-full px-3 py-2 border-2 rounded-lg outline-none text-sm font-mono transition-all bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 ${hasError
+                                                        ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-800'
+                                                        : 'border-gray-300 dark:border-gray-600 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-800'
                                                         }`}
                                                     placeholder={`e.g., ${sensor.code}`}
                                                 />
                                                 {hasError && (
-                                                    <div className="mt-1 text-xs text-red-600">
+                                                    <div className="mt-1 text-xs text-red-600 dark:text-red-400">
                                                         {validationErrors[`sensor_${sensor.code}`].map((err, idx) => (
                                                             <div key={idx}>• {err}</div>
                                                         ))}
@@ -490,24 +490,24 @@ const MQTTTopicConfigurator = ({ room, sensorTypes, actuatorTypes, isLoadingActu
                                             <div className="flex flex-col gap-1 mt-6">
                                                 <button
                                                     onClick={() => handleCopyTopic(currentTopic)}
-                                                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                                                    className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                                                     title={t('Copy topic')}
                                                 >
-                                                    <FaCopy className="text-gray-600" />
+                                                    <FaCopy className="text-gray-600 dark:text-gray-400" />
                                                 </button>
                                                 <button
                                                     onClick={() => testMQTTConnection(currentTopic, 'sensor', sensor.code)}
                                                     disabled={testingTopics[`sensor_${sensor.code}`] || hasError}
-                                                    className="p-2 hover:bg-teal-100 rounded-lg transition-colors disabled:opacity-50"
+                                                    className="p-2 hover:bg-teal-100 dark:hover:bg-teal-900/30 rounded-lg transition-colors disabled:opacity-50"
                                                     title={t('Test connection')}
                                                 >
-                                                    <FaPlug className="text-teal-600" />
+                                                    <FaPlug className="text-teal-600 dark:text-teal-400" />
                                                 </button>
                                             </div>
                                         </div>
 
-                                        <div className="mt-2 text-xs text-gray-500">
-                                            {t('Example:')} <code className="bg-gray-200 px-2 py-0.5 rounded">{sensor.code}</code> or <code className="bg-gray-200 px-2 py-0.5 rounded">ESP2</code>
+                                        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                            {t('Example:')} <code className="bg-gray-200 dark:bg-gray-600 px-2 py-0.5 rounded">{sensor.code}</code> or <code className="bg-gray-200 dark:bg-gray-600 px-2 py-0.5 rounded">ESP2</code>
                                         </div>
 
                                         <TestResultBadge type="sensor" code={sensor.code} />
@@ -1210,7 +1210,7 @@ const DynamicLocationSelector = ({ selectedLocation, onLocationChange }) => {
                                     </div>
                                 </div>
 
-                                <div className="flex gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                <div className="flex gap-1 opacity-100 lg:opacity-0 lg:group-hover/item:opacity-100 transition-opacity">
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
