@@ -359,7 +359,7 @@ const UserManagement = () => {
             </div>
 
             {/* Users List */}
-            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
                 <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-6">
                     <div className="flex items-center justify-between flex-wrap gap-4">
                         <h3 className="text-xl font-bold text-white">{t('Users List')} ({filteredUsers.length})</h3>
@@ -392,10 +392,10 @@ const UserManagement = () => {
 
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <div className="text-sm text-gray-600">
-                            {t('Showing')} <span className="font-semibold text-gray-800">{indexOfFirstUser + 1}</span> {t('to')}{' '}
-                            <span className="font-semibold text-gray-800">{Math.min(indexOfLastUser, filteredUsers.length)}</span> {t('of')}{' '}
-                            <span className="font-semibold text-gray-800">{filteredUsers.length}</span> {t('users')}
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                            {t('Showing')} <span className="font-semibold text-gray-800 dark:text-gray-200">{indexOfFirstUser + 1}</span> {t('to')}{' '}
+                            <span className="font-semibold text-gray-800 dark:text-gray-200">{Math.min(indexOfLastUser, filteredUsers.length)}</span> {t('of')}{' '}
+                            <span className="font-semibold text-gray-800 dark:text-gray-200">{filteredUsers.length}</span> {t('users')}
                         </div>
                         <select
                             value={usersPerPage}
@@ -403,7 +403,7 @@ const UserManagement = () => {
                                 setUsersPerPage(Number(e.target.value));
                                 setCurrentPage(1);
                             }}
-                            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                            className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                         >
                             <option value={5}>5 {t('per page')}</option>
                             <option value={10}>10 {t('per page')}</option>
@@ -414,88 +414,88 @@ const UserManagement = () => {
 
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-gray-50 border-b border-gray-200">
+                            <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         {t('Username')}
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         {t('Role')}
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         {t('Status')}
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         {t('Activity')}
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         {t('Statistics')}
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         {t('Created')}
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         {t('Actions')}
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 {currentUsers.map((u) => (
-                                    <tr key={u.id} className="hover:bg-gray-50 transition-colors">
+                                    <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
                                                     {u.username[0].toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <div className="font-medium text-gray-900">{u.username}</div>
-                                                    <div className="text-xs text-gray-500">ID: {u.id}</div>
+                                                    <div className="font-medium text-gray-900 dark:text-gray-100">{u.username}</div>
+                                                    <div className="text-xs text-gray-500 dark:text-gray-400">ID: {u.id}</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${u.role === 'admin'
-                                                    ? 'bg-purple-100 text-purple-800'
-                                                    : 'bg-blue-100 text-blue-800'
+                                                    ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300'
+                                                    : 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300'
                                                 }`}>
                                                 {u.role === 'admin' ? t('Admin') : t('User')}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${u.is_active
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-red-100 text-red-800'
+                                                    ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300'
+                                                    : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300'
                                                 }`}>
                                                 {u.is_active ? t('Online') : t('Offline')}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             {u.last_login
                                                 ? new Date(u.last_login).toLocaleString()
                                                 : t('Never')}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-900">
+                                            <div className="text-sm text-gray-900 dark:text-gray-100">
                                                 {u.measurement_count || 0} {t('measurements')}
                                             </div>
-                                            <div className="text-xs text-gray-500">
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">
                                                 {t('Desired Temp')}: {u.desired_temperature}°C
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             {new Date(u.created_at).toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <div className="flex gap-2">
                                                 <button
                                                     onClick={() => setEditingUser(u)}
-                                                    className="text-indigo-600 hover:text-indigo-900 transition-colors"
+                                                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 transition-colors"
                                                 >
                                                     ✏️
                                                 </button>
                                                 <button
                                                     onClick={() => setDeleteConfirm({ show: true, userId: u.id, username: u.username })}
-                                                    className="text-red-600 hover:text-red-900 transition-colors"
+                                                    className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 transition-colors"
                                                     disabled={u.id === user.id}
                                                 >
                                                     🗑️
@@ -511,8 +511,8 @@ const UserManagement = () => {
                     {filteredUsers.length === 0 && (
                         <div className="text-center py-12">
                             <div className="text-6xl mb-4">👤</div>
-                            <h4 className="text-xl font-semibold text-gray-800 mb-2">{t('No users found')}</h4>
-                            <p className="text-gray-600">{t('Try adjusting your search or filters')}</p>
+                            <h4 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">{t('No users found')}</h4>
+                            <p className="text-gray-600 dark:text-gray-400">{t('Try adjusting your search or filters')}</p>
                         </div>
                     )}
 
@@ -521,7 +521,7 @@ const UserManagement = () => {
                             <button
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 {t('Previous')}
                             </button>
@@ -538,7 +538,7 @@ const UserManagement = () => {
                                             onClick={() => setCurrentPage(page)}
                                             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${currentPage === page
                                                     ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-                                                    : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                                                    : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
                                                 }`}
                                         >
                                             {page}
@@ -550,7 +550,7 @@ const UserManagement = () => {
                             <button
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 {t('Next')}
                             </button>
@@ -562,20 +562,20 @@ const UserManagement = () => {
             {/* Edit User Modal */}
             {editingUser && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-6">
                             <h3 className="text-xl font-bold text-white">{t('Edit User')}: {editingUser.username}</h3>
                         </div>
 
                         <form onSubmit={handleUpdateUser} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     {t('Role')}
                                 </label>
                                 <select
                                     value={editingUser.role}
                                     onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                                 >
                                     <option value="user">{t('User')}</option>
                                     <option value="admin">{t('Admin')}</option>
@@ -583,7 +583,7 @@ const UserManagement = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     {t('Desired Temp')}
                                 </label>
                                 <input
@@ -591,7 +591,7 @@ const UserManagement = () => {
                                     step="0.1"
                                     value={editingUser.desired_temperature}
                                     onChange={(e) => setEditingUser({ ...editingUser, desired_temperature: parseFloat(e.target.value) })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                                 />
                             </div>
 
@@ -601,9 +601,9 @@ const UserManagement = () => {
                                     id="is_active"
                                     checked={editingUser.is_active}
                                     onChange={(e) => setEditingUser({ ...editingUser, is_active: e.target.checked })}
-                                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                                    className="w-4 h-4 text-purple-600 border-gray-300 dark:border-gray-600 rounded focus:ring-purple-500"
                                 />
-                                <label htmlFor="is_active" className="text-sm font-medium text-gray-700">
+                                <label htmlFor="is_active" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                     {t('Active User')}
                                 </label>
                             </div>
@@ -612,7 +612,7 @@ const UserManagement = () => {
                                 <button
                                     type="button"
                                     onClick={() => setEditingUser(null)}
-                                    className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors"
+                                    className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors"
                                 >
                                     {t('Cancel')}
                                 </button>
@@ -631,26 +631,26 @@ const UserManagement = () => {
             {/* Delete Confirmation Modal */}
             {deleteConfirm.show && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="bg-gradient-to-r from-red-500 to-pink-500 p-6">
                             <h3 className="text-xl font-bold text-white">{t('Confirm Deletion')}</h3>
                         </div>
 
                         <div className="p-6">
                             <div className="text-center mb-6">
-                                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <span className="text-3xl">⚠️</span>
                                 </div>
-                                <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                                <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                                     {t('Delete user')} "{deleteConfirm.username}"?
                                 </h4>
-                                <p className="text-gray-600 text-sm">
+                                <p className="text-gray-600 dark:text-gray-400 text-sm">
                                     {t('This action cannot be undone')}
                                 </p>
                             </div>
 
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                                <p className="text-sm text-red-800">
+                            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+                                <p className="text-sm text-red-800 dark:text-red-300">
                                     <strong>{t('Warning')}:</strong> {t('This will permanently remove the user')}
                                 </p>
                             </div>
@@ -658,7 +658,7 @@ const UserManagement = () => {
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setDeleteConfirm({ show: false, userId: null, username: '' })}
-                                    className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors"
+                                    className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors"
                                 >
                                     {t('Cancel')}
                                 </button>

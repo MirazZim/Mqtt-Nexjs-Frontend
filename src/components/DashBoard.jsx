@@ -199,7 +199,7 @@ const Dashboard = () => {
     };
 
     return (
-        <div className="h-screen flex flex-col bg-gray-100 dark:bg-gray-900 overflow-hidden w-[95vw] mx-auto rounded-lg border dark:border-gray-700 transition-colors duration-300">
+        <div className="h-full flex flex-col bg-gray-100 dark:bg-gray-900 overflow-hidden w-[95vw] mx-auto rounded-lg border dark:border-gray-700 transition-colors duration-300">
             {/* Compact Top Header */}
             <div className="bg-linear-to-r from-teal-700 via-teal-600 to-blue-600 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 px-2 md:px-3 lg:px-4 py-1.5 md:py-1.5 lg:py-2 flex items-center justify-between shadow-lg transition-colors duration-300">
                 <h1 className="text-white text-xs md:text-sm lg:text-xl font-bold tracking-wide lg:min-w-[420px]">
@@ -297,7 +297,7 @@ const Dashboard = () => {
                 </div>
             </div>
             {/* Main Content Area - Fixed Height */}
-            <div className="flex-1 overflow-y-auto pb-16 pt-2">
+            <div className="flex-1 overflow-y-auto pt-2">
                 {/* DESKTOP LAYOUT - Unchanged (>= 1024px) */}
                 <div className="hidden lg:grid grid-cols-12 gap-3 h-full">
                     {/* LEFT COLUMN - Sensors & Controls */}
@@ -339,29 +339,6 @@ const Dashboard = () => {
                                     />
                                 </Suspense>
                             </div>
-
-                            {/* Spatial Temperature Map */}
-                            {showHeavyComponents ? (
-                                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-1 transition-colors duration-300">
-                                    {isLoadingLocations ? (
-                                        <div className="flex justify-center items-center h-[400px] text-base text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                            <i className="fas fa-spinner fa-spin mr-2"></i>
-                                            {t('Loading temperature data...')}
-                                        </div>
-                                    ) : (
-                                        <ComponentLoader height={700}>
-                                            {/* <SpatialTemperatureMap /> */}
-                                        </ComponentLoader>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow-md h-[400px] flex justify-center items-center transition-colors duration-300">
-                                    <div className="text-center text-gray-600 dark:text-gray-400">
-                                        <i className="fas fa-hourglass-half fa-2x mb-2"></i>
-                                        <div>{t('Loading advanced features...')}</div>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
 
@@ -480,29 +457,6 @@ const Dashboard = () => {
                                         />
                                     </Suspense>
                                 </div>
-
-                                {/* Spatial Temperature Map */}
-                                {showHeavyComponents ? (
-                                    <div className="glass-card dark:glass-card-dark rounded-2xl p-3">
-                                        {isLoadingLocations ? (
-                                            <div className="flex justify-center items-center h-[300px] text-base text-gray-700 dark:text-gray-300">
-                                                <i className="fas fa-spinner fa-spin mr-2"></i>
-                                                {t('Loading temperature data...')}
-                                            </div>
-                                        ) : (
-                                            <ComponentLoader height={500}>
-                                                {/* <SpatialTemperatureMap /> */}
-                                            </ComponentLoader>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="glass-card dark:glass-card-dark rounded-2xl h-[300px] flex justify-center items-center">
-                                        <div className="text-center text-gray-700 dark:text-gray-300">
-                                            <i className="fas fa-hourglass-half fa-2x mb-2"></i>
-                                            <div className="text-sm font-medium">{t('Loading advanced features...')}</div>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         )}
 

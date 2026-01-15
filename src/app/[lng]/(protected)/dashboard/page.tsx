@@ -8,7 +8,7 @@ const LoadingFallback = () => (
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        height: '100vh',
+        height: '100%',
         fontSize: '1.5rem',
         color: '#555',
     }}>
@@ -18,8 +18,10 @@ const LoadingFallback = () => (
 
 export default function DashboardPage() {
     return (
-        <Suspense fallback={<LoadingFallback />}>
-            <DashboardComponent />
-        </Suspense>
+        <div className="h-full">
+            <Suspense fallback={<LoadingFallback />}>
+                <DashboardComponent />
+            </Suspense>
+        </div>
     );
 }

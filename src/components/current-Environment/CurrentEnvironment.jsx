@@ -897,7 +897,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
             {realTimeStatus.connected && realTimeStatus.sensorActive ? (
                 <div className="space-y-3 pt-1">
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2">
 
                         {/* Temperature Card - ONLY SHOW IF HAS DATA */}
                         {(currentData.temperature !== null && currentData.temperature !== undefined) && (
@@ -1090,7 +1090,7 @@ const CurrentEnvironment = ({ selectedLocation }) => {
                     </div>
 
                     {/* Status Badges Section - Only CO2 & Sugar 1x2 Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                    <div className="grid grid-cols-2 gap-2 pt-2">
 
 
 

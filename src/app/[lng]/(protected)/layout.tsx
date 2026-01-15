@@ -10,9 +10,11 @@ export default function ProtectedLayout({
 }) {
     return (
         <ProtectedRoute>
-            <div>
+                       <div className="h-screen flex flex-col overflow-hidden">
                 <Navbar />
-                {children}
+                <main className="flex-1 overflow-auto">
+                    {children}
+                </main>
             </div>
         </ProtectedRoute>
     );

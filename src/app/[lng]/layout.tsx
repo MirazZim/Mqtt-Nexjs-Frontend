@@ -3,6 +3,7 @@ import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "../../context/AuthContext.jsx";
 import { NotificationProvider } from "../../context/NotificationContext.jsx";
+import SuppressWebSocketError from "../../components/SuppressWebSocketError";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <SuppressWebSocketError />
         <AuthProvider>
           <NotificationProvider>
             {children}

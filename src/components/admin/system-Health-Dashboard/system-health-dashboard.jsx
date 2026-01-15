@@ -257,7 +257,7 @@ const SystemHealthDashboard = ({ socket }) => {
             {/* Health Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Device Status Card */}
-                <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                     <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center text-2xl">
@@ -273,23 +273,23 @@ const SystemHealthDashboard = ({ socket }) => {
                     <div className="p-4">
                         <div className="grid grid-cols-3 gap-4 text-center">
                             <div>
-                                <div className="text-2xl font-bold text-green-600">{healthData?.devices.active || 0}</div>
-                                <div className="text-xs text-gray-500">{t('Active')}</div>
+                                <div className="text-2xl font-bold text-green-600 dark:text-green-400">{healthData?.devices.active || 0}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">{t('Active')}</div>
                             </div>
                             <div>
-                                <div className="text-2xl font-bold text-red-600">{healthData?.devices.offline || 0}</div>
-                                <div className="text-xs text-gray-500">{t('Offline')}</div>
+                                <div className="text-2xl font-bold text-red-600 dark:text-red-400">{healthData?.devices.offline || 0}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">{t('Offline')}</div>
                             </div>
                             <div>
-                                <div className="text-2xl font-bold text-gray-600">{healthData?.devices.total || 0}</div>
-                                <div className="text-xs text-gray-500">{t('Total')}</div>
+                                <div className="text-2xl font-bold text-gray-600 dark:text-gray-300">{healthData?.devices.total || 0}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">{t('Total')}</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* User Activity Card */}
-                <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                     <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center text-2xl">
@@ -305,19 +305,19 @@ const SystemHealthDashboard = ({ socket }) => {
                     <div className="p-4">
                         <div className="grid grid-cols-2 gap-4 text-center">
                             <div>
-                                <div className="text-2xl font-bold text-green-600">{healthData?.users.active || 0}</div>
-                                <div className="text-xs text-gray-500">{t('Online')}</div>
+                                <div className="text-2xl font-bold text-green-600 dark:text-green-400">{healthData?.users.active || 0}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">{t('Online')}</div>
                             </div>
                             <div>
-                                <div className="text-2xl font-bold text-gray-600">{healthData?.users.total || 0}</div>
-                                <div className="text-xs text-gray-500">{t('Total')}</div>
+                                <div className="text-2xl font-bold text-gray-600 dark:text-gray-300">{healthData?.users.total || 0}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">{t('Total')}</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Audit Trail Summary Card */}
-                <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                     <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center text-2xl">
@@ -332,14 +332,14 @@ const SystemHealthDashboard = ({ socket }) => {
                     </div>
                     <div className="p-4">
                         <div className="text-center mb-3">
-                            <div className="text-3xl font-bold text-orange-600">{healthData?.audit?.recent_actions || 0}</div>
-                            <div className="text-xs text-gray-500">{t('Recent Actions')}</div>
+                            <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">{healthData?.audit?.recent_actions || 0}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{t('Recent Actions')}</div>
                         </div>
                         <div className="flex justify-center gap-2">
                             {auditStats?.byActionType?.slice(0, 3).map((stat, index) => (
-                                <div key={index} className="flex items-center gap-1 bg-orange-50 px-2 py-1 rounded-lg">
+                                <div key={index} className="flex items-center gap-1 bg-orange-50 dark:bg-orange-900/30 px-2 py-1 rounded-lg">
                                     <span className="text-lg">{getActionIcon(stat.action_type)}</span>
-                                    <span className="text-sm font-medium text-orange-700">{stat.action_count}</span>
+                                    <span className="text-sm font-medium text-orange-700 dark:text-orange-300">{stat.action_count}</span>
                                 </div>
                             ))}
                         </div>
@@ -347,7 +347,7 @@ const SystemHealthDashboard = ({ socket }) => {
                 </div>
 
                 {/* System Alerts Card */}
-                <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                     <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center text-2xl">
@@ -361,16 +361,16 @@ const SystemHealthDashboard = ({ socket }) => {
                         <div className={`w-3 h-3 rounded-full animate-pulse ${healthData?.anomalies > 0 ? 'bg-yellow-400' : 'bg-green-400'}`}></div>
                     </div>
                     <div className="p-4 flex items-center justify-center">
-                        <div className="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg">
+                        <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 px-4 py-2 rounded-lg">
                             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                            <span className="text-green-700 font-medium">{t('System Healthy')}</span>
+                            <span className="text-green-700 dark:text-green-300 font-medium">{t('System Healthy')}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* User Action Audit Trail Section - REFINED STANDARD SIZE */}
-            <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 p-6">
                     <div className="flex items-center justify-between flex-wrap gap-4">
@@ -424,21 +424,21 @@ const SystemHealthDashboard = ({ socket }) => {
                     {auditData.length > 0 ? (
                         <>
                             {/* Results Info Bar */}
-                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
-                                <div className="px-3 py-1.5 bg-indigo-50 rounded-md border border-indigo-100">
-                                    <span className="text-xs font-semibold text-indigo-600">
+                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
+                                <div className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-md border border-indigo-100 dark:border-indigo-800">
+                                    <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
                                         {t('Showing')} {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, auditData.length)} {t('of')} {auditData.length}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-500 font-medium">{t('Per page')}:</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('Per page')}:</span>
                                     <select
                                         value={itemsPerPage}
                                         onChange={(e) => {
                                             setItemsPerPage(Number(e.target.value));
                                             setCurrentPage(1);
                                         }}
-                                        className="px-3 py-1.5 text-xs font-semibold border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none hover:border-purple-300 transition-colors cursor-pointer bg-white"
+                                        className="px-3 py-1.5 text-xs font-semibold border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none hover:border-purple-300 transition-colors cursor-pointer bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                                     >
                                         <option value={5}>5</option>
                                         <option value={10}>10</option>
@@ -453,7 +453,7 @@ const SystemHealthDashboard = ({ socket }) => {
                                 {currentItems.map((action, index) => (
                                     <div
                                         key={action.id || index}
-                                        className="group bg-gray-50 hover:bg-white rounded-lg border border-gray-200 hover:border-gray-300 p-4 transition-all duration-200 hover:shadow-md"
+                                        className="group bg-gray-50 dark:bg-gray-700/50 hover:bg-white dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 p-4 transition-all duration-200 hover:shadow-md"
                                         style={{
                                             borderLeftWidth: '4px',
                                             borderLeftColor: getActionColor(action.action_type)
@@ -487,23 +487,23 @@ const SystemHealthDashboard = ({ socket }) => {
                                                         </span>
 
                                                         {/* Action Description */}
-                                                        <span className="text-gray-700 font-medium text-sm">
+                                                        <span className="text-gray-700 dark:text-gray-300 font-medium text-sm">
                                                             {action.action_description}
                                                         </span>
                                                     </div>
 
                                                     {/* Live Indicator */}
-                                                    <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 rounded-full border border-green-200">
+                                                    <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 dark:bg-green-900/30 rounded-full border border-green-200 dark:border-green-700">
                                                         <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                                                        <span className="text-xs font-semibold text-green-700">LIVE</span>
+                                                        <span className="text-xs font-semibold text-green-700 dark:text-green-400">LIVE</span>
                                                     </div>
                                                 </div>
 
                                                 {/* Value Change */}
-                                                <div className="flex items-center gap-2 mb-3 p-2.5 bg-white rounded-md border border-gray-200 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-3 p-2.5 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-600 shadow-sm">
                                                     {action.old_value !== null && action.old_value !== undefined && (
                                                         <>
-                                                            <span className="px-2.5 py-1 bg-gray-100 rounded text-gray-600 font-semibold text-sm">
+                                                            <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-400 font-semibold text-sm">
                                                                 {action.old_value}{getUnitSuffix(action.action_type)}
                                                             </span>
                                                             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -534,9 +534,9 @@ const SystemHealthDashboard = ({ socket }) => {
                                                     </span>
 
                                                     {/* Timestamp */}
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-md">
-                                                        <span className="text-gray-600 text-xs">🕒</span>
-                                                        <span className="font-semibold text-gray-700 text-xs">
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-gray-700 rounded-md">
+                                                        <span className="text-gray-600 dark:text-gray-400 text-xs">🕒</span>
+                                                        <span className="font-semibold text-gray-700 dark:text-gray-300 text-xs">
                                                             {formatTimestamp(action.created_at)}
                                                         </span>
                                                     </span>
@@ -561,11 +561,11 @@ const SystemHealthDashboard = ({ socket }) => {
 
                             {/* Pagination */}
                             {totalPages > 1 && (
-                                <div className="flex items-center justify-center gap-2 pt-4 border-t border-gray-200">
+                                <div className="flex items-center justify-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                         disabled={currentPage === 1}
-                                        className="group flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-700 bg-white border border-gray-300 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+                                        className="group flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
                                     >
                                         <svg className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -585,7 +585,7 @@ const SystemHealthDashboard = ({ socket }) => {
                                                     onClick={() => setCurrentPage(page)}
                                                     className={`min-w-[32px] px-3 py-2 text-xs font-bold rounded-lg transition-all ${currentPage === page
                                                             ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-md scale-105'
-                                                            : 'text-gray-700 bg-white border border-gray-300 hover:border-indigo-300 hover:bg-indigo-50'
+                                                            : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:border-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'
                                                         }`}
                                                 >
                                                     {page}
@@ -597,7 +597,7 @@ const SystemHealthDashboard = ({ socket }) => {
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                         disabled={currentPage === totalPages}
-                                        className="group flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-700 bg-white border border-gray-300 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+                                        className="group flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
                                     >
                                         {t('Next')}
                                         <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -611,17 +611,17 @@ const SystemHealthDashboard = ({ socket }) => {
                         /* Empty State */
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                             <div className="relative mb-4">
-                                <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center text-4xl shadow-lg">
+                                <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 rounded-full flex items-center justify-center text-4xl shadow-lg">
                                     📋
                                 </div>
                                 <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full flex items-center justify-center text-lg shadow-md">
                                     ✨
                                 </div>
                             </div>
-                            <h4 className="text-lg font-bold text-gray-800 mb-2">
+                            <h4 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-2">
                                 {t('No user actions recorded')}
                             </h4>
-                            <p className="text-gray-600 text-sm max-w-md leading-relaxed mb-4">
+                            <p className="text-gray-600 dark:text-gray-400 text-sm max-w-md leading-relaxed mb-4">
                                 {t('Control changes will appear here in real-time')}
                             </p>
                             <div className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-semibold rounded-lg shadow-md">
