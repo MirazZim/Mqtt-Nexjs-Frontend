@@ -207,10 +207,10 @@ const Dashboard = () => {
                 </h1>
 
                 <div className="flex items-center gap-1.5 md:gap-2 lg:gap-3">
-                    {/* Dark/Light Mode Toggle */}
+                    {/* Dark/Light Mode Toggle - Hidden on Mobile/Tablet (available in burger menu) */}
                     <button
                         onClick={toggleDarkMode}
-                        className="flex items-center justify-center w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-105 active:scale-95"
+                        className="hidden lg:flex items-center justify-center w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-105 active:scale-95"
                         aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                     >
                         {isDarkMode ? (
